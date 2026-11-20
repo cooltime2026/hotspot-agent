@@ -7,7 +7,7 @@
   방법 1 '물 몫 모델': 띠 데이터로 학습한 log(Tmax−20) = 핫스팟위치(+×유량) + 유량 + log(핫스팟 칸 물 몫) + wf + dy_hs.
   방법 2 '물리 비례': 띠15 기준 온도 × (물 몫 배율)^(핫스팟별 유량 기울기).
      기준 온도: 실측(B1·B4 띠15) 55·100 이 있으면 그 둘을 멱법칙으로 이음, 없으면 v2b 예측.
-유량 선택: '안전' = 두 방법 중 더 뜨거운 쪽이 목표 이하가 되는 가장 적은 유량 (펌프 동력 최소).
+유량 선택: '안전' = 보정한 물리 방법 + 2 ℃ 가 목표 이하인 가장 적은 유량 (L1 검증에서 모델 방법은 9 ℃ 틀림).
   둘 중 하나만 지키면 그 방법 기준 유량도 같이 보여 줌. 100 mL/min 으로도 못 지키면 '못 지킴'.
 압력: 띠15 압력 × (전체 전도도 비), 유량 지수 m (family_model).
 ※ L 가족은 SimScale 데이터가 없음 → 모두 추정. L1 검증 후 다시 학습할 것.
@@ -26,6 +26,11 @@ from geometry import local_manifold as LM, param_manifold as PM  # noqa: E402
 from sklearn.linear_model import RidgeCV  # noqa: E402
 
 QS = np.arange(55.0, 100.01, 1.0)
+# L1 SimScale 검증(2026-11-20): 실측 82.13 ℃ / 9719 Pa (띠15 B1·B4 평균 84.6 ℃, 9,600~10,100 Pa)
+#  → 물리 비례에서 물 몫 배율의 효과가 예측의 약 22%만 나타남(EFF), 압력은 거의 안 늘어남(G 비례 틀림).
+EFF = 0.22          # 보정: 실효 물 몫 배율 = ratio**EFF
+P_FROM_G = False
+MARGIN = 2.0        # 안전 여유 [℃]    # 압력: 띠15 압력 그대로 (G 비례 쓰지 않음)
 MEAS15 = {"2_2+3_2": (np.mean([83.68, 85.43]), np.mean([68.14, 68.44])),   # B1·B4 (띠 15) 55 / 100 mL/min
           "1_3+1_4": (132.7, 115.8)}                                          # B4
 
@@ -59,9 +64,9 @@ def predict_curves(p, M, mfs, X, slopes, slope_all):
     else:
         fbase = FM.features(base, hs, 55)
         Tb = 20 + np.exp(M["T"].predict([dict(hotspot=hs, Q=Q, **{c: fbase[c] for c in FM.SFEATS}) for Q in QS]))
-    T2 = 20 + (Tb - 20) * ratio ** s
+    T2 = 20 + (Tb - 20) * ratio ** (s * EFF)
     fbase = FM.features(base, hs, 55)
-    dp55 = M["P"].predict({**fbase, "s_eff": np.log1p(PM.resolve(base)["s_eff"])}, 55.0) * Gr
+    dp55 = M["P"].predict({**fbase, "s_eff": np.log1p(PM.resolve(base)["s_eff"])}, 55.0) * (Gr if P_FROM_G else 1.0)
     dp = dp55 * (QS / 55) ** M["P"].m
     return hs, ratio, T1, T2, dp
 
@@ -81,7 +86,7 @@ def main(shapes, targets):
     out = []
     for name in shapes:
         hs, ratio, T1, T2, dp = predict_curves(R[name], M, mfs, X, slopes, s_all)
-        Ts = np.maximum(T1, T2)
+        Ts = T2 + MARGIN      # L1 검증 후: 모델(방법 1)은 9 ℃ 틀림 → 보정한 물리 방법 + 여유 2 ℃ 를 안전 기준으로
         print(f"{name} (핫스팟 {hs}, 핫스팟 칸 물 ×{ratio:.2f}): 55 mL → 모델 {T1[0]:.1f} / 물리 {T2[0]:.1f} ℃, 100 mL → {T1[-1]:.1f} / {T2[-1]:.1f} ℃")
         for tl in targets:
             safe, a, b = pick(QS, Ts, dp, tl), pick(QS, T1, dp, tl), pick(QS, T2, dp, tl)
