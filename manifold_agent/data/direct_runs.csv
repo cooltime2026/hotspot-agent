@@ -1,0 +1,227 @@
+design,inlet_velocity_m_s,total_flow_mL_min,model,heat,Tmax_bottom_C,p_max_Pa,p_min_Pa,inlet,note
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",136.7,1077,-130,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.2,1655,-244,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",103.1,2718,-469.4,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",90.36,4591,-860.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",80.6,7587,-1521,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",215.1,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",197.0,1655,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",176.4,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",155.9,4594,-842.5,corners,read from Post-processor colorbar (cut plane view)
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",137.6,7587,-1563,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",127.0,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",112.5,1655,-243.6,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",99.64,2718,-469.5,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",89.79,4592,-844.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",82.46,7590,-1505,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",153.1,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",136.6,1654,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",119.7,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",104.2,4592,-839.7,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",91.62,7588,-1539,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",132.0,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",117.3,1654,-244.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",94.04,4591,-857.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",104.3,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",86.4,7583,-1548,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",201.2,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",181.8,1655,-244.1,corners,read from Post-processor colorbar; flow identified from pressure/velocity
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",161.0,2718,-469,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",141.4,4593,-836.8,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",124.3,7583,-1510,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",137.9,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",120.6,1654,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",104.8,2718,-469.3,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",92.23,4593,-852.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",82.58,7585,-1563,corners,read from Post-processor colorbar
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",157.3,2044,-90.91,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",137.4,3119,-166.6,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.5,5092,-345.8,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",105.4,8354,-684.3,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",94.42,13450,-1257,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",174.4,1163.0,-117.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; inlet from top pressure view (orange ports at low y); converged ~150 it; img 208-213
+M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",157.5,1756.0,-214.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 214-218
+M0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",141.0,2831.0,-412.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 220-224
+M0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",126.8,4608.0,-813.4,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 225-229
+M0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",115.1,7362.0,-1485.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 230-234
+M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",175.3,1163.0,-116.7,"HTML (3,1)+(9,1)",read from Post-processor colorbar; mirror check of 1_1+1_2; img 235-241
+M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",159.0,1757.0,-210.6,"HTML (3,1)+(9,1)",read from Post-processor colorbar; mirror check of 1_1+1_2; img 242-245
+M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",152.6,1163.0,-117.4,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 246-252
+M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",138.2,1756.0,-212.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 253-257
+M0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",125.1,2830.0,-412.1,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 258-262
+M0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",114.7,4602.0,-813.8,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 263-267
+M0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",106.2,7360.0,-1480.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 268-272
+M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",160.5,1163.0,-117.4,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 277-281
+M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",144.7,1756.0,-212.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 282-286
+M0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",130.5,2831.0,-411.9,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 287-291
+M0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",119.3,4603.0,-815.6,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 292-297
+M0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",110.4,7362.0,-1506.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 298-303
+M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",204.0,1163.0,-117.1,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 305-311
+M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",182.7,1756.0,-213.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 312-316
+M0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",162.7,2830.0,-410.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 317-321
+M0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",145.7,4603.0,-812.7,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 322-326
+M0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",131.8,7373.0,-1443.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 328-332
+M3,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",167.6,3473.0,-320.1,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 333-339; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",148.5,5782.0,-637.5,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 340-344; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",131.4,10300.0,-1227.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.03e+4 (±50 Pa); img 346-350; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",117.9,18190.0,-2666.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.819e+4; img 351-355; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",107.5,31160.0,-4950.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 3.116e+4; img 356-359; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",158.3,3473.0,-320.1,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 360-368; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",142.8,5782.0,-637.4,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 369-375; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",128.9,10290.0,-1321.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.029e+4; img 376-380; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",118.0,18190.0,-2671.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.819e+4; img 381-385; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",109.7,31180.0,-4820.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax from section colorbar 3.118e+4 (윗면 압력 그림은 다음에 받기로); img 386-390; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",127.3,3473.0,-320.1,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 393-400; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",110.2,5782.0,-637.5,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 401-405; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",95.28,10300.0,-1292.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.03e+4; img 408-414; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",83.88,18210.0,-2655.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.821e+4; img 415-420; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",75.39,31160.0,-4960.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 3.116e+4; img 423-432; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",105.3,3473.0,-320.1,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 433-444; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",95.11,5782.0,-637.5,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; bottom image 454 confirms 95.11; img 445-454; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",85.83,10300.0,-1304.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.03e+4; img 456-460; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",78.24,18190.0,-2644.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 1.819e+4; img 465-469; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",72.29,31170.0,-4788.0,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; pmax shown as 3.117e+4; img 473-477; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",127.7,3470.0,-339.3,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 478-483; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M3,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",110.5,5782.0,-637.5,"user (9,1)+(9,11) [HTML 반대]",read from Post-processor colorbar; img 488-491; 2026-11-20 M1→M3 이름 정정(사진 336·461 관통층이 V자 물결 = M3 마스크)
+M4,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_4",152.4,577.4,-61.78,"HTML (3,6)+(9,6)",read from Post-processor colorbar; hotspot row 3 vs 2 from bottom-image convention (see log); img 496-502
+M4,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_4",134.1,954.1,-116.6,"HTML (3,6)+(9,6)",read from Post-processor colorbar; img 506-510
+M4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_4",116.6,1693.0,-225.6,"HTML (3,6)+(9,6)",read from Post-processor colorbar; img 514-518
+M4,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_4",102.6,2988.0,-455.3,"HTML (3,6)+(9,6)",read from Post-processor colorbar; img 522-526
+M4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_4",91.95,5094.0,-849.6,"HTML (3,6)+(9,6)",read from Post-processor colorbar; img 530-534
+M4,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_2",126.4,577.5,-61.67,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 538,539,540,541,542,543,544"
+M4,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_2",110.6,954.0,-117.0,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 548,549,550,551,552"
+M4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_2",96.79,1693.0,-225.6,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 556,557,558,559,560"
+M4,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_2",86.07,2991.0,-441.9,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 564,565,566,567,568"
+M4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_2",78.19,5099.0,-832.2,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 573,574,575,576,577"
+M4,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",162.5,577.5,-61.62,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 583,584,585,586,587,588"
+M4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",122.9,1694.0,-225.4,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 593,594,595,596,597"
+M4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",95.65,5104.0,-850.6,"HTML (3,6)+(9,6)","read from Post-processor colorbar; img 602,603,604,605,606"
+M1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",170.2,3115.0,-247.8,"user (9,1)+(9,11)","read from Post-processor colorbar; img 619,620,621,622,623,624,625"
+M1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",150.2,5321.0,-516.2,"user (9,1)+(9,11)","read from Post-processor colorbar; img 630,631,632,633,634"
+M1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",132.8,9676.0,-1057.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 639,640,641,642,643"
+M1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",119.1,17450.0,-2278.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 648,649,650,651,652"
+M1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",108.7,30300.0,-4485.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 657,658,659,660,661"
+M1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",166.0,3116.0,-247.7,"user (9,1)+(9,11)","read from Post-processor colorbar; img 666,667,668,669,670,671,672"
+M1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",151.1,5319.0,-516.2,"user (9,1)+(9,11)","read from Post-processor colorbar; img 677,678,679,680,681"
+M1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",138.0,9679.0,-1119.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 686,687,688,689,690"
+M1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",127.5,17450.0,-2264.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 695,696,697,698,699"
+M1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",118.9,30300.0,-4408.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 704,705,706,707,708"
+M1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",140.6,3116.0,-247.7,"user (9,1)+(9,11)","read from Post-processor colorbar; img 713,714,715,716,717,718,719"
+M1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",121.5,5319.0,-516.2,"user (9,1)+(9,11)","read from Post-processor colorbar; img 724,725,726,727,728"
+M1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",105.1,9676.0,-1082.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 733,734,735,736,737"
+M1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",92.22,17450.0,-2243.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 742,743,744,745,746"
+M1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",82.39,30300.0,-4488.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 751,752,753,754,755"
+M1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",113.8,3116.0,-247.7,"user (9,1)+(9,11)","read from Post-processor colorbar; img 760,761,762,763,764,765,766"
+M1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",103.5,5319.0,-516.2,"user (9,1)+(9,11)","read from Post-processor colorbar; img 771,772,773,774,775"
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",142.8,1077.0,-129.2,corners,"Experiment 5 Run 1; read from Post-processor colorbar; vmax 0.7234; img 780,781,782,783,784,785"
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",126.3,1655.0,-244.1,corners,"Experiment 5 Run 2; read from Post-processor colorbar; vmax 0.9525; img 786,787,788,789,790"
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",110.1,2718.0,-469.1,corners,"Experiment 5 Run 3; read from Post-processor colorbar; vmax 1.298; img 791,792,793,794,795,796,797"
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",95.9,4592.0,-869.8,corners,"Experiment 5 Run 4; read from Post-processor colorbar; vmax 1.753; img 798,799,800,801,802,803"
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",84.07,7594.0,-1500.0,corners,"Experiment 5 Run 5; read from Post-processor colorbar; vmax 2.332; img 804,805,806,807,808"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",141.2,2043.0,-91.23,"HTML (6,3.8)+(6,10.45)","D1 Experiment 2 Run 1; read from Post-processor colorbar; 핫스팟 x쪽은 Exp1(3_4+4_4)과 같은 시점 기준; img 861,862,863,864,865,866"
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",123.8,3119.0,-166.5,"HTML (6,3.8)+(6,10.45)","D1 Experiment 2 Run 2; read from Post-processor colorbar; vmax 0.9779; img 870,871,872,873,874"
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",108.6,5088.0,-345.8,"HTML (6,3.8)+(6,10.45)","D1 Experiment 2 Run 3; read from Post-processor colorbar; vmax 1.336; img 878,879,880,881,882"
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",96.89,8352.0,-684.2,"HTML (6,3.8)+(6,10.45)","D1 Experiment 2 Run 4; read from Post-processor colorbar; vmax 1.815; img 886,887,888,889,890"
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",87.99,13490.0,-1257.0,"HTML (6,3.8)+(6,10.45)","D1 Experiment 2 Run 5; read from Post-processor colorbar (1.349e+4); vmax 2.407; img 894,895,896,897,898"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",116.6,2043.0,-94.95,"HTML (6,3.8)+(6,10.45)","D1 Experiment 3 Run 1; read from Post-processor colorbar; vmax 0.7417; 핫스팟 x쪽은 Exp1·2와 같은 바닥 시점 기준; img 902,903,904,905,906,907"
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",101.5,3120.0,-166.9,"HTML (6,3.8)+(6,10.45)","D1 Experiment 3 Run 2; read from Post-processor colorbar; vmax 0.9787; img 911,912,913,914,915"
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",88.69,5094.0,-345.8,"HTML (6,3.8)+(6,10.45)","D1 Experiment 3 Run 3; read from Post-processor colorbar; vmax 1.337; img 919,920,921,922,923"
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",79.15,8359.0,-684.3,"HTML (6,3.8)+(6,10.45)","D1 Experiment 3 Run 4; read from Post-processor colorbar; vmax 1.811; img 927,928,929,930,931"
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",72.02,13440.0,-1257.0,"HTML (6,3.8)+(6,10.45)","D1 Experiment 3 Run 5; read from Post-processor colorbar (1.344e+4); vmax 2.401; img 935,936,937,938,939"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",123.7,2044.0,-90.79,"HTML (6,3.8)+(6,10.45)","D1 Experiment 4 Run 1; read from Post-processor colorbar; vmax 0.74; 핫스팟 x쪽은 Exp1~3과 같은 바닥 시점 기준; img 943,944,945,946,947,948"
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",108.0,3120.0,-166.9,"HTML (6,3.8)+(6,10.45)","D1 Experiment 4 Run 2; read from Post-processor colorbar; vmax 0.9787; img 952,953,954,955,956"
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",94.37,5092.0,-345.7,"HTML (6,3.8)+(6,10.45)","D1 Experiment 4 Run 3; read from Post-processor colorbar; vmax 1.337; img 960,961,962,963,964"
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",83.75,8348.0,-684.1,"HTML (6,3.8)+(6,10.45)","D1 Experiment 4 Run 4; read from Post-processor colorbar; vmax 1.811; img 968,969,970,971,972"
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",75.47,13450.0,-1257.0,"HTML (6,3.8)+(6,10.45)","D1 Experiment 4 Run 5; read from Post-processor colorbar (1.345e+4); vmax 2.399; img 976,977,978,979,980"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",116.8,2043.0,-91.62,"HTML (6,3.8)+(6,10.45)","D1 Experiment 5 Run 1 = 대칭 점검(3_3+4_3의 거울); read from Post-processor colorbar; vmax 0.7412; img 986,987,988,989,990,991"
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",101.6,3119.0,-170.2,"HTML (6,3.8)+(6,10.45)","D1 Experiment 5 Run 2 = 대칭 점검; read from Post-processor colorbar; vmax 0.9783; img 995,996,997,998,999"
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",88.59,5089.0,-345.7,"HTML (6,3.8)+(6,10.45)","D1 Experiment 5 Run 3 = 대칭 점검; read from Post-processor colorbar; vmax 1.336; img 1003,1004,1005,1006,1007"
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",78.85,8345.0,-684.2,"HTML (6,3.8)+(6,10.45)","D1 Experiment 5 Run 4 = 대칭 점검; read from Post-processor colorbar; vmax 1.811; img 1011,1012,1013,1014,1015"
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_2,4_2",71.78,13470.0,-1257.0,"HTML (6,3.8)+(6,10.45)","D1 Experiment 5 Run 5 = 대칭 점검; read from Post-processor colorbar (1.347e+4); vmax 2.405; img 1020,1021,1022,1023,1024"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",124.0,2044.0,-90.57,"HTML (6,3.8)+(6,10.45)","D1 Experiment 6 Run 1 = 1_3+2_3(Exp4)의 거울; read from Post-processor colorbar; vmax 0.7401; img 1029,1030,1031,1032,1033,1034"
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",108.2,3118.0,-170.1,"HTML (6,3.8)+(6,10.45)","D1 Experiment 6 Run 2 = 1_3+2_3 거울; read from Post-processor colorbar; vmax 0.978; img 1039,1040,1041,1042,1043,1044,1045,1046,1047"
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",94.57,5093.0,-345.7,"HTML (6,3.8)+(6,10.45)","D1 Experiment 6 Run 3 = 1_3+2_3 거울; read from Post-processor colorbar; vmax 1.337; img 1048,1049,1050,1051,1052"
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",83.96,8339.0,-684.1,"HTML (6,3.8)+(6,10.45)","D1 Experiment 6 Run 4 = 1_3+2_3 거울; read from Post-processor colorbar; vmax 1.808; img 1057,1058,1059,1060,1061"
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",75.78,13480.0,-1257.0,"HTML (6,3.8)+(6,10.45)","D1 Experiment 6 Run 5 = 1_3+2_3 거울; read from Post-processor colorbar (1.348e+4); vmax 2.405; img 1066,1067,1068,1069,1070"
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",157.3,2044.0,-93.06,"HTML (6,3.8)+(6,10.45)","D1 Experiment 7 Run 1 = 3_4+4_4(Exp1) 거울, 가장자리 열 대칭 점검; read from Post-processor colorbar; img 1075,1076,1077"
+A1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",101.6,12740.0,-1006.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1079,1080,1081,1082"
+A1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",102.4,12740.0,-991.5,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1083,1084,1085,1086"
+A2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",101.4,9398.0,-1022.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1090,1091,1092"
+A2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",99.08,9402.0,-1038.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1093,1094,1095"
+A3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",101.7,12200.0,-1132.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1096,1097,1098"
+A3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",103.7,12200.0,-1128.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1099,1100,1101"
+A3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",85.41,36840.0,-4472.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1102,1103,1104"
+A3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",78.68,36830.0,-4389.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1105,1106,1107"
+A4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",98.7,10400.0,-979.4,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1108,1109,1110"
+A4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",92.52,10410.0,-940.6,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1111,1112,1113"
+A4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",77.75,31340.0,-3875.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1114,1115,1116"
+A4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",77.84,31340.0,-3635.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1117,1118,1119"
+A2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",78.23,28590.0,-3714.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1120,1121,1122"
+A2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",80.77,28600.0,-3921.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1123,1124,1125"
+B1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 4_3,4_4",108.7,10130.0,-999.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1126,1127,1128"
+B1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",83.68,10130.0,-1010.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1129,1130,1131"
+B1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",68.14,30900.0,-3722.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1132,1133,1134"
+B1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 4_3,4_4",90.74,30890.0,-3609.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1135,1136,1137"
+B2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",142.7,8851.0,-1027.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1138,1139,1140"
+B2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",94.22,8851.0,-1027.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1141,1142,1143,1144"
+B2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",76.63,27030.0,-4050.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1145,1146,1147"
+B2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",121.2,27030.0,-4058.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1148,1149,1150"
+B3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",146.4,9166.0,-1079.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1151,1152,1153"
+B3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",97.9,9159.0,-1058.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1154,1155,1156"
+B3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",78.89,28570.0,-4580.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1157,1158,1159"
+B3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",124.8,28570.0,-4343.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1160,1161,1162"
+B4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",132.7,9602.0,-1067.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1163,1164,1165"
+B4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",85.43,9602.0,-1067.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1166,1167,1168"
+B4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",68.44,29030.0,-4434.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1169,1170,1171"
+B4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",115.8,29010.0,-4327.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1172,1173,1174"
+A7,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",99.88,10950.0,-1207.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1176,1175,1177"
+A7,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",89.82,10950.0,-1207.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1179,1178,1180"
+A7,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",76.19,33260.0,-5016.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1182,1181,1183"
+A6,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",98.96,10900.0,-919.6,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1185,1184,1186"
+C1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",137.2,9709.0,-1233.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1187,1188,1189"
+C1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",116.7,29700.0,-4329.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1190,1191,1192"
+C1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",104.0,9709.0,-1231.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1193,1194,1195"
+C1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",88.29,29740.0,-4385.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1196,1197,1198"
+C1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",102.4,9706.0,-1230.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1199,1200,1201"
+C1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",81.52,29670.0,-4518.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+C1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",102.8,9708.0,-1229.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1202,1203,1204"
+C1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",81.42,29730.0,-4579.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1206,1205,1207"
+A6,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",91.88,10910.0,-862.2,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1208,1210,1209"
+A6,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",75.89,32970.0,-3404.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1212,1211,1213"
+A5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",138.0,9713.0,-1093.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1215,1214,1216"
+A5,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",117.7,29340.0,-3985.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1218,1217,1219"
+A5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",88.65,9723.0,-1012.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+A5,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",72.9,29340.0,-3921.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1221,1220,1222"
+A8,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,3_2",103.6,9358.0,-885.3,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1225,1223,1224"
+A8,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",100.0,9366.0,-884.6,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+A8,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,2_4",79.77,28710.0,-3975.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1227,1226,1228"
+B8,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",151.0,9250.0,-1591.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1230,1229,1231"
+B8,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",125.5,28300.0,-6174.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+B8,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",109.7,9248.0,-1601.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1233,1232,1234"
+B8,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",87.79,28300.0,-6174.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+B7,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",141.5,9325.0,-1029.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1236,1235,1237"
+B7,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",119.6,29070.0,-4204.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+B7,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",95.25,9325.0,-1029.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1239,1238,1240"
+B7,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",77.02,29070.0,-4185.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1242,1241,1243"
+B6,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",133.0,9795.0,-921.9,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1245,1244,1246"
+B6,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 4_1,4_2",108.7,29930.0,-3587.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1248,1247,1249"
+B6,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_3",86.73,9795.0,-921.9,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1251,1250,1252"
+B6,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_3,3_3",73.47,29960.0,-3488.0,"user (9,1)+(9,11)","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정"
+B5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",91.92,9066.0,-1176.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1254,1253,1255"
+B5,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",76.29,27780.0,-4779.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1257,1256,1258"
+B5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",141.1,9066.0,-1176.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1260,1259,1261"
+B5,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",120.3,27760.0,-4712.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1264,1262,1263"
+C2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",146.3,12180.0,-929.5,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1265,1266,1267"
+C2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",124.9,36700.0,-3557.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1268,1270"
+C2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",84.82,12180.0,-929.5,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1272,1273,1274"
+C2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",68.71,36690.0,-3615.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1275,1276,1277"
+C2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",96.98,12180.0,-929.6,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1278,1279,1280"
+C2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",80.3,36700.0,-3574.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1281,1282,1283"
+C2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",102.0,12180.0,-929.6,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1284,1285,1286"
+C2,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",80.16,36670.0,-3720.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1287,1288,1289"
+C3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",90.43,10590.0,-1009.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1290,1291,1292"
+C3,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",74.39,31810.0,-3660.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1293,1294,1295"
+C4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",99.63,11940.0,-935.8,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1296,1297,1298"
+C4,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",77.41,35800.0,-3718.0,"user (9,1)+(9,11)","사용자 문서(data/user_docs)에서 읽음; img 1299,1300,1301"
+A1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",78.83,38960.0,-4366.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1302,1303,1304"
+A1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",84.44,38970.0,-4381.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1305,1306,1307"

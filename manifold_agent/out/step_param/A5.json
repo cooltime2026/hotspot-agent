@@ -1,0 +1,20 @@
+{
+ "name": "A5",
+ "params": {
+  "n": 9,
+  "yf": 7.83,
+  "s": 0.06,
+  "xf": 1.76,
+  "b": -0.3,
+  "wf": 0.52,
+  "s_eff": 0.18,
+  "s_max": 3.0
+ },
+ "valid": true,
+ "fluid_solids": 1,
+ "fluid_mm3": 62.219,
+ "solid_mm3": 110.581,
+ "dead_fluid_filled_mm3": 0,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

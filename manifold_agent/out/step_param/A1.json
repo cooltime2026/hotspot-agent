@@ -1,0 +1,20 @@
+{
+ "name": "A1",
+ "params": {
+  "n": 13,
+  "yf": 2.54,
+  "s": 0.09,
+  "xf": 9.96,
+  "b": 0.22,
+  "wf": 0.53,
+  "s_eff": 0.0036,
+  "s_max": 0.0401
+ },
+ "valid": true,
+ "fluid_solids": 1,
+ "fluid_mm3": 61.356,
+ "solid_mm3": 111.444,
+ "dead_fluid_filled_mm3": 0,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

@@ -1,0 +1,20 @@
+{
+ "name": "B5",
+ "params": {
+  "n": 11,
+  "yf": 8.79,
+  "s": 0.97,
+  "xf": 2.02,
+  "b": -0.75,
+  "wf": 0.74,
+  "s_eff": 0.1972,
+  "s_max": 0.2033
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 67.836,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

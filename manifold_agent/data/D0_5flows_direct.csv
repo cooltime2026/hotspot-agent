@@ -1,0 +1,36 @@
+design,inlet_velocity_m_s,total_flow_mL_min,model,heat,Tmax_bottom_C,p_max_Pa,p_min_Pa,inlet,note
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",136.7,1077,-130,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.2,1655,-244,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",103.1,2718,-469.4,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",90.36,4591,-860.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",80.6,7587,-1521,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",215.1,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",197.0,1655,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",176.4,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",155.9,4594,-842.5,corners,read from Post-processor colorbar (cut plane view)
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",137.6,7587,-1563,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",127.0,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",112.5,1655,-243.6,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",99.64,2718,-469.5,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",89.79,4592,-844.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",82.46,7590,-1505,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",153.1,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",136.6,1654,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",119.7,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",104.2,4592,-839.7,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",91.62,7588,-1539,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",132.0,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",117.3,1654,-244.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",94.04,4591,-857.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",104.3,2718,-469.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",86.4,7583,-1548,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",201.2,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",181.8,1655,-244.1,corners,read from Post-processor colorbar; flow identified from pressure/velocity
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",161.0,2718,-469,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",141.4,4593,-836.8,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",124.3,7583,-1510,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",137.9,1077,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",120.6,1654,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",104.8,2718,-469.3,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",92.23,4593,-852.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",82.58,7585,-1563,corners,read from Post-processor colorbar

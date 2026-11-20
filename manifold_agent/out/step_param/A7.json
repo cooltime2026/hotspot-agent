@@ -1,0 +1,20 @@
+{
+ "name": "A7",
+ "params": {
+  "n": 13,
+  "yf": 9.32,
+  "s": 0.02,
+  "xf": 10.21,
+  "b": -0.24,
+  "wf": 0.51,
+  "s_eff": 0.0064,
+  "s_max": 0.3213
+ },
+ "valid": true,
+ "fluid_solids": 1,
+ "fluid_mm3": 62.189,
+ "solid_mm3": 110.611,
+ "dead_fluid_filled_mm3": 0,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

@@ -1,0 +1,581 @@
+{
+ "D0": {
+  "inlets": [
+   [
+    1.56,
+    1.55
+   ],
+   [
+    10.44,
+    10.45
+   ]
+  ],
+  "outlets": [
+   [
+    6.0,
+    6.0
+   ],
+   [
+    5.5,
+    8.3
+   ]
+  ],
+  "mirror_x": false,
+  "confirmed": "사용자 SimScale (HTML과 반대, 모서리 입구)"
+ },
+ "D1": {
+  "inlets": [
+   [
+    6.0,
+    3.8
+   ],
+   [
+    6.0,
+    10.45
+   ]
+  ],
+  "outlets": [
+   [
+    6.0,
+    1.55
+   ],
+   [
+    6.0,
+    8.2
+   ]
+  ],
+  "mirror_x": true,
+  "confirmed": "윗면 압력 그림, HTML과 같음. 형상 마스크 좌우 완전 대칭"
+ },
+ "M0": {
+  "inlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    9.0,
+    1.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    11.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "mirror_x": true,
+  "confirmed": "사진 211 압력, 대칭 직접 점검(+0.9, +1.5 ℃)"
+ },
+ "M4": {
+  "inlets": [
+   [
+    3.0,
+    6.0
+   ],
+   [
+    9.0,
+    6.0
+   ]
+  ],
+  "outlets": [
+   [
+    6.0,
+    2.75
+   ],
+   [
+    6.0,
+    9.25
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "confirmed": "사진 499 윗면 압력: 가운데 줄 좌우 포트 노랑(고압)=입구, 위·아래 포트 파랑=출구 → HTML과 같음"
+ },
+ "M3": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "confirmed": "입구 x=9 확정: 사진 455 좌표축(X→오른쪽)과 고압 포트 위치 일치. HTML과 반대. | 2026-11-20: 예전 M1 이름의 Run은 실제 M3 형상(V자 물결 빗살)으로 정정. 진짜 M1(직선 빗살)은 아직 안 돌림.",
+  "mirror_y": true
+ },
+ "M1": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "confirmed": "2026-11-20 사진 622 윗면 압력: 화면 오른쪽 포트 2개 빨강(입구), 왼쪽 파랑(출구). M3와 같은 화면 규칙(x 오른쪽)으로 (9,1),(9,11)=입구 가정. 직선 빗살 = 진짜 M1(설정 619·620)."
+ },
+ "A1": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A1.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A2": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A2.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A3": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A3.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A4": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A4.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A5": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A5.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A6": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A6.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A7": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A7.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "A8": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/A8.step",
+  "confirmed": "자동설계 1차 변형(param_manifold v3). 입구 B망 (9,1),(9,11)."
+ },
+ "B1": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B1.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B2": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B2.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B3": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B3.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B4": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B4.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B5": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B5.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B6": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B6.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B7": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B7.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ },
+ "B8": {
+  "inlets": [
+   [
+    9.0,
+    1.0
+   ],
+   [
+    9.0,
+    11.0
+   ]
+  ],
+  "outlets": [
+   [
+    3.0,
+    1.0
+   ],
+   [
+    3.0,
+    11.0
+   ]
+  ],
+  "mirror_x": false,
+  "mirror_y": false,
+  "family": "param_band_v3",
+  "step": "out/step_param_v3/B8.step",
+  "confirmed": "자동설계 2차 변형(param_manifold v3). 입구 (9,1),(9,11)."
+ }
+}

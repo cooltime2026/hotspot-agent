@@ -1,0 +1,20 @@
+{
+ "name": "B3",
+ "params": {
+  "n": 7,
+  "yf": 3.1,
+  "s": 0.07,
+  "xf": 10.45,
+  "b": -0.66,
+  "wf": 0.78,
+  "s_eff": 0.0835,
+  "s_max": 1.1923
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 72.199,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

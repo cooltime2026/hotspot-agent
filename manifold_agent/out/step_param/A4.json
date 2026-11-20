@@ -1,0 +1,20 @@
+{
+ "name": "A4",
+ "params": {
+  "n": 13,
+  "yf": 6.57,
+  "s": 0.99,
+  "xf": 4.72,
+  "b": 0.08,
+  "wf": 0.51,
+  "s_eff": 0.045,
+  "s_max": 0.0455
+ },
+ "valid": true,
+ "fluid_solids": 1,
+ "fluid_mm3": 61.141,
+ "solid_mm3": 111.659,
+ "dead_fluid_filled_mm3": 0,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

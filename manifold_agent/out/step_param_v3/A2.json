@@ -1,0 +1,20 @@
+{
+ "name": "A2",
+ "params": {
+  "n": 7,
+  "yf": 2.59,
+  "s": 0.87,
+  "xf": 6.52,
+  "b": 0.55,
+  "wf": 0.77,
+  "s_eff": 0.0866,
+  "s_max": 0.0995
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 68.255,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

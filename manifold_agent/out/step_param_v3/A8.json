@@ -1,0 +1,20 @@
+{
+ "name": "A8",
+ "params": {
+  "n": 7,
+  "yf": 9.85,
+  "s": 0.95,
+  "xf": 1.91,
+  "b": 0.73,
+  "wf": 0.75,
+  "s_eff": 0.0974,
+  "s_max": 0.1026
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 65.69,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

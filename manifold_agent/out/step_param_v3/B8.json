@@ -1,0 +1,20 @@
+{
+ "name": "B8",
+ "params": {
+  "n": 5,
+  "yf": 9.92,
+  "s": 0.1,
+  "xf": 1.78,
+  "b": 0.42,
+  "wf": 0.84,
+  "s_eff": 0.0094,
+  "s_max": 0.0943
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 71.426,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}
