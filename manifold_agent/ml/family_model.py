@@ -177,6 +177,7 @@ def fit(with_m=True):
 # 모양 효과 분석: 같은 핫스팟·유량 안 차이의 대부분이 띠 개수(logG)·띠 폭(wf)·모음 위치(dy_hs)로 설명됨.
 # → log(Tmax−20) = 핫스팟 위치 숫자 + logQ + logG + wf + dy_hs + (핫스팟 위치 × logG) 선형(릿지) 모델.
 # 시험: 본 핫스팟 3.6 ℃ (기준선 4.3), 처음 보는 핫스팟 7.8 ℃.
+# v2b(+핫스팟×유량): 본 핫스팟 3.8 ℃, 처음 보는 5.1 ℃ (대칭 뒤집기 포함 다시 잰 값). 가장자리 핫스팟 유량 효과 개선.
 from sklearn.linear_model import RidgeCV  # noqa: E402
 SFEATS = ["logG", "wf", "dy_hs"]
 SINTER = ["logG"]
@@ -194,7 +195,8 @@ def simple_X(rows):
     """rows: dict 목록 또는 DataFrame (hotspot, Q, logG, wf, dy_hs 필요)"""
     d = pd.DataFrame(rows)
     H = np.array([hs_pos(h) for h in d.hotspot])
-    cols = [H, np.log(d.Q.values / 55)[:, None]] + [d[[f]].values for f in SFEATS] + [H * d[[f]].values for f in SINTER]
+    lq = np.log(d.Q.values / 55)[:, None]
+    cols = [H, lq, H * lq] + [d[[f]].values for f in SFEATS] + [H * d[[f]].values for f in SINTER]   # H*lq: 핫스팟마다 유량 효과 다름(v2b)
     return np.hstack(cols)
 
 

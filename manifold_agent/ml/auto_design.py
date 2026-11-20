@@ -27,6 +27,7 @@ from geometry import param_manifold as PM  # noqa: E402
 QS = np.array([55.0, 65.0, 75.0, 85.0, 100.0])
 V_OF_Q = lambda q: q / 55 * 0.912
 NMAX = 15        # 학습 데이터의 띠 개수 범위(5~15) 밖은 외삽이라 금지
+NMIN = 7         # 띠 5개는 B8 하나뿐(증거 약함) → 제외
 
 # 속도: 같은 모양의 resolve·masks 를 여러 번 계산하지 않게 캐시 (결과는 같음)
 _res_orig, _mask_orig, _cache_r, _cache_m = PM.resolve, PM.masks, {}, {}
@@ -78,7 +79,7 @@ def random_params(rng, k):
         p["n"] = int(round(p["n"])) | 1
         p = {kk: (round(v, 2) if kk != "n" else v) for kk, v in p.items()}
         r = PM.resolve(p)
-        if PM.masks(r)[2] and r["n"] <= NMAX:
+        if PM.masks(r)[2] and NMIN <= r["n"] <= NMAX:
             out.append({kk: r[kk] for kk in FM.KEYS})
     return out
 
@@ -93,7 +94,7 @@ def neighbors(rng, p, k, scale=0.12):
         q["n"] = int(round(q["n"])) | 1; q["n"] = int(np.clip(q["n"], 7, 17))
         q = {kk: (round(v, 2) if kk != "n" else v) for kk, v in q.items()}
         r = PM.resolve(q)
-        if PM.masks(r)[2] and r["n"] <= NMAX:
+        if PM.masks(r)[2] and NMIN <= r["n"] <= NMAX:
             out.append({kk: r[kk] for kk in FM.KEYS})
         if len(out) >= k:
             break

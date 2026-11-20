@@ -1,0 +1,20 @@
+{
+ "name": "AD_22-23_2",
+ "params": {
+  "n": 7,
+  "yf": 4.13,
+  "s": 0.07,
+  "xf": 1.87,
+  "b": 0.08,
+  "wf": 0.56,
+  "s_eff": 0.0594,
+  "s_max": 0.8491
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 61.272,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

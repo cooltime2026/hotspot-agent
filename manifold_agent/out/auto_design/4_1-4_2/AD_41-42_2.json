@@ -1,0 +1,20 @@
+{
+ "name": "AD_41-42_2",
+ "params": {
+  "n": 15,
+  "yf": 6.29,
+  "s": 0.15,
+  "xf": 7.17,
+  "b": -0.15,
+  "wf": 0.68,
+  "s_eff": 0.0028,
+  "s_max": 0.0184
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 63.967,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

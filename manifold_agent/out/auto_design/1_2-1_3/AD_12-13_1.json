@@ -1,0 +1,20 @@
+{
+ "name": "AD_12-13_1",
+ "params": {
+  "n": 15,
+  "yf": 2.75,
+  "s": 0.0,
+  "xf": 5.86,
+  "b": -0.8,
+  "wf": 0.55,
+  "s_eff": 0.0,
+  "s_max": 0.016
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 62.6,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}
