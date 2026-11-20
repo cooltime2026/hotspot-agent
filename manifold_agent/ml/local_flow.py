@@ -91,7 +91,7 @@ def main(shapes, targets):
         for tl in targets:
             safe, a, b = pick(QS, Ts, dp, tl), pick(QS, T1, dp, tl), pick(QS, T2, dp, tl)
             fmt = lambda r: f"{r['Q']:.0f} mL/min (v {r['v']}) → {r['T']} ℃, {r['dp']} Pa, {r['W']} mW" if r else "못 지킴 (100 mL/min 으로도)"
-            print(f"   목표 {tl:.0f} ℃: 안전(두 방법 다) {fmt(safe)} | 모델만 {fmt(a)} | 물리만 {fmt(b)}")
+            print(f"   목표 {tl:.0f} ℃: 안전(보정 물리+2℃) {fmt(safe)} | 모델만 {fmt(a)} | 물리만 {fmt(b)}")
             out.append(dict(shape=name, hotspot=hs, target_C=tl, flow_share_ratio=round(ratio, 2),
                             **{f"safe_{k}": v for k, v in (safe or {}).items()},
                             **{f"model_{k}": v for k, v in (a or {}).items()}, **{f"physics_{k}": v for k, v in (b or {}).items()}))
