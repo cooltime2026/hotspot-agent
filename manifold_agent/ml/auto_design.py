@@ -2,10 +2,12 @@
 
   python ml/auto_design.py --hotspot 2_2,3_2                    # 목표 최고온도 기본 85 ℃
   python ml/auto_design.py --hotspot 1_3,1_4 --tlimit 120 --top 3 --step
+  python ml/auto_design.py --hotspot 2_2,3_2 --q 75                # 유량 고정 (mL/min)
+  python ml/auto_design.py --hotspot 2_2,3_2 --v 0.912 1.658       # 유속 고정 (m/s), 여러 개면 그중 최적
 
 목적: 목표 온도(예측 상한 = 평균 + 1σ)를 지키는 운전점 중 펌프 동력(Δp·Q)이 가장 작은 것.
       목표를 못 지키면 최고온도(상한)가 가장 낮은 것.
-제약: 제작 가능(param_manifold 제약), 유량 55~100 mL/min (학습 데이터 범위, 밖은 외삽이라 금지).
+제약: 제작 가능(param_manifold 제약), 유량 55~100 mL/min, 띠 ≤ 15개 (학습 데이터 범위, 밖은 외삽이라 금지).
 탐색: 무작위 후보 + 기존 학습 모양 주변 → 상위 후보 국소 탐색. 학습 데이터에서 너무 먼 모양은 불확실성이 커져 자연히 불리.
 결과: out/auto_design/<핫스팟>/ 에 후보 표(csv) + 상위 N개 STEP·그림 + 비교(같은 핫스팟의 기존 최선 실측값).
 ※ 예측은 SimScale로 검증 전까지 '예측'일 뿐. 제안 3개를 돌려보고 틀리면 재학습.
@@ -24,15 +26,33 @@ from geometry import param_manifold as PM  # noqa: E402
 
 QS = np.array([55.0, 65.0, 75.0, 85.0, 100.0])
 V_OF_Q = lambda q: q / 55 * 0.912
+NMAX = 15        # 학습 데이터의 띠 개수 범위(5~15) 밖은 외삽이라 금지
+
+# 속도: 같은 모양의 resolve·masks 를 여러 번 계산하지 않게 캐시 (결과는 같음)
+_res_orig, _mask_orig, _cache_r, _cache_m = PM.resolve, PM.masks, {}, {}
+def _key(p):
+    return tuple(sorted((k, float(v)) for k, v in p.items()))
+def _resolve_c(p):
+    k = _key(p)
+    if k not in _cache_r:
+        _cache_r[k] = _res_orig(p)
+    return dict(_cache_r[k])
+def _masks_c(p):
+    k = _key(p)
+    if k not in _cache_m:
+        _cache_m[k] = _mask_orig(p)
+    return _cache_m[k]
+PM.resolve, PM.masks = _resolve_c, _masks_c
 
 
 def load():
     return pickle.load(open(FM.PKL, "rb"))
 
 
-def predict(M, p, hs, Q):
-    f = FM.features(p, hs, Q)
-    m, s = M["T"].predict(np.array([[f[c] for c in FM.TFEATS]]), std=True)
+def predict(M, p, hs, Q, f=None):
+    if f is None:
+        f = FM.features(p, hs, Q)
+    m, s = M["T"].predict([dict(hotspot=hs, Q=Q, **{c: f[c] for c in FM.SFEATS})], std=True)
     T = T_IN + np.exp(m[0]); Tup = T_IN + np.exp(m[0] + s[0])
     dp, sp = M["P"].predict(f, Q, std=True)
     W = dp * Q / 60e6 * 1e3          # mW
@@ -41,8 +61,9 @@ def predict(M, p, hs, Q):
 
 def evaluate(M, p, hs, tlimit):
     best = None
+    f = FM.features(p, hs, QS[0])          # 모양 특징은 유량과 무관 → 한 번만 계산 (속도 약 5배)
     for Q in QS:
-        r = predict(M, p, hs, Q); r["Q"] = Q
+        r = predict(M, p, hs, Q, f); r["Q"] = Q
         ok = r["T_hi"] <= tlimit
         key = (0, r["W"]) if ok else (1, r["T_hi"])
         if best is None or key < best["key"]:
@@ -57,7 +78,7 @@ def random_params(rng, k):
         p["n"] = int(round(p["n"])) | 1
         p = {kk: (round(v, 2) if kk != "n" else v) for kk, v in p.items()}
         r = PM.resolve(p)
-        if PM.masks(r)[2]:
+        if PM.masks(r)[2] and r["n"] <= NMAX:
             out.append({kk: r[kk] for kk in FM.KEYS})
     return out
 
@@ -72,7 +93,7 @@ def neighbors(rng, p, k, scale=0.12):
         q["n"] = int(round(q["n"])) | 1; q["n"] = int(np.clip(q["n"], 7, 17))
         q = {kk: (round(v, 2) if kk != "n" else v) for kk, v in q.items()}
         r = PM.resolve(q)
-        if PM.masks(r)[2]:
+        if PM.masks(r)[2] and r["n"] <= NMAX:
             out.append({kk: r[kk] for kk in FM.KEYS})
         if len(out) >= k:
             break
@@ -81,7 +102,7 @@ def neighbors(rng, p, k, scale=0.12):
 
 def measured_best(hs, tlimit):
     """같은 핫스팟에서 실제로 돌린 가족 형상의 결과 (비교용)"""
-    df = FM.table(True); o = df[(df.aug == "original") & (df.hotspot == hs)]
+    df = FM.table(False); o = df[(df.aug == "original") & (df.hotspot == hs)]
     if o.empty:
         return None
     o = o.assign(W=o.pmax * o.Q / 60e6 * 1e3)
@@ -93,7 +114,7 @@ def measured_best(hs, tlimit):
 def run(hs, tlimit, top, n_rand, seed, step):
     hs = "+".join(sorted(hs.replace(",", "+").split("+")))
     M = load(); rng = np.random.default_rng(seed)
-    cands = [{k: v for k, v in p.items()} for p in FM.family_params(True).values()] + random_params(rng, n_rand)
+    cands = [{k: v for k, v in p.items()} for p in FM.family_params(False).values()] + random_params(rng, n_rand)
     res = []
     for p in cands:
         e = evaluate(M, p, hs, tlimit); res.append((e["key"], p, e))
@@ -138,4 +159,14 @@ if __name__ == "__main__":
     ap.add_argument("--hotspot", required=True); ap.add_argument("--tlimit", type=float, default=85)
     ap.add_argument("--top", type=int, default=3); ap.add_argument("--rand", type=int, default=400)
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--step", action="store_true")
-    a = ap.parse_args(); run(a.hotspot, a.tlimit, a.top, a.rand, a.seed, a.step)
+    ap.add_argument("--q", type=float, nargs="+", help="유량 고정 [mL/min] (여러 개 가능). 없으면 55~100 중 최적을 찾음")
+    ap.add_argument("--v", type=float, nargs="+", help="입구 유속 고정 [m/s] (0.912 = 55 mL/min, 1.658 = 100 mL/min)")
+    a = ap.parse_args()
+    if a.v:
+        QS = np.array([v / 0.912 * 55 for v in a.v])
+    elif a.q:
+        QS = np.array(a.q, dtype=float)
+    out_rng = [q for q in QS if q < 54.5 or q > 100.5]
+    if out_rng:
+        print(f"⚠ 유량 {[round(q, 1) for q in out_rng]} mL/min 은 학습 범위(55~100) 밖 → 예측 믿기 어려움(외삽)")
+    run(a.hotspot, a.tlimit, a.top, a.rand, a.seed, a.step)

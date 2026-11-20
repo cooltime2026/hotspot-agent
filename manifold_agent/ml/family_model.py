@@ -1,7 +1,7 @@
 """띠(빗살)형 매니폴드 가족 전용 모델 — 숫자 6개 + 핫스팟 + 유량 → 최고온도, 압력.
 
   python ml/family_model.py test     # 형상 하나를 통째로 빼고 맞히기 (새 모양 예측 실력)
-  python ml/family_model.py fit      # 전체 학습 → ml/family_model.pkl
+  python ml/family_model.py fit      # v2 단순 모델 학습 → ml/family_model.pkl (fit_old = 이전 복잡 모델)
 
 데이터: A1~A8, B1~B8, C1~C4 (+ 선택: M1·M3 근사 변수, IoU 0.89/0.69).
 가족은 위아래 대칭(y → 12−y)이 정확히 성립(마스크 IoU 1.0, 포트·발열 대칭) →
@@ -172,6 +172,63 @@ def fit(with_m=True):
     print("저장:", PKL.name, len(df), "행 (원본", int((df.aug == 'original').sum()), ")  압력 지수 m =", round(pm.m, 3))
 
 
+# ───────── v2: 단순 모델 (2026-11-20 오후) ─────────
+# 시험 결과: 복잡 모델(GP+GB, 입력 16개)은 형상 빼기 시험에서 5.8 ℃ (기준선 5.1) → 실패.
+# 모양 효과 분석: 같은 핫스팟·유량 안 차이의 대부분이 띠 개수(logG)·띠 폭(wf)·모음 위치(dy_hs)로 설명됨.
+# → log(Tmax−20) = 핫스팟 위치 숫자 + logQ + logG + wf + dy_hs + (핫스팟 위치 × logG) 선형(릿지) 모델.
+# 시험: 본 핫스팟 3.6 ℃ (기준선 4.3), 처음 보는 핫스팟 7.8 ℃.
+from sklearn.linear_model import RidgeCV  # noqa: E402
+SFEATS = ["logG", "wf", "dy_hs"]
+SINTER = ["logG"]
+
+
+def hs_pos(h):
+    cs = [tuple(map(int, c.split("_"))) for c in h.split("+")]
+    ys = [(r - .5) * 3 for r, c in cs]; xs = [(c - .5) * 3 for r, c in cs]
+    edge_y = min(min(y, 12 - y) for y in ys) / 12; xc = np.mean(xs) / 12
+    vert = float(len(cs) > 1 and cs[0][1] == cs[1][1])
+    return [edge_y, xc, vert, edge_y * xc]
+
+
+def simple_X(rows):
+    """rows: dict 목록 또는 DataFrame (hotspot, Q, logG, wf, dy_hs 필요)"""
+    d = pd.DataFrame(rows)
+    H = np.array([hs_pos(h) for h in d.hotspot])
+    cols = [H, np.log(d.Q.values / 55)[:, None]] + [d[[f]].values for f in SFEATS] + [H * d[[f]].values for f in SINTER]
+    return np.hstack(cols)
+
+
+class SimpleT:
+    def fit(self, df):
+        self.m = RidgeCV(alphas=np.logspace(-3, 2, 20)).fit(simple_X(df), np.log(df.Tmax.values - T_IN))
+        # 불확실성: 형상 빼기 시험 잔차 (log 단위), 본 핫스팟 / 처음 보는 핫스팟 따로
+        self.seen = set(df[df.aug == "original"].hotspot) | set(df.hotspot)
+        res_s, res_u = [], []
+        o = df[df.aug == "original"]
+        for d in o.design.unique():
+            tr = df[df.design != d]; te = o[o.design == d]
+            mm = RidgeCV(alphas=np.logspace(-3, 2, 20)).fit(simple_X(tr), np.log(tr.Tmax.values - T_IN))
+            r = mm.predict(simple_X(te)) - np.log(te.Tmax.values - T_IN)
+            for h, x in zip(te.hotspot, r):
+                (res_s if h in set(tr.hotspot) else res_u).append(x)
+        self.sig_seen = float(np.sqrt(np.mean(np.square(res_s)))); self.sig_unseen = float(np.sqrt(np.mean(np.square(res_u)))) if res_u else 2 * self.sig_seen
+        return self
+
+    def predict(self, rows, std=False):
+        m = self.m.predict(simple_X(rows))
+        if not std:
+            return m
+        s = np.array([self.sig_seen if h in self.seen else self.sig_unseen for h in pd.DataFrame(rows).hotspot])
+        return m, s
+
+
+def fit_v2():
+    df = table(False)
+    t = SimpleT().fit(df); pm = Pressure().fit(df)
+    pickle.dump(dict(T=t, P=pm, version="v2_simple", n_rows=len(df), with_m=False), open(PKL, "wb"))
+    print(f"저장: {PKL.name} (v2 단순 모델) {len(df)} 행, 불확실성 σ(log) 본 핫스팟 {t.sig_seen:.3f} / 처음 보는 {t.sig_unseen:.3f}, 압력 지수 m = {pm.m:.3f}")
+
+
 if __name__ == "__main__":
     a = sys.argv[1] if len(sys.argv) > 1 else "test"
-    {"test": test, "fit": lambda: fit(True), "fit_nom": lambda: fit(False)}[a]()
+    {"test": test, "fit": lambda: __import__("family_model").fit_v2(), "fit_old": lambda: fit(True), "fit_nom": lambda: fit(False)}[a]()

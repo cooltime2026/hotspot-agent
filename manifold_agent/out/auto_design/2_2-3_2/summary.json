@@ -1,0 +1,71 @@
+{
+ "hotspot": "2_2+3_2",
+ "tlimit": 85.0,
+ "proposals": [
+  {
+   "rank": 1,
+   "hotspot": "2_2+3_2",
+   "n": 15,
+   "yf": 9.02,
+   "s": 0.02,
+   "xf": 1.5,
+   "b": -0.31,
+   "wf": 0.7,
+   "s_eff": 0.0003,
+   "Q_mLmin": 65.0,
+   "v_mps": 1.078,
+   "Tmax_pred": 80.5,
+   "Tmax_upper": 84.9,
+   "sigma_log": 0.07,
+   "dp_pred_Pa": 13008,
+   "W_pump_mW": 14.09,
+   "meets_target": 1.0
+  },
+  {
+   "rank": 2,
+   "hotspot": "2_2+3_2",
+   "n": 15,
+   "yf": 8.45,
+   "s": 0.16,
+   "xf": 1.8,
+   "b": -0.5,
+   "wf": 0.7,
+   "s_eff": 0.0028,
+   "Q_mLmin": 65.0,
+   "v_mps": 1.078,
+   "Tmax_pred": 80.5,
+   "Tmax_upper": 84.9,
+   "sigma_log": 0.07,
+   "dp_pred_Pa": 13040,
+   "W_pump_mW": 14.13,
+   "meets_target": 1.0
+  },
+  {
+   "rank": 3,
+   "hotspot": "2_2+3_2",
+   "n": 15,
+   "yf": 4.05,
+   "s": 0.23,
+   "xf": 1.58,
+   "b": -0.67,
+   "wf": 0.7,
+   "s_eff": 0.0041,
+   "Q_mLmin": 65.0,
+   "v_mps": 1.078,
+   "Tmax_pred": 80.5,
+   "Tmax_upper": 84.9,
+   "sigma_log": 0.07,
+   "dp_pred_Pa": 13058,
+   "W_pump_mW": 14.15,
+   "meets_target": 1.0
+  }
+ ],
+ "measured_best": {
+  "design": "B1",
+  "Q": 55.0,
+  "Tmax": 83.68,
+  "dp": 10130.0,
+  "W": 9.285833333333333,
+  "ok": true
+ }
+}
