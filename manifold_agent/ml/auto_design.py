@@ -24,7 +24,7 @@ import family_model as FM  # noqa: E402
 from common import T_IN  # noqa: E402
 from geometry import param_manifold as PM  # noqa: E402
 
-QS = np.array([55.0, 65.0, 75.0, 85.0, 100.0])
+QS = np.arange(55.0, 100.01, 1.0)   # 유량 후보: 55~100 mL/min, 1 단위 (학습 범위 안)
 V_OF_Q = lambda q: q / 55 * 0.912
 NMAX = 15        # 학습 데이터의 띠 개수 범위(5~15) 밖은 외삽이라 금지
 NMIN = 7         # 띠 5개는 B8 하나뿐(증거 약함) → 제외
@@ -61,15 +61,17 @@ def predict(M, p, hs, Q, f=None):
 
 
 def evaluate(M, p, hs, tlimit):
-    best = None
-    f = FM.features(p, hs, QS[0])          # 모양 특징은 유량과 무관 → 한 번만 계산 (속도 약 5배)
-    for Q in QS:
-        r = predict(M, p, hs, Q, f); r["Q"] = Q
-        ok = r["T_hi"] <= tlimit
-        key = (0, r["W"]) if ok else (1, r["T_hi"])
-        if best is None or key < best["key"]:
-            best = dict(r, key=key, ok=ok)
-    return best
+    """유량 QS 전체를 한 번에 계산 → 목표(상한) 지키는 것 중 펌프 최소, 없으면 상한 최저"""
+    f = FM.features(p, hs, QS[0])          # 모양 특징은 유량과 무관 → 한 번만 계산
+    rows = [dict(hotspot=hs, Q=Q, **{c: f[c] for c in FM.SFEATS}) for Q in QS]
+    m, s = M["T"].predict(rows, std=True)
+    T = T_IN + np.exp(m); Thi = T_IN + np.exp(m + s)
+    dp55, sp = M["P"].predict(f, 55.0, std=True)
+    dp = dp55 * (QS / 55) ** M["P"].m; W = dp * QS / 60e6 * 1e3
+    ok = Thi <= tlimit
+    i = int(np.argmin(np.where(ok, W, np.inf))) if ok.any() else int(np.argmin(Thi))
+    return dict(T=float(T[i]), T_hi=float(Thi[i]), sig=float(s[i]), dp=float(dp[i]), dp_sig=float(sp), W=float(W[i]),
+                Q=float(QS[i]), ok=bool(ok[i]), key=(0, float(W[i])) if ok.any() else (1, float(Thi[i])))
 
 
 def random_params(rng, k):

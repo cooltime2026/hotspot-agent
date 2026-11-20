@@ -3,7 +3,7 @@
   python ml/auto_design_all.py                 # → out/auto_design_all/
   python ml/auto_design_all.py --pool 1500
 
-경우의 수: 2칸 핫스팟 C(16,2)=120 + 1칸 16 = 136, 유량 55/65/75/85/100 mL/min.
+경우의 수: 2칸 핫스팟 C(16,2)=120 + 1칸 16 = 136, 유량 55~100 mL/min 1 단위(표는 55/65/75/85/100).
   학습 데이터 = 이웃한 2칸뿐 → 나머지(떨어진 2칸, 1칸)는 'kind' 로 표시하고 믿음 낮음.
 모양 후보: 띠 가족(7~15띠) 무작위 + 학습한 A·B·C 모양 + 그 주변. 제작 가능한 것만.
 출력 (핫스팟마다):
@@ -26,7 +26,9 @@ import shape_features as SF  # noqa: E402
 from common import T_IN  # noqa: E402
 from geometry import param_manifold as PM  # noqa: E402
 
-QS = [55.0, 65.0, 75.0, 85.0, 100.0]
+REUSE = False
+QS = [float(q) for q in np.arange(55, 101, 1)]     # 유량 55~100, 1 mL/min 단위 (목표별 최소 유량 찾기)
+Q_TABLE = [55.0, 65.0, 75.0, 85.0, 100.0]          # best_by_flow 표에 남길 유량
 TARGETS = [85.0, 100.0, 120.0]
 CELLS = [f"{r}_{c}" for r in range(1, 5) for c in range(1, 5)]
 
@@ -81,13 +83,14 @@ def evaluate(M, S, hs):
 def main(n_rand, seed):
     t0 = time.time()
     M = AD.load(); out = ROOT / "out" / "auto_design_all"; out.mkdir(parents=True, exist_ok=True)
-    S = shape_pool(n_rand, seed)
+    cj = out / "candidates.json"
+    S = pd.read_json(cj, orient="index") if (REUSE and cj.exists()) else shape_pool(n_rand, seed)
     print(f"모양 후보 {len(S)}개 만듦 ({time.time() - t0:.0f} s)")
     S.to_json(out / "candidates.json", orient="index", indent=1)
     byflow, bytarget = [], []
     for hs, kind in all_hotspots():
         E, seen = evaluate(M, S, hs)
-        for Q, g in E.groupby("Q"):
+        for Q, g in E[E.Q.isin(Q_TABLE)].groupby("Q"):
             b = g.loc[g.T_hi.idxmin()]; s = S.loc[int(b["sid"])]
             byflow.append(dict(hotspot=hs, kind=kind, seen=seen, Q_mLmin=Q, v_mps=round(Q / 55 * 0.912, 3), shape_id=int(b["sid"]),
                                **{k: s[k] for k in FM.KEYS}, Tmax_pred=round(b["T"], 1), Tmax_upper=round(b.T_hi, 1),
@@ -108,4 +111,5 @@ def main(n_rand, seed):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--pool", type=int, default=1200); ap.add_argument("--seed", type=int, default=0)
-    a = ap.parse_args(); main(a.pool, a.seed)
+    ap.add_argument("--reuse", action="store_true", help="이전에 만든 모양 후보(candidates.json) 다시 쓰기")
+    a = ap.parse_args(); REUSE = a.reuse; main(a.pool, a.seed)
