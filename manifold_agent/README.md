@@ -1,5 +1,9 @@
 # manifold_agent — 머신러닝 데이터
 
+## ★ 웹 설계기 (설치 없이)
+
+`manifold_designer.html` (저장소 맨 위, 또는 `manifold_agent/web/`) 을 브라우저로 열면 핫스팟을 눌러 최적 모양·유량·예상 온도를 바로 봄. STEP 은 페이지의 문장을 Claude 에게 보내거나 아래 명령으로.
+
 ## ★ 자동 최적 설계 (명령 하나)
 
 ```bash

@@ -1,0 +1,262 @@
+<title>핫스팟 매니폴드 설계기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* 레이아웃: 왼쪽 = 입력(판 4×4 + 목표·유량), 오른쪽 = 결과(핵심 숫자 → 매니폴드 그림 → 믿음·실측 비교 → STEP 요청) */
+:root{
+  --bg:#f3f5f6; --panel:#ffffff; --ink:#14202a; --muted:#5b6b76; --line:#d5dde2;
+  --coolant:#0f7c8c; --coolant-soft:#d9eff1; --hot:#d63a2c; --hot-soft:#fbe1dd;
+  --netA:#4f7fd6; --netB:#d9645b; --ok:#1f8a4c; --warn:#b26a00; --bad:#b3261e; --cell:#e8eef1;
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-num:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1519; --panel:#172026; --ink:#e3ebef; --muted:#93a3ad; --line:#2a3741;
+  --coolant:#3fb6c6; --coolant-soft:#123238; --hot:#ff6a5c; --hot-soft:#3a1f1c;
+  --netA:#6f9cf0; --netB:#f08279; --ok:#4cc27e; --warn:#e6a23c; --bad:#ff7a70; --cell:#1f2a31; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --panel:#172026; --ink:#e3ebef; --muted:#93a3ad; --line:#2a3741;
+  --coolant:#3fb6c6; --coolant-soft:#123238; --hot:#ff6a5c; --hot-soft:#3a1f1c;
+  --netA:#6f9cf0; --netB:#f08279; --ok:#4cc27e; --warn:#e6a23c; --bad:#ff7a70; --cell:#1f2a31; color-scheme:dark }
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:20px}
+header h1{font-size:1.55rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:.3rem 0 0;color:var(--muted);max-width:68ch}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:16px;min-width:0}
+.label{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+h2{font-size:1rem;margin:0}
+.board{position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:0 auto}
+.board .cells{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);border:2px solid var(--ink);border-radius:4px;overflow:hidden}
+.cellbtn{border:1px solid var(--line);background:var(--cell);color:var(--ink);font-family:var(--f-num);font-size:.95rem;cursor:pointer;display:grid;place-content:center;gap:2px;transition:background .12s}
+.cellbtn small{font-family:var(--f-body);font-size:.68rem;color:var(--muted)}
+.cellbtn:hover{background:var(--coolant-soft)}
+.cellbtn[aria-pressed="true"]{background:var(--hot);color:#fff;font-weight:600}
+.cellbtn[aria-pressed="true"] small{color:#fff}
+.cellbtn:focus-visible{outline:3px solid var(--coolant);outline-offset:-3px}
+.port{position:absolute;width:9%;aspect-ratio:1;border-radius:50%;border:2px solid var(--ink);transform:translate(-50%,-50%);pointer-events:none;z-index:2}
+.port.in{background:#f2c230}.port.out{background:var(--panel)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);justify-content:center}
+.dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;border:1.5px solid var(--ink);vertical-align:-.1em;margin-right:4px}
+.row{display:grid;gap:6px}
+.inline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=number]{font-family:var(--f-num);font-size:1rem;width:6.5em;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--coolant)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);color:var(--ink);padding:7px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--coolant);color:#fff}
+.seg button:focus-visible{outline:3px solid var(--coolant);outline-offset:-3px}
+.hint{font-size:.82rem;color:var(--muted)}
+.big{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.big{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.kpi .v{font-family:var(--f-num);font-size:1.45rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .s{font-size:.78rem;color:var(--muted)}
+.status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.85rem;font-weight:500;border:1px solid currentColor}
+.status.ok{color:var(--ok)}.status.no{color:var(--bad)}
+.trust{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{padding:2px 9px;border-radius:999px;font-size:.8rem;border:1px solid var(--line)}
+.chip.seen{color:var(--ok);border-color:currentColor}.chip.adj{color:var(--warn);border-color:currentColor}.chip.out{color:var(--bad);border-color:currentColor}
+.shape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:560px){.shape{grid-template-columns:minmax(0,1fr)}}
+canvas{width:100%;max-width:360px;aspect-ratio:1;display:block;margin:0 auto;border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.params{font-family:var(--f-num);font-size:.9rem;display:grid;grid-template-columns:auto 1fr;gap:2px 12px}
+.params dt{color:var(--muted)}.params dd{margin:0}
+.copybox{display:grid;gap:8px}
+.copybox pre{margin:0;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;white-space:pre-wrap;word-break:break-all;font-family:var(--f-num);font-size:.85rem}
+.btn{justify-self:start;border:1px solid var(--coolant);background:var(--coolant);color:#fff;border-radius:6px;padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.note{font-size:.82rem;color:var(--muted)}
+.warnline{color:var(--warn);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>핫스팟 매니폴드 설계기</h1>
+    <p>판의 칸을 눌러 핫스팟을 고르면, SimScale 227번 결과로 학습한 모델이 띠형 매니폴드 후보 1,671개와 유량 55~100 mL/min을 모두 계산해 목표 온도를 지키면서 펌프 동력이 가장 적은 설계를 고릅니다.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="in-h">
+      <h2 id="in-h">1. 핫스팟 고르기</h2>
+      <div class="row">
+        <div class="board" id="board">
+          <div class="cells" id="cells" role="group" aria-label="4×4 발열 칸 (바닥에서 본 모습)"></div>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--hot)"></span>핫스팟 300 W/cm²</span>
+          <span><span class="dot" style="background:var(--cell)"></span>나머지 50 W/cm²</span>
+          <span><span class="dot" style="background:#f2c230"></span>입구</span>
+          <span><span class="dot" style="background:var(--panel)"></span>출구</span>
+        </div>
+        <p class="hint">SimScale 바닥(BOTTOM) 시점과 같은 방향입니다. 칸 이름 r_c = r행(위가 1) · c열(왼쪽이 1). 1~2칸을 고르세요.</p>
+      </div>
+
+      <h2>2. 목표 최고온도</h2>
+      <div class="inline">
+        <input type="range" id="tgtRange" min="70" max="150" step="1" value="85" aria-label="목표 최고온도 슬라이더">
+        <input type="number" id="tgt" min="60" max="200" step="1" value="85" aria-label="목표 최고온도 (℃)"><span>℃</span>
+      </div>
+
+      <h2>3. 유량</h2>
+      <div class="inline">
+        <div class="seg" role="group" aria-label="유량 방식">
+          <button type="button" id="flowAuto" aria-pressed="true">자동 (펌프 최소)</button>
+          <button type="button" id="flowFix" aria-pressed="false">직접 정하기</button>
+        </div>
+        <span id="flowWrap" hidden><input type="number" id="flow" min="55" max="100" step="1" value="75" aria-label="유량 (mL/min)"> mL/min</span>
+      </div>
+      <p class="hint" id="flowHint">55~100 mL/min 사이에서 1 mL/min 단위로 찾습니다 (학습 데이터 범위).</p>
+    </section>
+
+    <section class="panel" aria-labelledby="out-h" aria-live="polite">
+      <div class="inline" style="justify-content:space-between">
+        <h2 id="out-h">최적 설계 <span id="hsName" style="font-family:var(--f-num)"></span></h2>
+        <span class="status" id="status"></span>
+      </div>
+      <div class="big">
+        <div class="kpi"><div class="label">최적 유량</div><div class="v" id="kQ">—</div><div class="s" id="kV"></div></div>
+        <div class="kpi"><div class="label">예상 최고온도</div><div class="v" id="kT">—</div><div class="s" id="kThi"></div></div>
+        <div class="kpi"><div class="label">예상 압력</div><div class="v" id="kP">—</div><div class="s">최대 압력 (윗면)</div></div>
+        <div class="kpi"><div class="label">펌프 동력</div><div class="v" id="kW">—</div><div class="s">압력 × 유량</div></div>
+      </div>
+      <div class="trust"><span class="label">믿음 정도</span><span class="chip" id="trust"></span><span class="note" id="trustErr"></span></div>
+      <div class="warnline" id="edgeWarn" hidden>1행·4행 가로 핫스팟은 실측보다 낮게(낙관적으로) 예측되는 경향이 있습니다.</div>
+
+      <div class="shape">
+        <div class="row">
+          <span class="label">매니폴드 관통층 구멍 (바닥 시점)</span>
+          <canvas id="cv" width="480" height="480" aria-label="최적 매니폴드 관통층 그림"></canvas>
+          <div class="legend"><span><span class="dot" style="background:var(--netA)"></span>출구망 띠</span><span><span class="dot" style="background:var(--netB)"></span>입구망 띠</span><span><span class="dot" style="background:transparent;border-color:var(--hot)"></span>핫스팟</span></div>
+        </div>
+        <div class="row">
+          <span class="label">모양 숫자 6개</span>
+          <dl class="params" id="params"></dl>
+          <p class="note">n 띠 개수 · yf 띠를 모으는 y 위치(mm) · s 모으는 정도(0~1) · xf 휘는 중심 x(mm) · b 휘는 정도 · wf 띠 폭 비율</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="label">이 핫스팟의 실측 (SimScale)</span>
+        <div class="tablewrap"><table id="meas"></table></div>
+      </div>
+
+      <div class="copybox">
+        <span class="label">STEP 파일 받기</span>
+        <p class="note" style="margin:0">이 페이지는 계산만 합니다. 아래 문장을 복사해 Claude 대화창에 붙여 넣으면 이 모양의 STEP 파일을 만들어 드립니다.</p>
+        <pre id="req"></pre>
+        <button type="button" class="btn" id="copy">문장 복사</button>
+      </div>
+    </section>
+  </div>
+  <p class="note">모델: family_model v2b (릿지 회귀, 형상 하나를 통째로 빼고 맞히기 시험 평균 오차 약 4 ℃) · 압력: 가우시안 과정 회귀 · 2026-11-20 데이터 (A1~A8, B1~B8, C1~C4, L1). 모두 예측값이며, 중요한 설계는 SimScale로 확인하세요.</p>
+</div>
+
+<script>/*CORE*/</script>
+<script>
+const M = CORE.prepare(/*MODEL*/);
+const state = { cells: ['2_2', '3_2'], target: 85, flow: null };
+try { const s = JSON.parse(localStorage.getItem('mfd-state') || 'null'); if (s && Array.isArray(s.cells) && s.cells.length) Object.assign(state, s); } catch (e) {}
+
+const cellsEl = document.getElementById('cells');
+for (let r = 1; r <= 4; r++) for (let c = 1; c <= 4; c++) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'cellbtn'; b.id = `cell-${r}_${c}`; b.dataset.cell = `${r}_${c}`;
+  b.innerHTML = `${r}_${c}<small>${'50'} W/cm²</small>`;
+  b.addEventListener('click', () => toggle(`${r}_${c}`)); cellsEl.appendChild(b);
+}
+const board = document.getElementById('board');
+[[3, 1, 'out'], [3, 11, 'out'], [9, 1, 'in'], [9, 11, 'in']].forEach(([x, y, k]) => {
+  const d = document.createElement('div'); d.className = `port ${k}`; d.style.left = `${x / 12 * 100}%`; d.style.top = `${y / 12 * 100}%`;
+  d.title = `${k === 'in' ? '입구' : '출구'} (${x},${y})`; board.appendChild(d);
+});
+
+function toggle(c) {
+  const i = state.cells.indexOf(c);
+  if (i >= 0) { if (state.cells.length > 1) state.cells.splice(i, 1); }
+  else { state.cells.push(c); if (state.cells.length > 2) state.cells.shift(); }
+  run();
+}
+const tgt = document.getElementById('tgt'), tgtR = document.getElementById('tgtRange');
+tgt.value = tgtR.value = state.target;
+tgt.addEventListener('input', () => { const v = +tgt.value; if (v >= 40 && v <= 250) { state.target = v; tgtR.value = Math.min(150, Math.max(70, v)); run(); } });
+tgtR.addEventListener('input', () => { state.target = +tgtR.value; tgt.value = tgtR.value; run(); });
+const fA = document.getElementById('flowAuto'), fF = document.getElementById('flowFix'), fw = document.getElementById('flowWrap'), fl = document.getElementById('flow');
+function setFlowMode(fix) {
+  fA.setAttribute('aria-pressed', String(!fix)); fF.setAttribute('aria-pressed', String(fix)); fw.hidden = !fix;
+  state.flow = fix ? Math.min(100, Math.max(55, +fl.value || 75)) : null;
+  document.getElementById('flowHint').textContent = fix ? '정한 유량에서 가장 시원하고 펌프 동력이 적은 모양을 찾습니다. 55~100 밖은 학습 범위 밖입니다.' : '55~100 mL/min 사이에서 1 mL/min 단위로 찾습니다 (학습 데이터 범위).';
+  run();
+}
+fA.addEventListener('click', () => setFlowMode(false)); fF.addEventListener('click', () => setFlowMode(true));
+fl.addEventListener('input', () => { if (state.flow !== null) { const v = +fl.value; if (v >= 30 && v <= 150) { state.flow = v; run(); } } });
+if (state.flow) { fl.value = state.flow; setTimeout(() => setFlowMode(true)); }
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function draw(p, cells) {
+  const cv = document.getElementById('cv'), g = cv.getContext('2d'), S = cv.width / 12;
+  g.fillStyle = css('--panel'); g.fillRect(0, 0, cv.width, cv.height);
+  const P = CORE.mask(p), N = CORE.N, px = cv.width / N;
+  const colA = css('--netA'), colB = css('--netB');
+  for (let iy = 0; iy < N; iy++) for (let ix = 0; ix < N; ix++) {
+    const v = P[iy * N + ix]; if (!v) continue;
+    g.fillStyle = v === 1 ? colA : colB; g.fillRect(ix * px, iy * px, px + .5, px + .5);   // y=0 이 위 (바닥 시점)
+  }
+  g.strokeStyle = css('--ink'); g.lineWidth = 1;
+  for (let t = 1; t < 4; t++) { g.beginPath(); g.moveTo(t * 3 * S, 0); g.lineTo(t * 3 * S, cv.height); g.stroke(); g.beginPath(); g.moveTo(0, t * 3 * S); g.lineTo(cv.width, t * 3 * S); g.stroke(); }
+  g.lineWidth = 2; g.strokeRect(1, 1, cv.width - 2, cv.height - 2);
+  g.strokeStyle = css('--hot'); g.lineWidth = 4;
+  cells.forEach(c => { const [r, k] = c.split('_').map(Number); g.strokeRect((k - 1) * 3 * S + 2, (r - 1) * 3 * S + 2, 3 * S - 4, 3 * S - 4); });
+  [[3, 1, 'out'], [3, 11, 'out'], [9, 1, 'in'], [9, 11, 'in']].forEach(([x, y, k]) => {
+    g.beginPath(); g.arc(x * S, y * S, .45 * S, 0, 2 * Math.PI); g.fillStyle = k === 'in' ? '#f2c230' : css('--panel'); g.fill(); g.strokeStyle = css('--ink'); g.lineWidth = 2; g.stroke();
+  });
+}
+
+const fmt = (v, d = 0) => v.toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d });
+function run() {
+  try { localStorage.setItem('mfd-state', JSON.stringify(state)); } catch (e) {}
+  const cells = state.cells.slice().sort(), key = cells.join('+');
+  document.querySelectorAll('.cellbtn').forEach(b => { const on = cells.includes(b.dataset.cell); b.setAttribute('aria-pressed', String(on)); b.querySelector('small').textContent = on ? '300 W/cm²' : '50 W/cm²'; });
+  const r = CORE.design(M, cells, state.target, state.flow);
+  document.getElementById('hsName').textContent = key;
+  const st = document.getElementById('status');
+  st.className = 'status ' + (r.ok ? 'ok' : 'no');
+  st.textContent = r.ok ? `목표 ${state.target} ℃ 지킴` : `목표 ${state.target} ℃ 못 지킴 · 가장 시원한 설계`;
+  document.getElementById('kQ').textContent = `${fmt(r.Q)} mL/min`;
+  document.getElementById('kV').textContent = `입구 유속 ${r.v.toFixed(3)} m/s`;
+  document.getElementById('kT').textContent = `${r.T.toFixed(1)} ℃`;
+  document.getElementById('kThi').textContent = `불확실성 포함 최대 ${r.Thi.toFixed(1)} ℃`;
+  document.getElementById('kP').textContent = `${fmt(r.dp)} Pa`;
+  document.getElementById('kW').textContent = `${r.W.toFixed(1)} mW`;
+  const ch = document.getElementById('trust'); ch.className = 'chip ' + r.k.kind; ch.textContent = r.k.label;
+  document.getElementById('trustErr').textContent = `예측 오차 ${r.k.err}`;
+  document.getElementById('edgeWarn').hidden = !r.k.edge;
+  const p = r.p;
+  document.getElementById('params').innerHTML = `<dt>n</dt><dd>${p.n} (띠 개수)</dd><dt>yf</dt><dd>${p.yf}</dd><dt>s</dt><dd>${p.s}</dd><dt>xf</dt><dd>${p.xf}</dd><dt>b</dt><dd>${p.b}</dd><dt>wf</dt><dd>${p.wf}</dd>`;
+  draw(p, cells);
+  const rows = M.measured.filter(m => m[1] === key).sort((a, b) => a[2] - b[2] || a[3] - b[3]);
+  document.getElementById('meas').innerHTML = rows.length
+    ? `<thead><tr><th>모양</th><th class="num">유량 mL/min</th><th class="num">최고온도 ℃</th><th class="num">최대 압력 Pa</th></tr></thead><tbody>` +
+      rows.map(m => `<tr><td>${m[0]}</td><td class="num">${fmt(m[2])}</td><td class="num">${m[3].toFixed(1)}</td><td class="num">${fmt(m[4])}</td></tr>`).join('') + `</tbody>`
+    : `<tbody><tr><td class="note">이 핫스팟은 아직 SimScale로 돌린 적이 없습니다.</td></tr></tbody>`;
+  document.getElementById('req').textContent =
+    `STEP 만들어줘: 핫스팟 ${key}, 모양 n=${p.n} yf=${p.yf} s=${p.s} xf=${p.xf} b=${p.b} wf=${p.wf}, 유량 ${fmt(r.Q)} mL/min (유속 ${r.v.toFixed(3)} m/s), 목표 ${state.target} ℃`;
+}
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const t = document.getElementById('req').textContent, b = e.currentTarget;
+  try { await navigator.clipboard.writeText(t); b.textContent = '복사됨'; }
+  catch (err) { const s = window.getSelection(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('req')); s.removeAllRanges(); s.addRange(rg); b.textContent = '선택됨 — Ctrl+C로 복사'; }
+  setTimeout(() => { b.textContent = '문장 복사'; }, 2000);
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', run);
+new MutationObserver(run).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+run();
+</script>
