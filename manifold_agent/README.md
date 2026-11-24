@@ -1,5 +1,18 @@
 # manifold_agent — 머신러닝 데이터
 
+## ★ 자동 최적 설계 (명령 하나)
+
+```bash
+cd manifold_agent
+python ml/design.py 2_2,3_2 --target 85
+```
+
+- 핫스팟(칸 이름 r_c, SimScale 바닥 BOTTOM 시점 기준)과 목표 최고온도를 넣으면
+  최적 띠형 매니폴드 모양 **STEP**, **최적 유량**, 예상 최고온도·압력·펌프 동력, 그림이 `out/design/` 에 나옴 (약 30~50초).
+- 유량을 정하고 싶으면 `--flow 75` (mL/min), STEP 없이 숫자만 보려면 `--nostep`.
+- 예측 오차: 돌려본 이웃 2칸 핫스팟 약 ±4 ℃. 1칸·떨어진 2칸은 학습 밖.
+
+
 핫스팟 → 띠형 매니폴드 자동설계용 SimScale 결과와 학습 코드. 자세한 내용은 `HANDOFF.md` (20장부터).
 
 - `data/direct_runs.csv` — 226개 Run (형상, 유속, 핫스팟, 최고온도, 압력)

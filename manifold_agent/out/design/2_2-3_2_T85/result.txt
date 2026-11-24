@@ -1,0 +1,8 @@
+핫스팟 2_2+3_2, 목표 최고온도 85 ℃
+  → 최적 모양: 띠 15개 (n=15 yf=9.25 s=0.0 xf=9.98 b=-0.6 wf=0.5)
+  → 최적 유량: 56 mL/min (입구 유속 0.929 m/s)
+  → 예상 최고온도 80.7 ℃ (불확실성 포함 상한 84.9 ℃) ✓ 목표 지킴
+  → 예상 압력 10719 Pa, 펌프 동력 10.0 mW
+  → 믿음: 이웃 2칸, 실제로 돌려본 위치 → ±4 ℃ 정도
+  → STEP: /home/user/manifold_agent/out/design/2_2-3_2_T85/design.step (물 덩어리 1개, 최소 벽 0.2 mm)
+  → 그림: /home/user/manifold_agent/out/design/2_2-3_2_T85/summary.png   (49 초)
