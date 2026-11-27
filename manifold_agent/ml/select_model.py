@@ -42,6 +42,14 @@ V17 = ROOT / "out" / "step_v17"     # HTML v17(ML 판)에서 꺼낸 모양 (S0, 
 def summary_of(design):
     if design in PRESET:
         return SF.design_summary(design)
+    if design.startswith("E") and design[1:].isdigit():          # 가장자리 직접 급수 E (geometry/edge_feed.py): 띠 + 헤더 공급
+        from geometry import edge_feed as EF
+        return SF.shape_summary(EF.openings(EF.E[design]))
+    if design.startswith("F") and design[1:].isdigit():          # 핫스팟 줄 전용 입구 F (아래쪽 기준)
+        import f_family as FF
+        from geometry import split_feed as SFd
+        P, _ = FF.f_masks(SFd.F[design], "bottom")
+        return SF.shape_summary(SF.openings_from_mask(P, 2, 1.5, 10.5))
     mf = V17 / f"{design}_mask.json"
     if mf.exists():
         cav = np.array(json.load(open(mf))["cav"]).reshape(240, 240)

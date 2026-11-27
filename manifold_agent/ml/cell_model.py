@@ -46,6 +46,9 @@ def cell_rows(summary, hot_cells, Q):
 def table():
     c = pd.read_csv(ROOT / "data/ml/cell_temps.csv")
     c = c[c.design != "L1"].reset_index(drop=True)
+    # E 가족은 뺌 (2026-11-27): E1 은 구멍→헤더→첫 띠 '지름길'로 물이 거의 다 빠져 201.5 ℃. 모델의 흐름 특징(저항 비례 분배)으로 표현 못 하는 현상이라
+    # 넣으면 다른 모양 예측이 망가짐(고른 모양 손해 4.6 → 7.5 ℃). 데이터(direct_runs·cell_temps)에는 그대로 있음.
+    c = c[~c.design.str.match(r"^E\d")].reset_index(drop=True)
     Qof = {0.497: 29.98, 0.663: 39.99, 0.912: 55.01, 1.243: 74.98, 1.658: 100.01}
     S = {k: SM.summary_of(k) for k in c.design.unique()}
     R = []

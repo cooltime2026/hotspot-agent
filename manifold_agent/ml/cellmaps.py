@@ -76,8 +76,10 @@ def main():
             C = T(res["mean"])[::-1, :]          # 행 0 = r 1 (y 아래)
             best.append((np.mean([C[i, j] for i, j in hot]), name, C, T(res["max"])[::-1, :]))
         best.sort(key=lambda b: -b[0])
-        if d in FIXED_ORIENT:                    # 카메라 방향이 확인된 형상: 고정 방향 사용(대칭 핫스팟이면 '최적 방향'이 임의로 바뀌므로)
-            fixed = [b for b in best if b[1] == FIXED_ORIENT[d]][0]
+        fo = FIXED_ORIENT.get(d) or ((2, True) if d[:1] in "SEF" and d[1:].isdigit() else None)
+        # ↑ 2026-11-27: S·E·F(새 모양)도 같은 카메라(BOTTOM 보기, x 오른쪽·y 아래쪽) — E1 좌표축·S3 입구 위치로 확인. 핫스팟이 제일 뜨겁지 않은 모양(E1)에서 '최적 방향'이 틀렸음
+        if fo:                                   # 카메라 방향이 확인된 형상: 고정 방향 사용(대칭 핫스팟이면 '최적 방향'이 임의로 바뀌므로)
+            fixed = [b for b in best if b[1] == fo][0]
             best = [fixed] + [b for b in best if b is not fixed]
         sc, name, C, M = best[0]
         margin = sc - best[1][0]
