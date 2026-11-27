@@ -1,0 +1,72 @@
+{
+ "name": "N26",
+ "hotspot": "2_1+2_2",
+ "design": "머신러닝 새 설계 (흡입형에서 진화 · 슬롯 +6 · 홈 +6)",
+ "head": 0,
+ "inlets": [
+  [
+   6,
+   1.55
+  ],
+  [
+   6,
+   10.45
+  ]
+ ],
+ "outlets": [
+  [
+   3,
+   6
+  ],
+  [
+   9,
+   6
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 1,
+ "fluid_mm3": 37.535,
+ "solid_mm3": 178.465,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 3,
+ "dead_fluid_filled_mm3": 0,
+ "ml_pred_C": 51.7,
+ "hotspot_faces": [
+  {
+   "hotspot": "H1",
+   "x0": 2.0,
+   "y0": 5.0,
+   "x1": 4.0,
+   "y1": 7.0,
+   "q_W_cm2": 300,
+   "area_mm2": 4.0,
+   "found": true
+  },
+  {
+   "hotspot": "H2",
+   "x0": 8.0,
+   "y0": 5.0,
+   "x1": 10.0,
+   "y1": 7.0,
+   "q_W_cm2": 300,
+   "area_mm2": 4.0,
+   "found": true
+  }
+ ],
+ "hs": [
+  {
+   "x": 3,
+   "y": 6,
+   "lx": 2,
+   "ly": 2,
+   "q": 300
+  },
+  {
+   "x": 9,
+   "y": 6,
+   "lx": 2,
+   "ly": 2,
+   "q": 300
+  }
+ ]
+}

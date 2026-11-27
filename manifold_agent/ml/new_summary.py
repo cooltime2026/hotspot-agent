@@ -34,9 +34,12 @@ def main(target=85.0):
     for f in sorted(OUT.glob("N*_mask.json"), key=lambda x: int(x.stem.split("_")[0][1:])):
         m = json.loads(f.read_text()); k = m["name"]; hs = m["hotspot"]; key = "+".join(sorted(hs.split("+")))
         T = {Q: NR.ml_predict(k, hs, Q) for Q in range(55, 101)}
+        free = bool(m.get("hs"))
+        if free:      # 아무 배치: 핫스팟을 '중심(x,y) 크기 열유속' 으로 적음, 그 배치 실측은 없음
+            hs = " + ".join(f"({h['x']:g},{h['y']:g}) {h['lx']:g}×{h['ly']:g} mm {h['q']:g}" for h in m["hs"])
         q = next((Q for Q in range(55, 101) if T[Q] <= target), None)
         lb = m.get("lib_best") or {}
-        mb = best.get(key)
+        mb = None if free else best.get(key)
         rows.append(dict(name=k, hotspot=hs, family=m["fam"], header=m["head"], seed_T=round(m["seedT"], 1), pred_T55=round(T[55], 1),
                          pred_T100=round(T[100], 1), lib_best=f"{lb.get('name')} {lb.get('T', 0):.1f}" if lb else "", meas_best=f"{mb[0]} {mb[1]:.1f}" if mb else "",
                          Q_for_target=q, v_for_target=round(v_of(q), 3) if q else None, inlets=m["pin"], outlets=m["pout"]))

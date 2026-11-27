@@ -8,8 +8,8 @@ const {chromium} = require('playwright');
 const fs = require('fs'), path = require('path');
 
 const DEEP = String.raw`
-async function deepDesign(key,Q,iters){
-  const hs=key.split('+').map(c=>{const [r,k]=c.split('_').map(Number);return {x:(k-.5)*3,y:(r-.5)*3,lx:3,ly:3,q:300}});
+async function deepDesign(key,Q,iters,hsIn){
+  const hs=hsIn||key.split('+').map(c=>{const [r,k]=c.split('_').map(Number);return {x:(k-.5)*3,y:(r-.5)*3,lx:3,ly:3,q:300}});   // hsIn: 아무 배치 [{x,y,lx,ly,q}] (위치·크기·열유속)
   const cells=mlCells(hs),R=(a,b,st)=>{const o=[];for(let v=a;v<=b+1e-9;v+=st)o.push(+v.toFixed(2));return o},mm=m=>m==='full'?'전폭 슬롯':'좌우 여유 '+m+' mm';
   const jobs=[];const add=(fam,name,make)=>jobs.push({fam,name,make});
   for(const gg of [0,1])for(const m of [...R(0,3,.5),'full'])for(const s of R(.4,1.2,.2))add('흡입형','흡입형 · 슬롯 '+s+' mm · '+mm(m)+(gg?' · 가운데 한 줄':''),()=>aSwap(famDirect(hs,s,m,gg)));
@@ -22,7 +22,9 @@ async function deepDesign(key,Q,iters){
   for(const p of Object.values(ML_LIB.strip))libH.push(mlMasks(p).P.map(sw));
   for(const p of Object.values(ML_LIB.F))for(const sd of ['bottom','top']){const mk=mlMasksF(p,sd);if(mk)libH.push(mk.P.map(sw))}
   const maxIoU=(P,head)=>{let b=0;for(const L of (head?libH:libP))b=Math.max(b,mlIoU(P,L));return b};
-  const scoreG=(g,fam)=>{const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!g.head,cells,Q);if(r.out)return null;return {m:mlCorrect(SEL_M,r.m,fam,P,cells).m,P}};
+  // 물이 안 흐르는 채널 수(공급→회수 구간이 하나도 없는 채널, 22개 중). DEADMAX 가 있으면 그보다 많은 모양은 버림 (모델이 죽은 칸 온도를 낮게 보는 약점 대비)
+  const nDead=(P,head)=>selSummary(P,head?1.5:.6,head?10.5:11.4).segs.filter(x=>!x.length).length,DM=(typeof window.DEADMAX==='number')?window.DEADMAX:99;
+  const scoreG=(g,fam)=>{const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!g.head,cells,Q);if(r.out)return null;if(DM<22&&nDead(P,!!g.head)>DM)return null;return {m:mlCorrect(SEL_M,r.m,fam,P,cells).m,P}};
   const res=[];for(const j of jobs){let g=null;try{g=j.make()}catch(e){}if(!g||aCheck(g))continue;const sc=scoreG(g,j.fam);if(sc)res.push({...j,m:sc.m,P:sc.P})}
   res.sort((a,b)=>a.m-b.m);
   const fl=G.fQ?G.fQ(Q):G.f,Qt=Q*1e-6/60,solveOK=(g,head)=>{let s=null;try{s=flowSolve(mlCloneG(g),S.inl,Qt,fl,false)}catch(e){}return !!(s&&isFinite(s.Rl)&&(s.conv||head))};
@@ -55,8 +57,8 @@ async function deepDesign(key,Q,iters){
     if(!solveOK(sn.g,sn.head))continue;famUsed.add(sn.fam);out.push({...sn,P})}
   const rle=a=>{const o=[];let i=0;while(i<a.length){let j=i;while(j<a.length&&a[j]===a[i])j++;o.push(a[i],j-i);i=j}return o};
   const lib=mlLibrary(cells,Q).slice(0,6).map(x=>({name:x.name,T:20+Math.exp(x.m),meas:x.meas,out:x.out}));
-  const pack=o=>({fam:o.fam,from:o.from,head:o.head?1:0,cnt:o.cnt,iou:o.iou,T:20+Math.exp(o.m),T0:20+Math.exp(o.m0),g:{cav:rle(o.g.cav),gro:rle(o.g.gro),pin:o.g.pin,pout:o.g.pout}});
-  return {key,cells,Q,nCand:res.length,seeds:seeds.map(s=>[s.fam,s.name,+(20+Math.exp(s.m0)).toFixed(1)]),nSnap:snaps.length,best:out[0]?pack(out[0]):null,alts:out.slice(1).map(pack),lib};
+  const pack=o=>({nDead:nDead(mlPool(o.g.cav),o.head),fam:o.fam,from:o.from,head:o.head?1:0,cnt:o.cnt,iou:o.iou,T:20+Math.exp(o.m),T0:20+Math.exp(o.m0),g:{cav:rle(o.g.cav),gro:rle(o.g.gro),pin:o.g.pin,pout:o.g.pout}});
+  return {key,cells:[...cells],w:cells.w,exact:cells.exact,hs:hsIn||null,Q,nCand:res.length,seeds:seeds.map(s=>[s.fam,s.name,+(20+Math.exp(s.m0)).toFixed(1)]),nSnap:snaps.length,best:out[0]?pack(out[0]):null,alts:out.slice(1).map(pack),lib};
 }
 var i_yield=0;`;
 
@@ -66,7 +68,10 @@ var i_yield=0;`;
   const file = 'file://' + path.resolve(__dirname, 'hotspot_agent_v17_ml.html');
   const browser = await chromium.launch();
   const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : {};
-  for (const hs of hss) {
+  for (const spec of hss) {
+    // 'r_c+r_c' (칸 이름) 또는 '이름=x,y,lx,ly,q;x,y,lx,ly,q' (아무 배치: 중심 x·y, 크기 lx·ly [mm], 열유속 q [W/cm²])
+    let hs = spec, free = null;
+    if (spec.includes('=')) { const [lab, body] = spec.split('='); hs = lab; free = body.split(';').filter(Boolean).map(t => { const [x, y, lx, ly, q] = t.split(',').map(Number); return {x, y, lx, ly, q}; }); }
     const page = await browser.newPage();
     page.on('pageerror', e => console.log('  페이지 오류', hs, String(e).slice(0, 200)));
     await page.addInitScript(() => { try { localStorage.setItem('hs-agent-v14', JSON.stringify({hs: [], Q: 55})); } catch (e) {} });
@@ -75,12 +80,12 @@ var i_yield=0;`;
     await page.addScriptTag({content: DEEP});
     const t0 = Date.now();
     let r;
-    try { r = await page.evaluate(([k, it]) => deepDesign(k, 55, it), [hs, iters]); }
+    try { r = await page.evaluate(([k, it, q, f, dm]) => { if (dm != null) window.DEADMAX = dm; return deepDesign(k, q, it, f); }, [hs, iters, +(process.env.QML || 55), free, process.env.DEADMAX != null ? +process.env.DEADMAX : null]); }
     catch (e) { console.log('  실패', hs, String(e).slice(0, 300)); await page.close(); continue; }
     r.sec = Math.round((Date.now() - t0) / 1000);
     res[hs] = r; fs.writeFileSync(out, JSON.stringify(res));
     const b = r.best, L = r.lib[0];
-    console.log(hs, r.sec + 's', b ? `1위 ${b.fam}에서 진화 ${b.T.toFixed(1)}℃ (출발 ${b.T0.toFixed(1)}, 슬롯+${b.cnt.add} 홈+${b.cnt.gro})` : '새 설계 없음',
+    console.log(hs, r.sec + 's', b ? `1위 ${b.fam}에서 진화 ${b.T.toFixed(1)}℃ · 안 흐르는 채널 ${b.nDead}/22 (출발 ${b.T0.toFixed(1)}, 슬롯+${b.cnt.add} 홈+${b.cnt.gro})` : '새 설계 없음',
       '| 실측모양 최선', L ? `${L.name} ${L.T.toFixed(1)}${L.meas != null ? '(실측)' : ''}` : '-', '| 다른 후보', r.alts.map(a => `${a.fam} ${a.T.toFixed(1)}`).join(', '));
     await page.close();
   }

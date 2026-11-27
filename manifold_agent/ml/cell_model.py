@@ -32,15 +32,45 @@ FEATS = ["hot", "nhot", "lflow", "dead", "fresh", "path", "nlflow", "ndead", "ed
 def cell_rows(summary, hot_cells, Q):
     """한 모양·핫스팟·유량 → 16칸 특징 행"""
     cf = {(r, c): SF.cell_features(summary, f"{r}_{c}") for r, c in CELLS}
-    hot = set(hot_cells); lq = np.log(Q / 55); lG = np.log(summary["G"]); rows = []
+    W = hot_cells if isinstance(hot_cells, dict) else {k: 1.0 for k in hot_cells}     # 칸마다 발열 몫 (hs_weights) 또는 두 칸 0/1
+    lq = np.log(Q / 55); lG = np.log(summary["G"]); rows = []
     for r, c in CELLS:
         nb = [(r + dr, c + dc) for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)] if 1 <= r + dr <= 4 and 1 <= c + dc <= 4]
-        f = cf[(r, c)]; h = 1.0 if (r, c) in hot else 0.0; nh = sum(1 for n in nb if n in hot)
+        f = cf[(r, c)]; h = float(W.get((r, c), 0.0)); nh = sum(W.get(n, 0.0) for n in nb)
         lf = np.log(f["flow_loc"] + 1e-4); nlf = np.mean([np.log(cf[n]["flow_loc"] + 1e-4) for n in nb]); nd = np.mean([cf[n]["dead"] for n in nb])
         rows.append(dict(hot=h, nhot=nh, lflow=lf, dead=f["dead"], fresh=f["dfresh"] / 12, path=min(f["path_in"], 12) / 12,
                          nlflow=nlf, ndead=nd, edge_r=float(r in (1, 4)), edge_c=float(c in (1, 4)), lq=lq, logG=lG,
                          hot_lq=h * lq, hot_lflow=h * lf, hot_dead=h * f["dead"], hot_fresh=h * f["dfresh"] / 12, nhot_lq=nh * lq, dead_lq=f["dead"] * lq))
     return rows
+
+
+def hs_weights(hs, q0=50.0):
+    """아무 배치 핫스팟 [{x,y,lx,ly,q}] → (칸마다 발열 몫 {(r,c): w}, 발열 큰 두 칸 이름표 'r_c+r_c', exact). 페이지 mlCells 와 같은 식.
+    w = 칸에 겹친 면적 × (q − 기본 열유속) / (9 mm² × (300 − 기본)). 가장 큰 칸이 1 을 넘으면 모두 같은 비율로 줄임."""
+    w = {}
+    for h in hs:
+        for r, c in CELLS:
+            ox = min(h["x"] + h["lx"] / 2, c * 3) - max(h["x"] - h["lx"] / 2, (c - 1) * 3)
+            oy = min(h["y"] + h["ly"] / 2, r * 3) - max(h["y"] - h["ly"] / 2, (r - 1) * 3)
+            if ox > 0 and oy > 0:
+                w[(r, c)] = w.get((r, c), 0.0) + ox * oy * max(0.0, h["q"] - q0) / (9 * (300 - q0))
+    al = sorted([(k, v) for k, v in w.items() if v > .02], key=lambda x: -x[1])     # 파이썬 정렬은 안정적(같은 값이면 넣은 순서) = JS 와 같음
+    mx = al[0][1] if al else 1.0; sc = 1 / mx if mx > 1 else 1.0
+    exact = len(al) <= 2 and all(abs(v - 1) < .02 for _, v in al) and abs(q0 - 50) < 1
+    return {k: v * sc for k, v in al}, "+".join(f"{r}_{c}" for (r, c), _ in al[:2]), exact
+
+
+def free_hs(design):
+    """아무 배치로 만든 새 설계(ml/design_any.py)면 그 핫스팟 목록 [{x,y,lx,ly,q}], 아니면 None"""
+    f = ROOT / f"out/new_designs/{design}_mask.json"
+    if re.match(r"^N\d", str(design)) and f.exists():
+        return json.load(open(f)).get("hs")
+    return None
+
+
+def hs_sig(hs):
+    """핫스팟 목록의 서명 (페이지 mlCells.sig 와 같음) — 같은 배치인지 알아보는 이름표"""
+    return "free:" + ";".join(sorted(f"{h['x']:.2f},{h['y']:.2f},{h['lx']:.2f},{h['ly']:.2f},{h['q']:.2f}" for h in hs))
 
 
 def table():
@@ -53,8 +83,9 @@ def table():
     S = {k: SM.summary_of(k) for k in c.design.unique()}
     R = []
     for i, x in c.iterrows():
-        hot = [tuple(map(int, h.split("_"))) for h in x.hotspot.split("+")]
-        for (r, cc), f in zip(CELLS, cell_rows(S[x.design], hot, Qof[round(x.inlet_v_mps, 3)])):
+        fh = free_hs(x.design)      # 아무 배치 Run: 칸마다 발열 몫으로 학습 (2026-11-28)
+        hot = hs_weights(fh)[0] if fh else [tuple(map(int, h.split("_"))) for h in x.hotspot.split("+")]
+        for (r, cc), f in zip(CELLS, cell_rows(S[x.design], hot, Qof.get(round(x.inlet_v_mps, 3), x.inlet_v_mps / 0.912 * 55.01))):
             R.append(dict(run=i, design=x.design, hotspot=x.hotspot, v=x.inlet_v_mps, Tmax=x.Tmax_C, cell=f"{r}_{cc}",
                           T=x[f"Tcellmax_{r}_{cc}"], **f))
     return pd.DataFrame(R).dropna(subset=["T"]).reset_index(drop=True)

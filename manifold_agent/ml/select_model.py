@@ -67,6 +67,8 @@ def summary_of(design):
 def table():
     d = pd.read_csv(ROOT / "data/ml/thermal.csv")
     d = d[(d.augmented == "original") & (d.design != "L1")].reset_index(drop=True)
+    _free = [k for k in d.design.unique() if re.match(r"^N\d", k) and (ROOT / f"out/new_designs/{k}_mask.json").exists() and json.load(open(ROOT / f"out/new_designs/{k}_mask.json")).get("hs")]
+    d = d[~d.design.isin(_free)].reset_index(drop=True)      # 아무 배치 Run 은 '두 칸 핫스팟' 특징이 안 맞아 이 참고용 모델에서는 뺌 (칸 모델은 씀)
     S = {k: summary_of(k) for k in d.design.unique()}
     F = pd.DataFrame([{**SF.hotspot_features(S[k], h, q), **plate_features(S[k])} for k, h, q in zip(d.design, d.hotspot, d.Q_mLmin)])
     return d, F

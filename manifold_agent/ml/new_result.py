@@ -51,6 +51,8 @@ def ml_predict(design, hotspot, Q):
         if re.match(r"^N\d", design):      # 머신러닝 새 설계 (out/new_designs, 페이지 진화와 같은 종류 이름으로 보정)
             m = json.loads((ROOT / f"out/new_designs/{design}_mask.json").read_text())
             Ph = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)); fam = m["fam"]
+            if m.get("hs"):                 # 아무 배치 핫스팟: 칸마다 발열 몫, 이름표는 발열 큰 두 칸 (페이지 mlCells 와 같음)
+                cells, key, _ = CM.hs_weights(m["hs"]); key = "+".join(sorted(key.split("+")))
     rows = pd.DataFrame(CM.cell_rows(s, cells, Q))
     lm = float(np.log(CM.pred_cells({"mu": np.array(M["mu"]), "sd": np.array(M["sd"]), "m": type("L", (), {"predict": lambda self, X: X @ np.array(M["coef"]) + M["intercept"]})()}, rows).max() - 20))
     if fam == "띠형" and Ph is None:
@@ -70,11 +72,18 @@ def ml_predict(design, hotspot, Q):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--design", required=True); ap.add_argument("--hotspot", required=True)
+    ap.add_argument("--design", required=True); ap.add_argument("--hotspot")
     ap.add_argument("--tmax", type=float, required=True); ap.add_argument("--pmax", type=float, required=True)
     ap.add_argument("--pmin", type=float, required=True); ap.add_argument("--v", type=float, default=0.912)
     ap.add_argument("--inlet", default=""); ap.add_argument("--photos", nargs="*"); ap.add_argument("--note", default="")
     a = ap.parse_args()
+    import cell_model as _CM
+    _fh = _CM.free_hs(a.design)
+    if _fh:      # 아무 배치 설계(ml/design_any.py): 핫스팟은 설계 파일에 있음. 기록용 이름표 = 발열 큰 두 칸, 실제 배치는 note 에
+        a.hotspot = ",".join(sorted(_CM.hs_weights(_fh)[1].split("+")))      # 정렬: intake·cellmaps 의 이름표와 같게
+        a.note = (a.note + " " if a.note else "") + "아무 배치 핫스팟: " + " + ".join(f"({h['x']:g},{h['y']:g}) {h['lx']:g}x{h['ly']:g} mm {h['q']:g} W/cm2" for h in _fh)
+    if not a.hotspot:
+        raise SystemExit("--hotspot 필요 (예: 2_1,2_2)")
     hs = a.hotspot.replace(",", "+"); Q = round(a.v / 0.912 * 55.01, 2)
     try:
         pred = ml_predict(a.design, hs, Q)
