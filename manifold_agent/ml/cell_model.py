@@ -118,7 +118,30 @@ def residuals(D, M):
     by_hs = {h: float(g.r.mean()) for h, g in strip.groupby("hotspot")}   # 핫스팟별 (실측이 있으면 이쪽 우선)
     nh = run[run.design.isin(["D0", "D1"]) | run.design.str.match(r"^S\d")]   # 헤더 없는 계열(채널 0.6~11.4): 모양별 평균의 평균
     nohead = float(nh.groupby("design").r.mean().mean())
+    shapes += f_shapes(M)
     return dict(strip=float(strip.r.mean()), strip_n=int(len(strip)), strip_hs=by_hs, nohead=nohead, shapes=shapes)
+
+
+def f_shapes(M):
+    """F형(핫스팟 줄 전용 입구) 실측 — 칸 사진이 없어도 최고온도로 보정값을 만듦 (direct_runs.csv)."""
+    import base64
+    sys.path.insert(0, str(ROOT))
+    import f_family as FF
+    from geometry import split_feed as SFd
+    runs = pd.read_csv(ROOT / "data/direct_runs.csv"); runs = runs[runs.design.isin(list(SFd.F))]
+    out = []
+    for k, g in runs.groupby("design"):
+        rs = []
+        for _, x in g.iterrows():
+            hs = x.heat.split("at ")[1].replace(",", "+"); cells = [tuple(map(int, c.split("_"))) for c in hs.split("+")]
+            side = "top" if all(r == 4 for r, _ in cells) else "bottom"
+            P, _ = FF.f_masks(SFd.F[k], side)
+            s = SF.shape_summary(SF.openings_from_mask(P, 2, 1.5, 10.5))
+            p = pred_cells(M, pd.DataFrame(cell_rows(s, cells, x.total_flow_mL_min))).max()
+            rs.append(np.log(x.Tmax_bottom_C - 20) - np.log(p - 20))
+        Ph = np.where(P == 2, 1, np.where(P == 1, 2, 0)).astype(np.uint8)       # HTML 규칙 (1 = 입구망)
+        out.append(dict(name=k, fam="F형", r=float(np.mean(rs)), P=base64.b64encode(Ph.tobytes()).decode()))
+    return out
 
 
 if __name__ == "__main__":

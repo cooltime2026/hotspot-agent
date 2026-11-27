@@ -117,6 +117,13 @@ CHT = {
 }
 
 
+# 새 Run 사진 (ml/new_result.py 가 추가): data/extra_photos.json "cht": [[형상, 핫스팟, 유속, 사진번호, Tmax, 메모]]
+import json as _json
+_EX = Path(__file__).resolve().parents[1] / "data" / "extra_photos.json"
+if _EX.exists():
+    for _d, _h, _v, _img, _t, _n in _json.loads(_EX.read_text(encoding="utf-8")).get("cht", []):
+        CHT[(_d, _h, _v)] = (_img, _t, _n)
+
 def main():
     out = []
     for (d, h, v), (img, tmax, memo) in CHT.items():

@@ -593,3 +593,13 @@ python ml/cellmaps.py; python ml/chantemps.py; python ml/dataset.py; python ml/i
   S4 1_3+1_4 V자 0.4/1.2 (예측 96) · S5 2_1+2_2 V자 0.4/2.0 (80) · S6 3_3+3_4 V자 0.4/1.0 (83) · S7 2_2+3_2 V자 0.4/1.0 (80, S2 와 직접 비교).
   S6 과 S7 은 같은 모양(STEP 하나, 핫스팟만 다름). V자 계열 실측 없음 → 예측 불확실 큼.
 - 다음 할 일: F 가족을 ML 에 넣기(입구 분배를 특징으로), F 를 다른 가장자리 핫스팟(4행 = 위아래 뒤집기)으로.
+
+### 21-15. ★ 결과 한 번에 넣기: ml/new_result.py (2026-11-27, 사용자 "보내기만 하면 되게 해")
+- 사용자는 사진 3장(바닥·채널층·압력) + Tmax·pmax·pmin 만 보냄. Claude 는 이것 하나만 실행:
+  `python ml/new_result.py --design S4 --hotspot 1_3,1_4 --tmax .. --pmax .. --pmin .. --inlet "user (..)+(..)" --photos <바닥> <채널층> <압력>`
+  (사진이 파일로 안 오면 --photos 빼기). 하는 일: 사진 등록·Run 등록·data/extra_photos.json(칸 사진 목록)·cellmaps/chantemps/dataset·check·
+  사전 예측(칸 모델+실측 보정, HTML 과 같은 계산) vs 실측을 runs_log 에 기록·재학습(cell_model 10, select_model 3, 띠면 family_model)·patch_ml → html_v17/artifact_body.html.
+  그다음 Claude: Artifact publish(file_path=html_v17/artifact_body.html, url=https://claude.ai/artifact/WMq3nfa1Bog7EYCdzLm3MY) + git push.
+- HTML 후보에 **F형** 추가: 핫스팟이 1행이면 아래, 4행이면 위(뒤집음). 띠 상위 3개 + F1 설정(띠15·폭0.7). 마스크 ml/f_family.py = JS mlMasksF (칸 단위 일치 확인).
+- 실측 보정에 F1(−0.096, 칸 사진 없어 최고온도로) 추가. 비슷한 모양 비교는 위아래 뒤집은 것도 봄(대칭).
+- 현재 예측(새 결과 오기 전): S4 1_3+1_4 96.2 / S5 2_1+2_2 79.9 / S6 3_3+3_4 82.9 / S7 2_2+3_2 80.4. 1_3+1_4 순위: 1 V자(S4) 96.2, 2 F1 설정 111.6(실측).

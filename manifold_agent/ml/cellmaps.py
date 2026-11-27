@@ -52,6 +52,13 @@ def transforms():
             yield (k, f), (lambda a, k=k, f=f: np.rot90(a[:, ::-1] if f else a, k))
 
 
+# 새 Run 사진 (ml/new_result.py 가 추가): data/extra_photos.json {"bottom": [[형상, 핫스팟, 유속, 사진번호]], "cht": [...]}
+import json as _json
+_EX = Path(__file__).resolve().parents[1] / "data" / "extra_photos.json"
+if _EX.exists():
+    for _d, _h, _v, _img in _json.loads(_EX.read_text(encoding="utf-8")).get("bottom", []):
+        BOTTOM[(_d, _h, _v)] = _img
+
 def main():
     runs = {(r["design"], "+".join(parse_cells(r["heat"])), float(r["inlet_velocity_m_s"])): r
             for r in csv.DictReader(open(ROOT / "data/direct_runs.csv", encoding="utf-8"))}
