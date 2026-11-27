@@ -61,7 +61,7 @@ function mlCands(hs,Qml,K){
     const c=M.cand[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]};
     const key=[p.n,p.wf.toFixed(1),p.s_eff>.05?Math.round(p.yf/1.5):'-',p.b>.15?'+':p.b<-.15?'-':'0'].join('|');if(seen.has(key))continue;seen.add(key);
     const {P,U}=mlMasks(p);
-    const name=`머신러닝 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
+    const name=`머신러닝 ${out.filter(o=>!o.why).length+1}위 · 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
     const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
       ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
     const g=presetGeo(d);if(!g||!port_ok(g)){out.push({name,why:'포트가 유로에 닿지 않음'});continue}
@@ -85,7 +85,7 @@ src = src[:a] + (
     "    // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
     "    st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;\n"
     "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
-    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[a:]
+    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});let rk=0;for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d,ml:++rk});\n") + src[a:]
 # 3) 다시 고를 조건에 유량·목표 온도 추가
 src = rep(src, "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q])]);",
           "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q]),Math.max(55,Math.min(100,Math.round(S.Q))),S.Tlim]);   // ← ML: 유량·목표 온도 추가")
@@ -96,9 +96,9 @@ src = src.replace(_o, "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head
 # 7) 계산식이 '유효하지 않음'(예: 물 95 °C 초과)이라고 해도 머신러닝 모양은 버리지 않고 표시 (경고는 원래 문구 그대로)
 src = rep(src, "  const okv=ok.filter(c=>validR(c.r));\n",
           "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
-# 8) 원래 '후보 N개를 계산해 골랐습니다' 문장 → '머신러닝 후보 N개'로 (머신러닝 예상 온도는 표시 안 함)
-src = rep(src, "`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.",
-          "`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개(핫스팟 맞춤 모양 ${ok.length-ok.filter(c=>/^머신러닝/.test(c.name)).length}개 + 머신러닝 띠 모양 ${ok.filter(c=>/^머신러닝/.test(c.name)).length}개)를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.")
+# 8) 상태 문장: 선택은 머신러닝 1위 (머신러닝 예상 온도는 표시 안 함)
+src = rep(src, "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`);",
+          "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':(best&&best.ml?`머신러닝(SimScale 227 Run 학습)이 이 핫스팟에 가장 시원할 것으로 고른 모양(1위)을 선택했습니다. 머신러닝 후보 ${ok.filter(c=>c.ml).length}개의 온도·압력은 이 에이전트 계산식 값입니다. 원래 모양(바람개비·대역 등) ${ok.filter(c=>!c.ml).length}개는 SimScale 데이터가 없어 머신러닝이 고를 수 없으므로 참고로 간이 계산만 했습니다.`:`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`));   // ← ML")
 # 9) 3D NS: 모양마다 격자 형상(층 두께·채널 범위·헤더)을 받게 함 — 식은 그대로
 src = rep(src, "function nsGrid(){const G=NSGEO,", "const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상\nfunction nsGrid(GG){const G=GG||NSGEO,")
 src = rep(src, "function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),", "function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),")
@@ -108,6 +108,16 @@ src = rep(src, "g:{cav:c.g.cav,gro:c.g.gro,pin:c.g.pin,pout:c.g.pout}}", "g:{cav
 # 10) 간이 계산이 모두 '유효하지 않음'이어도 3D NS 는 머신러닝 후보로 돌림
 src = rep(src, "  const okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));\n",
           "  let okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));if(!okv.length&&AUTO.ml)okv=AUTO.cands.filter(c=>c.d&&c.g&&c.r);   // ← ML\n")
+# 11) 선택: 머신러닝 1위 (간이 계산 순위로 바꾸지 않음)
+src = rep(src, "if(!best){const lam=okv.filter(c=>feas(c.r))", "if(!best&&AUTO.ml){best=ok.find(c=>c.ml===1&&c.r)||null}   // ← ML: 선택은 머신러닝 1위\n  if(!best){const lam=okv.filter(c=>feas(c.r))")
+# 12) 3D NS 대상: 머신러닝 1·2위
+src = rep(src, "let top=top0.slice(0,NS_K);", "let top=AUTO.ml&&AUTO.cands.some(c=>c.ml)?AUTO.cands.filter(c=>c.ml&&c.d&&c.g&&c.r).sort((a,b)=>a.ml-b.ml).slice(0,NS_K):top0.slice(0,NS_K);   // ← ML: 머신러닝 1·2위")
+src = rep(src, "간이 모델 상위 후보 ${top.length}개", "${top.some(c=>c.ml)?'머신러닝':'간이 모델'} 상위 후보 ${top.length}개")
+# 13) 3D 뒤 최종 선택도 머신러닝 1위 (3D 결과가 유효하면)
+src = rep(src, "const b=pl.filter(x=>x.ns.Tmax<=tm+.5).reduce((p,q)=>p.ns.dp<=q.ns.dp?p:q),d=b.c.d;",
+          "const b=cand.find(x=>x.c.ml===1)||pl.filter(x=>x.ns.Tmax<=tm+.5).reduce((p,q)=>p.ns.dp<=q.ns.dp?p:q),d=b.c.d;   // ← ML: 머신러닝 1위")
+src = rep(src, "st(`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽). [${tbl}]",
+          "st((b.c.ml?`3D 나비에–스토크스 + 열전달로 머신러닝 상위 후보 ${cand.length}개를 계산했습니다. 선택은 머신러닝 ${b.c.ml}위입니다.`:`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽).`)+` [${tbl}]")
 # 6) 제목
 src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>")
 
