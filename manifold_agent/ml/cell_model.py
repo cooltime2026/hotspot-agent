@@ -116,7 +116,7 @@ def residuals(D, M):
     for k, g in run[run.design.str.match(r"^S\d")].groupby("design"):
         m = json.load(open(SM.V17 / f"{k}_mask.json"))
         P = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)).astype(np.uint8)
-        fam = (m.get("base") or "").split(" · ")[0].split(" (")[0]
+        fam = (m.get("base") or "").replace("머신러닝 설계 · ", "").split(" · ")[0].split(" (")[0]
         shapes.append(dict(name=k, fam=fam, r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
     by_hs = {h: float(g.r.mean()) for h, g in strip.groupby("hotspot")}   # 핫스팟별 (실측이 있으면 이쪽 우선)
     nh = run[run.design.isin(["D0", "D1"]) | run.design.str.match(r"^S\d")]   # 헤더 없는 계열(채널 0.6~11.4): 모양별 평균의 평균

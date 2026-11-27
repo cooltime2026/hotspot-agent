@@ -231,3 +231,5 @@ S2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",79.55,8374.0,-683.7,"user 
 S3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",93.35,3426.0,-723.9,"user (8,1.55)+(2.5,10.45)","read from Post-processor colorbar; img 1317,1318,1319"
 F1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",111.6,9174.0,-986.8,"user (9,1)+(9,11); 아래 입구 = 헤더 전용","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정(채널층 헤더 위치·압력 방향으로 맞춤, 바닥 사진은 90° 돌아감)"
 E1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",201.5,9278.0,-1109.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1320,1321,1322"
+S5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",88.82,11010.0,-1056.0,"user (0.95,5.35)+(0.95,7.65)","read from Post-processor colorbar; img 1323,1324,1325"
+S4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",116.3,nan,nan,"user (0.95,3.55)+(0.95,7.45)","read from Post-processor colorbar; img 1326,1327"

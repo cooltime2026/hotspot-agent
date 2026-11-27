@@ -6,8 +6,13 @@ import json, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle
 matplotlib.rcParams["font.family"] = ["WenQuanYi Zen Hei", "DejaVu Sans"]
+import sys
 RUNS = [("S4", "1_3,1_4", "S4.step"), ("S5", "2_1,2_2", "S5.step"), ("S6", "3_3,3_4", "S6.step"), ("S7", "2_2,3_2", "S6.step (S6과 같은 모양)")]
-fig, axs = plt.subplots(4, 2, figsize=(13, 26))
+if len(sys.argv) > 1:   # 예: S8:2_1,2_2 S9:3_3,3_4
+    RUNS = [(a.split(":")[0], a.split(":")[1], a.split(":")[0] + ".step") for a in sys.argv[1:]]
+fig, axs = plt.subplots(len(RUNS), 2, figsize=(13, 6.5 * len(RUNS)))
+import numpy as _np
+axs = _np.atleast_2d(axs)
 for row, (k, hs, stp) in enumerate(RUNS):
     m = json.load(open(f"out/step_v17/{k}_mask.json")); HOT = [tuple(map(int, c.split("_"))) for c in hs.split(",")]
     a, b = axs[row]
@@ -32,6 +37,6 @@ for row, (k, hs, stp) in enumerate(RUNS):
     b.set_title(f"{k} — 뒷면(바닥): 핫스팟 {hs.replace(',', ' + ')}\n아래에서 올려다봄 (위아래 뒤집힘)", fontsize=14, weight="bold")
     for ax in (a, b):
         ax.set_aspect("equal"); ax.set_xticks(range(0, 13, 3)); ax.set_yticks(range(0, 13, 3))
-fig.suptitle("S4 ~ S7: 왼쪽 = 앞면 입구·출구, 오른쪽 = 뒷면 핫스팟\n(SimScale 좌표축 x 빨강·y 초록으로 방향 확인)", fontsize=16, weight="bold")
-fig.tight_layout(rect=(0, 0, 1, .97)); fig.savefig("out/step_v17/batch_S4-S7_front_back.png", dpi=90)
+fig.suptitle(f"{RUNS[0][0]} ~ {RUNS[-1][0]}: 왼쪽 = 앞면 입구·출구, 오른쪽 = 뒷면 핫스팟\n(SimScale 좌표축 x 빨강·y 초록으로 방향 확인)", fontsize=16, weight="bold")
+fig.tight_layout(rect=(0, 0, 1, .95 if len(RUNS) < 4 else .97)); fig.savefig(f"out/step_v17/batch_{RUNS[0][0]}-{RUNS[-1][0]}_front_back.png", dpi=90)
 print("저장")
