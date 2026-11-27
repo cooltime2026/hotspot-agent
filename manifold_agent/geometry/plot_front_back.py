@@ -10,7 +10,7 @@ import sys
 RUNS = [("S4", "1_3,1_4", "S4.step"), ("S5", "2_1,2_2", "S5.step"), ("S6", "3_3,3_4", "S6.step"), ("S7", "2_2,3_2", "S6.step (S6과 같은 모양)")]
 if len(sys.argv) > 1:   # 예: S8:2_1,2_2 S9:3_3,3_4
     RUNS = [(a.split(":")[0], a.split(":")[1], a.split(":")[0] + ".step") for a in sys.argv[1:]]
-fig, axs = plt.subplots(len(RUNS), 2, figsize=(13, 6.5 * len(RUNS)))
+fig, axs = plt.subplots(len(RUNS), 2, figsize=(13, 7 * len(RUNS)))
 import numpy as _np
 axs = _np.atleast_2d(axs)
 for row, (k, hs, stp) in enumerate(RUNS):
@@ -18,12 +18,16 @@ for row, (k, hs, stp) in enumerate(RUNS):
     a, b = axs[row]
     # 앞면: 입구·출구
     a.add_patch(Rectangle((0, 0), 12, 12, fc="#eef0f3", ec="k", lw=1.5))
-    for (x, y) in m["pin"]:
-        a.add_patch(Circle((x, y), .5, fc="white", ec="#1f4fd8", lw=3))
-        a.text(x + .75, y, f"입구 ({x:.2f}, {y:.2f})\n0.912 m/s", va="center", fontsize=12, color="#1f4fd8", weight="bold")
-    for (x, y) in m["pout"]:
-        a.add_patch(Circle((x, y), .5, fc="gold", ec="#c0301a", lw=3))
-        a.text(x - .75, y, f"출구 ({x:.2f}, {y:.2f})\n0 Pa", va="center", ha="right", fontsize=12, color="#c0301a", weight="bold")
+    def lab(pts, txt, col, fc):
+        for i, (x, y) in enumerate(pts):
+            a.add_patch(Circle((x, y), .5, fc=fc, ec=col, lw=3))
+            near = any(abs(x - q[0]) < 4 and abs(y - q[1]) < 1.5 for j, q in enumerate(pts) if j != i)   # 가까운 포트: 위·아래로 나눠 씀
+            if near:
+                a.text(x, y + (.75 if i == 0 else -.75), f"{txt} ({x:.2f}, {y:.2f})", ha="center", va="bottom" if i == 0 else "top", fontsize=11, color=col, weight="bold")
+            else:
+                ha = "left" if x < 6 else "right"
+                a.text(x + (.75 if x < 6 else -.75), y, f"{txt} ({x:.2f}, {y:.2f})", va="center", ha=ha, fontsize=12, color=col, weight="bold")
+    lab(m["pin"], "입구", "#1f4fd8", "white"); lab(m["pout"], "출구", "#c0301a", "gold")
     a.set_xlim(0, 12); a.set_ylim(0, 12); a.set_xlabel("x [mm] →"); a.set_ylabel("y [mm] ↑")
     a.set_title(f"{k} — 앞면(윗면): 입구·출구\n위에서 내려다봄 · STEP {stp}", fontsize=14, weight="bold")
     # 뒷면: 핫스팟
