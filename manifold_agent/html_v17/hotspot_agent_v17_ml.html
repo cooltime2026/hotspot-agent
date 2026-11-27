@@ -1691,24 +1691,27 @@ function mlMasks(p){
   for(const [y0,y1] of [[.4,1.5],[10.5,11.5]]){fill(y0,y1,.6,3.6,1);fill(y0,y1,8.3,11.4,2)}   // 포트 받침
   return {P,U};
 }
-// 핫스팟·유량·목표 온도 → 머신러닝이 고른 모양을 계산 엔진용 구조(d)로. 실패하면 {why}
-function mlPick(hs,Qml,Tlim){
-  const cells=mlCells(hs);if(!cells.length)return {name:'머신러닝 모양',why:'판 안에 핫스팟이 없음'};
-  const Qd=Math.max(55,Math.min(100,Math.round(Qml)));                       // 학습 범위 55~100 mL/min
-  const tgt=(Tlim!=null&&Number.isFinite(+Tlim))?+Tlim:85;
-  const r=CORE.design(ML_M,cells,tgt,Qd),p=r.p;
-  const {P,U}=mlMasks(p),sw=v=>v===1?2:v===2?1:0,bin=v=>v?1:0;             // 계산 엔진 규칙: 1 = 입구망
-  const name=`머신러닝 띠 ${p.n}개 (띠 폭 비율 ${p.wf.toFixed(2)}${p.s_eff>.05?`, y ${p.yf.toFixed(1)} mm 쪽으로 모음`:''}${Math.abs(p.b)>.05?`, 휨 ${p.b.toFixed(2)}`:''})`;
-  const M1=DESIGNS.find(x=>x.k==='M1');
-  const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
-    ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
-  const g=presetGeo(d);if(!g||!port_ok(g))return {name,why:'포트가 유로에 닿지 않음'};
-  d.flow=makeFlow(g,null,null);
-  const k=r.k,info=`머신러닝(SimScale 227 Run 학습)이 고른 모양: 띠 ${p.n}개 · 핫스팟 칸 ${cells.join('+')} (${k.label}) · `+
-    `머신러닝 예상 최고 ${r.T.toFixed(1)} °C @ ${Qd} mL/min (오차 ${k.err}${k.edge?', 가장자리 1·4행이라 낮게 나올 수 있음':''}). `+
-    (Qd!==Math.round(Qml)?`지금 유량 ${Qml} mL/min은 학습 범위 55~100 밖이라 ${Qd} mL/min 기준으로 모양을 골랐습니다. `:'')+
-    `아래 온도·압력은 이 에이전트 계산식 값입니다.`;
-  return {name,d,p,cells,ml:r,info};
+// 핫스팟·유량 → 머신러닝(SimScale 학습 모델)이 가장 시원할 것으로 본 띠 모양 후보 K개를 계산 엔진용 구조(d)·형상(g)으로
+//   후보 1,671개를 모델 점수(같은 유량에서 예상 최고 온도)로 줄 세우고, 비슷한 모양(띠 수·폭·모으기·휨이 같은 것)은 하나만
+//   g.ns: 3D 나비에–스토크스 격자 형상(관통층 0.15 = 3칸, 덮개 홈 0.4 = 8칸, 채널 y 1.5~10.5 + 헤더)
+function mlCands(hs,Qml,K){
+  const cells=mlCells(hs);if(!cells.length)return {why:'판 안에 핫스팟이 없음',list:[]};
+  const Qd=Math.max(55,Math.min(100,Math.round(Qml))),M=ML_M,H=CORE.hsPos(cells);
+  const hy=cells.reduce((a,c)=>a+(+c.split('_')[0]-.5)*3,0)/cells.length;
+  const sc=M.cand.map((c,i)=>{const [n,yf,s,xf,b,wf,seff,logG]=c,dy=Math.abs(hy-yf)/12*Math.min(seff,1),lq=Math.log(Qd/55);
+    const x=[...H,lq,...H.map(h=>h*lq),logG,wf,dy,...H.map(h=>h*logG)];let m=M.intercept;for(let j=0;j<x.length;j++)m+=M.coef[j]*x[j];return {i,m}}).sort((a,b)=>a.m-b.m);
+  const seen=new Set(),out=[],M1=DESIGNS.find(x=>x.k==='M1'),sw=v=>v===1?2:v===2?1:0,bin=v=>v?1:0;
+  for(const {i} of sc){if(out.length>=K)break;
+    const c=M.cand[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]};
+    const key=[p.n,p.wf.toFixed(1),p.s_eff>.05?Math.round(p.yf/1.5):'-',p.b>.15?'+':p.b<-.15?'-':'0'].join('|');if(seen.has(key))continue;seen.add(key);
+    const {P,U}=mlMasks(p);
+    const name=`머신러닝 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
+    const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
+      ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
+    const g=presetGeo(d);if(!g||!port_ok(g)){out.push({name,why:'포트가 유로에 닿지 않음'});continue}
+    g.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};
+    d.flow=makeFlow(g,null,null);out.push({name,d,g,p})}
+  return {cells,Qd,list:out};
 }
 </script>
 <script type="text/plain" id="nsSrc">
@@ -2022,7 +2025,8 @@ const NSG=typeof module!=='undefined'?Object.assign({},require('./nsflow.js'),re
 const NSGEO={h:0.05,n:240,z0:0.1,kCh:8,kCav:18,kGro:25,nz:55,kEval:34,nb:2,kSolidTop:18,APD:0.8,N:22,PITCH:0.5,CX0:0.65,CY:[0.6,11.4],rx:2,rz:2};
 // 비균일 격자: 기본 칸 0.05 mm(에이전트 240 격자와 같음). 채널 폭 방향(x)에서 채널 안 칸만 rx등분, 채널 층(z 0.1~0.5)만 rz등분.
 //   rx=rz=1이면 예전 균일 격자와 똑같음. 매니폴드 마스크(cav, gro)는 각 칸이 속한 0.05 mm 부모 칸 값을 그대로 씀
-function nsGrid(){const G=NSGEO,n=G.n,h=G.h,rx=G.rx||1,rz=G.rz||1,W=0.25;
+const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상
+function nsGrid(GG){const G=GG||NSGEO,n=G.n,h=G.h,rx=G.rx||1,rz=G.rz||1,W=0.25;
   // x: 채널 벽 위치를 설계값 그대로(채널 c = X0+0.5c ~ X0+0.25+0.5c, X0 = 0.625 mm) 칸 경계에 둠. 채널은 5·rx칸, 핀 5칸, 가장자리 13칸
   const X0=rx>1?0.625:G.CX0,br=[0];for(let c=0;c<G.N;c++)br.push(X0+G.PITCH*c,X0+W+G.PITCH*c);br.push(n*h);
   const dx=[];for(let a=0;a<br.length-1;a++){const L=br[a+1]-br[a],m=Math.max(1,Math.round(L/(a%2===1?h/rx:h)-1e-9));for(let q=0;q<m;q++)dx.push(L/m)}
@@ -2030,12 +2034,13 @@ function nsGrid(){const G=NSGEO,n=G.n,h=G.h,rx=G.rx||1,rz=G.rz||1,W=0.25;
   const px=xc.map(X=>Math.min(n-1,Math.floor(X/h)));G.X0=X0;
   const kCh=G.kCh*rz,sh=kCh-G.kCh,dz=[];for(let k=0;k<kCh;k++)dz.push(h/rz);for(let k=G.kCh;k<G.nz;k++)dz.push(h);
   return {px,dx,xc,nx:dx.length,ny:n,nz:dz.length,dz,kCh,kCav:G.kCav+sh,kGro:G.kGro+sh,kEval:G.kEval+sh,kSolidTop:G.kSolidTop+sh}}
-function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),nx=R.nx,ny=n,nz=R.nz,nxy=nx*ny;
+function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),nx=R.nx,ny=n,nz=R.nz,nxy=nx*ny;
   const fluid=new Uint8Array(nxy*nz),inTop=new Uint8Array(nxy),outTop=new Uint8Array(nxy);
   const chMask=new Int8Array(nx).fill(-1);for(let i=0;i<nx;i++){const X=R.xc[i];for(let c=0;c<G.N;c++)if(X>G.X0+G.PITCH*c&&X<G.X0+0.25+G.PITCH*c)chMask[i]=c}
   for(let j=0;j<ny;j++){const Y=(j+.5)*G.h,inY=Y>G.CY[0]&&Y<G.CY[1];
     for(let i=0;i<nx;i++){const X=R.xc[i],o=i+nx*j,po=R.px[i]+n*j;
-      if(inY&&chMask[i]>=0)for(let k=0;k<R.kCh;k++)fluid[o+nxy*k]=1;
+      const inH=G.head&&X>0.625&&X<11.375&&((Y>0.5&&Y<1.5)||(Y>10.5&&Y<11.5));   // ← ML: 헤더형(채널층 헤더)
+      if((inY&&chMask[i]>=0)||inH)for(let k=0;k<R.kCh;k++)fluid[o+nxy*k]=1;
       if(g.cav[po])for(let k=R.kCh;k<R.kCav;k++)fluid[o+nxy*k]=1;
       if(g.gro[po])for(let k=R.kCav;k<R.kGro;k++)fluid[o+nxy*k]=1;
       let port=0;for(const p of g.pin)if((X-p[0])**2+(Y-p[1])**2<=(G.APD/2)**2)port=1;for(const p of g.pout)if((X-p[0])**2+(Y-p[1])**2<=(G.APD/2)**2)port=2;
@@ -2123,7 +2128,7 @@ async function nsStage(my){
   if(!NS_POOL||!AUTO.best||DESIGNS.indexOf(AUTOD)<0||!hasHeat())return true;
   NS_POOL.cancel();
   const st=t=>{$('autoStatus').textContent=t};
-  const okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));
+  let okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));if(!okv.length&&AUTO.ml)okv=AUTO.cands.filter(c=>c.d&&c.g&&c.r);   // ← ML
   // 거울상처럼 간이 결과가 똑같은 후보(최고 온도 0.01 °C·압력강하 1 Pa까지 같음)는 하나만 3D로 푼다
   const seenR=new Set(),top0=[];for(const c of okv.slice().sort((a,b)=>(feas(b.r)-feas(a.r))||(a.r.Tmax-b.r.Tmax))){const k=c.r.Tmax.toFixed(2)+'|'+Math.round(c.r.dp);if(seenR.has(k))continue;seenR.add(k);top0.push(c)}
   let top=top0.slice(0,NS_K);
@@ -2136,7 +2141,7 @@ async function nsStage(my){
   const tick2=setInterval(()=>{if(my===token)upd()},1000);
   let out;
   try{out=await Promise.all(top.map((c,i)=>{const k=keyOf(c);if(NS_CACHE.has(k)){prog[i]='완료';return NS_CACHE.get(k)}
-      return NS_POOL.run({...base,g:{cav:c.g.cav,gro:c.g.gro,pin:c.g.pin,pout:c.g.pout}},x=>{if(NS_LIVE){NS_LIVE.last=Date.now();NS_LIVE.stage[i]=x.stage;if(x.it)NS_LIVE.it[i]=x.it}prog[i]=x.stage==='heat'?'열전달 계산':`유동 반복 ${x.it}${x.pin?`, ΔP ${(x.pin/1e3).toFixed(2)} kPa`:''}`}).then(r=>{NS_CACHE.set(k,r);prog[i]='완료';if(NS_LIVE){NS_LIVE.stage[i]='완료';NS_LIVE.last=Date.now()}return r})}))}
+      return NS_POOL.run({...base,g:{cav:c.g.cav,gro:c.g.gro,pin:c.g.pin,pout:c.g.pout,ns:c.g.ns}},x=>{if(NS_LIVE){NS_LIVE.last=Date.now();NS_LIVE.stage[i]=x.stage;if(x.it)NS_LIVE.it[i]=x.it}prog[i]=x.stage==='heat'?'열전달 계산':`유동 반복 ${x.it}${x.pin?`, ΔP ${(x.pin/1e3).toFixed(2)} kPa`:''}`}).then(r=>{NS_CACHE.set(k,r);prog[i]='완료';if(NS_LIVE){NS_LIVE.stage[i]='완료';NS_LIVE.last=Date.now()}return r})}))}
   catch(e){clearInterval(tick2);{const b=document.getElementById('shResBusy');if(b)b.textContent='조건이 바뀌어 다시 계산하고 있습니다…'}if(my!==token||/cancelled/.test(e.message))return false;FAILS.push('3D 계산 오류: '+(e.message||e));st('3D 계산이 실패해 간이 계산 값을 표시합니다 — '+(e.message||e));return true}
   clearInterval(tick2);{const b=document.getElementById('shResBusy');if(b)b.textContent='조건이 바뀌어 다시 계산하고 있습니다…'}if(my!==token)return false;
   // 물리적으로 말이 되는 3D 결과만 쓴다: 에너지 수지 ±2 %, 판 온도가 입구 온도보다 낮지 않음, 압력강하 양수 (수렴 안 된 유동에서 열 계산이 틀어지는 경우를 거름)
@@ -2374,10 +2379,10 @@ async function autoDesign(my){
   if(AUTO.key!==key){
     AUTO.pick=null;if(DESIGNS.indexOf(AUTOD)>=0)AUTOD.note='핫스팟이 바뀌어 모양을 다시 찾는 중';
     if(drag){st('핫스팟을 놓으면 그 위치에 맞는 모양을 다시 찾습니다.');return true}
-    // ← ML: 후보 모양 생성(autoSpecs 4+1종)을 머신러닝이 고른 띠 모양 하나로 바꿈. 계산(evaluate·flowSolve)은 그대로
-    const list=[];st('머신러닝으로 매니폴드 모양을 고르는 중입니다');await tick();if(my!==token)return false;
-    let mr;try{mr=mlPick(HSN,S.Q,S.Tlim)}catch(e){mr={name:'머신러닝 모양',why:'모양을 만들지 못함: '+(e.message||e)}}
-    AUTO.ml=mr;list.push(mr.why?{name:mr.name,why:mr.why}:{name:mr.name,d:mr.d});
+    // ← ML: 후보 모양 생성(autoSpecs 4+1종)을 머신러닝이 고른 띠 모양 후보로 바꿈. 그 뒤 간이 계산 → 3D NS 는 원래 그대로
+    const list=[];st('머신러닝으로 매니폴드 후보를 고르는 중입니다');await tick();if(my!==token)return false;
+    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'후보를 만들지 못함: '+(e.message||e),list:[]}}
+    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});
     AUTO.key=key;AUTO.cands=list;
   }
   const ok=AUTO.cands.filter(c=>c.d);
@@ -2388,7 +2393,7 @@ async function autoDesign(my){
   if(!ok.length){drop();AUTO.best=null;AUTO.bestOk=false;st('이 핫스팟 배치에서는 만들 수 있는 모양을 찾지 못했습니다.');drawAuto();return true}
   // 선택 대상은 수치적으로 유효한 후보(validR)뿐. 유효 후보가 하나도 없으면 자동 설계를 내리고 종료
   const okv=ok.filter(c=>validR(c.r));
-  if(!okv.length&&AUTO.ml&&ok.length&&ok[0].r)okv.push(ok[0]);   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시
+  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시
   if(!okv.length){drop();AUTO.best=null;AUTO.bestOk=false;st(`자동 설계 후보 ${ok.length}개가 모두 수치적으로 유효하지 않습니다(수렴 실패·비정상값·단상 범위 밖). 자동 최적 매니폴드를 표시하지 않습니다.`);drawAuto();return true}
   let best=AUTO.pick!=null&&AUTO.cands[AUTO.pick]&&AUTO.cands[AUTO.pick].d?AUTO.cands[AUTO.pick]:null,pickNote='';
   if(best&&!validR(best.r)){pickNote='직접 고른 모양은 계산이 유효하지 않아 자동 선택으로 돌아갔습니다. ';best=null;AUTO.pick=null}
@@ -2398,7 +2403,7 @@ async function autoDesign(my){
   AUTO.best=best;const d=best.d;if(d.flow)d.flow.quickOK=false;   // ← 14차: 고른 설계는 이후 evaluate(재계산·유량 스윕·역설계)에서 그 유량마다 정밀 유량장으로 다시 푼다
   Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:d.head||0,   /* ← ML: 머신러닝 모양은 헤더형 */ext:d.ext,e0:d.e0,en:d.en,pz:d.pz,layers:d.layers,note:best.name,flow:d.flow,inl:d.inl});
   if(DESIGNS.indexOf(AUTOD)<0){DESIGNS.splice(1,0,AUTOD);if(AUTO.first){sel=1;AUTO.first=false}else if(sel>=1)sel++}
-  st(AUTO.ml&&AUTO.ml.info?AUTO.ml.info:'');   // ← ML
+  st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':`머신러닝(SimScale 학습)이 고른 띠 모양 후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`);
   if(AUTO.pickNote)st(AUTO.pickNote+$('autoStatus').textContent);
   if(!hasHeat())st($('autoStatus').textContent+' ⚠ 총 발열이 0 W라 냉각 성능(최고 온도) 비교가 불가능합니다. 압력강하가 가장 작은 모양을 참고용으로만 표시하며 성능 우열이 아닙니다.');
   if(!AUTO.bestOk)st($('autoStatus').textContent+(AUTO.pick!=null?' ⚠ 직접 고른 모양은 한도(최고 온도·압력강하·Re)를 넘습니다 — 부적합 설계입니다.':` ⚠ 모든 제약조건(최고 온도 ${S.Tlim??85} °C · 압력강하 ${S.dpMax??'없음'} kPa · Re 2300)을 만족하는 설계가 없습니다. 정상 계산된 후보 중 최고 온도가 가장 낮은 설계를 참고용으로 표시합니다(제약 위반이 가장 작은 설계가 아닙니다) — 부적합 설계입니다.`));

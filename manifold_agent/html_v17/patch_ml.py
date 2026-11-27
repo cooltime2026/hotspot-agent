@@ -47,24 +47,27 @@ function mlMasks(p){
   for(const [y0,y1] of [[.4,1.5],[10.5,11.5]]){fill(y0,y1,.6,3.6,1);fill(y0,y1,8.3,11.4,2)}   // 포트 받침
   return {P,U};
 }
-// 핫스팟·유량·목표 온도 → 머신러닝이 고른 모양을 계산 엔진용 구조(d)로. 실패하면 {why}
-function mlPick(hs,Qml,Tlim){
-  const cells=mlCells(hs);if(!cells.length)return {name:'머신러닝 모양',why:'판 안에 핫스팟이 없음'};
-  const Qd=Math.max(55,Math.min(100,Math.round(Qml)));                       // 학습 범위 55~100 mL/min
-  const tgt=(Tlim!=null&&Number.isFinite(+Tlim))?+Tlim:85;
-  const r=CORE.design(ML_M,cells,tgt,Qd),p=r.p;
-  const {P,U}=mlMasks(p),sw=v=>v===1?2:v===2?1:0,bin=v=>v?1:0;             // 계산 엔진 규칙: 1 = 입구망
-  const name=`머신러닝 띠 ${p.n}개 (띠 폭 비율 ${p.wf.toFixed(2)}${p.s_eff>.05?`, y ${p.yf.toFixed(1)} mm 쪽으로 모음`:''}${Math.abs(p.b)>.05?`, 휨 ${p.b.toFixed(2)}`:''})`;
-  const M1=DESIGNS.find(x=>x.k==='M1');
-  const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
-    ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
-  const g=presetGeo(d);if(!g||!port_ok(g))return {name,why:'포트가 유로에 닿지 않음'};
-  d.flow=makeFlow(g,null,null);
-  const k=r.k,info=`머신러닝(SimScale 227 Run 학습)이 고른 모양: 띠 ${p.n}개 · 핫스팟 칸 ${cells.join('+')} (${k.label}) · `+
-    `머신러닝 예상 최고 ${r.T.toFixed(1)} °C @ ${Qd} mL/min (오차 ${k.err}${k.edge?', 가장자리 1·4행이라 낮게 나올 수 있음':''}). `+
-    (Qd!==Math.round(Qml)?`지금 유량 ${Qml} mL/min은 학습 범위 55~100 밖이라 ${Qd} mL/min 기준으로 모양을 골랐습니다. `:'')+
-    `아래 온도·압력은 이 에이전트 계산식 값입니다.`;
-  return {name,d,p,cells,ml:r,info};
+// 핫스팟·유량 → 머신러닝(SimScale 학습 모델)이 가장 시원할 것으로 본 띠 모양 후보 K개를 계산 엔진용 구조(d)·형상(g)으로
+//   후보 1,671개를 모델 점수(같은 유량에서 예상 최고 온도)로 줄 세우고, 비슷한 모양(띠 수·폭·모으기·휨이 같은 것)은 하나만
+//   g.ns: 3D 나비에–스토크스 격자 형상(관통층 0.15 = 3칸, 덮개 홈 0.4 = 8칸, 채널 y 1.5~10.5 + 헤더)
+function mlCands(hs,Qml,K){
+  const cells=mlCells(hs);if(!cells.length)return {why:'판 안에 핫스팟이 없음',list:[]};
+  const Qd=Math.max(55,Math.min(100,Math.round(Qml))),M=ML_M,H=CORE.hsPos(cells);
+  const hy=cells.reduce((a,c)=>a+(+c.split('_')[0]-.5)*3,0)/cells.length;
+  const sc=M.cand.map((c,i)=>{const [n,yf,s,xf,b,wf,seff,logG]=c,dy=Math.abs(hy-yf)/12*Math.min(seff,1),lq=Math.log(Qd/55);
+    const x=[...H,lq,...H.map(h=>h*lq),logG,wf,dy,...H.map(h=>h*logG)];let m=M.intercept;for(let j=0;j<x.length;j++)m+=M.coef[j]*x[j];return {i,m}}).sort((a,b)=>a.m-b.m);
+  const seen=new Set(),out=[],M1=DESIGNS.find(x=>x.k==='M1'),sw=v=>v===1?2:v===2?1:0,bin=v=>v?1:0;
+  for(const {i} of sc){if(out.length>=K)break;
+    const c=M.cand[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]};
+    const key=[p.n,p.wf.toFixed(1),p.s_eff>.05?Math.round(p.yf/1.5):'-',p.b>.15?'+':p.b<-.15?'-':'0'].join('|');if(seen.has(key))continue;seen.add(key);
+    const {P,U}=mlMasks(p);
+    const name=`머신러닝 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
+    const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
+      ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
+    const g=presetGeo(d);if(!g||!port_ok(g)){out.push({name,why:'포트가 유로에 닿지 않음'});continue}
+    g.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};
+    d.flow=makeFlow(g,null,null);out.push({name,d,g,p})}
+  return {cells,Qd,list:out};
 }
 </script>
 '''
@@ -76,14 +79,14 @@ def rep(s, old, new):
 # 1) 계산 엔진(calcB) 블록 바로 다음에 삽입
 cb = src.index('<script id="calcB">'); ce = src.index('</script>', cb) + len('</script>')
 src = src[:ce] + '\n' + ML.rstrip('\n') + src[ce:]
-# 2) autoDesign: 후보 생성 → 머신러닝 모양 하나 (g 를 넘기지 않음 → 3D NS(헤더 없는 고정 형상)는 건너뜀)
+# 2) autoDesign: 후보 생성 → 머신러닝 후보 6개
 a = src.index("    const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs)")
 b = src.index("    AUTO.key=key;AUTO.cands=list;", a)
 src = src[:a] + (
-    "    // ← ML: 후보 모양 생성(autoSpecs 4+1종)을 머신러닝이 고른 띠 모양 하나로 바꿈. 계산(evaluate·flowSolve)은 그대로\n"
-    "    const list=[];st('머신러닝으로 매니폴드 모양을 고르는 중입니다');await tick();if(my!==token)return false;\n"
-    "    let mr;try{mr=mlPick(HSN,S.Q,S.Tlim)}catch(e){mr={name:'머신러닝 모양',why:'모양을 만들지 못함: '+(e.message||e)}}\n"
-    "    AUTO.ml=mr;list.push(mr.why?{name:mr.name,why:mr.why}:{name:mr.name,d:mr.d});\n") + src[b:]
+    "    // ← ML: 후보 모양 생성(autoSpecs 4+1종)을 머신러닝이 고른 띠 모양 후보로 바꿈. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
+    "    const list=[];st('머신러닝으로 매니폴드 후보를 고르는 중입니다');await tick();if(my!==token)return false;\n"
+    "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
+    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[b:]
 # 3) 다시 고를 조건에 유량·목표 온도 추가
 src = rep(src, "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q])]);",
           "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q]),Math.max(55,Math.min(100,Math.round(S.Q))),S.Tlim]);   // ← ML: 유량·목표 온도 추가")
@@ -91,16 +94,21 @@ src = rep(src, "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h
 _o = "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:0,"
 assert src.count(_o) == 2          # autoDesign 과 nsStage 두 곳
 src = src.replace(_o, "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:d.head||0,   /* ← ML: 머신러닝 모양은 헤더형 */")
-# 5) 상태 문구 앞에 머신러닝 설명
-old = "  drawAuto();return true;\n}\nfunction drawAuto(){"
-src = rep(src, old, "  if(AUTO.ml&&AUTO.ml.info)st(AUTO.ml.info+' '+$('autoStatus').textContent);   // ← ML\n" + old)
 # 7) 계산식이 '유효하지 않음'(예: 물 95 °C 초과)이라고 해도 머신러닝 모양은 버리지 않고 표시 (경고는 원래 문구 그대로)
 src = rep(src, "  const okv=ok.filter(c=>validR(c.r));\n",
-          "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length&&ok[0].r)okv.push(ok[0]);   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
-# 8) 원래 '후보 N개를 계산해 골랐습니다' 문장 → 머신러닝 문장으로 (경고 문장은 그대로)
-src = rep(src, "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`);",
-          "st(AUTO.ml&&AUTO.ml.info?AUTO.ml.info:'');   // ← ML")
-src = rep(src, "  if(AUTO.ml&&AUTO.ml.info)st(AUTO.ml.info+' '+$('autoStatus').textContent);   // ← ML\n", "")
+          "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
+# 8) 원래 '후보 N개를 계산해 골랐습니다' 문장 → '머신러닝 후보 N개'로 (머신러닝 예상 온도는 표시 안 함)
+src = rep(src, "`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.",
+          "`머신러닝(SimScale 학습)이 고른 띠 모양 후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.")
+# 9) 3D NS: 모양마다 격자 형상(층 두께·채널 범위·헤더)을 받게 함 — 식은 그대로
+src = rep(src, "function nsGrid(){const G=NSGEO,", "const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상\nfunction nsGrid(GG){const G=GG||NSGEO,")
+src = rep(src, "function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),", "function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),")
+src = rep(src, "if(inY&&chMask[i]>=0)for(let k=0;k<R.kCh;k++)fluid[o+nxy*k]=1;",
+          "const inH=G.head&&X>0.625&&X<11.375&&((Y>0.5&&Y<1.5)||(Y>10.5&&Y<11.5));   // ← ML: 헤더형(채널층 헤더)\n      if((inY&&chMask[i]>=0)||inH)for(let k=0;k<R.kCh;k++)fluid[o+nxy*k]=1;")
+src = rep(src, "g:{cav:c.g.cav,gro:c.g.gro,pin:c.g.pin,pout:c.g.pout}}", "g:{cav:c.g.cav,gro:c.g.gro,pin:c.g.pin,pout:c.g.pout,ns:c.g.ns}}")
+# 10) 간이 계산이 모두 '유효하지 않음'이어도 3D NS 는 머신러닝 후보로 돌림
+src = rep(src, "  const okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));\n",
+          "  let okv=AUTO.cands.filter(c=>c.d&&c.g&&validR(c.r));if(!okv.length&&AUTO.ml)okv=AUTO.cands.filter(c=>c.d&&c.g&&c.r);   // ← ML\n")
 # 6) 제목
 src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>")
 
