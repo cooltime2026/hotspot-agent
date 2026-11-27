@@ -95,8 +95,28 @@ def fit(alpha=3.0):
     js = dict(type="cell", note="ml/cell_model.py — 칸별 릿지, 최고온도 = 16칸 최댓값. 순위 전용.", alpha=alpha, feats=FEATS,
               mu=M["mu"].tolist(), sd=M["sd"].tolist(), coef=M["m"].coef_.tolist(), intercept=float(M["m"].intercept_),
               xmin=X.min(0).tolist(), xmax=X.max(0).tolist(), n_runs=int(D.run.nunique()), designs=sorted(D.design.unique().tolist()))
+    js["resid"] = residuals(D, M)
     OUT.write_text(json.dumps(js, ensure_ascii=False, indent=1))
     print("저장:", OUT, js["n_runs"], "Run", len(D), "칸")
+    print("실측 보정:", {k: v for k, v in js["resid"].items() if k != "shapes"}, [(x["name"], x["fam"], round(x["r"], 3)) for x in js["resid"]["shapes"]])
+
+
+def residuals(D, M):
+    """실측 보정값 (log(T−20) 단위, 실측 − 모델). 모델이 못 배우는 모양 차이를 실측으로 메움 (2026-11-27, S2 에서 배움).
+    띠 가족(A·B·C): 가족 평균 하나. HTML v17 모양(S*): 모양마다 하나 + 마스크(비슷한 후보일수록 그만큼 적용)."""
+    import base64
+    D = D.assign(p=pred_cells(M, D))
+    run = D.groupby("run").agg(design=("design", "first"), hotspot=("hotspot", "first"), Tmax=("Tmax", "first"), p=("p", "max"))
+    run["r"] = np.log(run.Tmax - 20) - np.log(run.p - 20)
+    strip = run[run.design.str.match(r"^[ABC]\d")]
+    shapes = []
+    for k, g in run[run.design.str.match(r"^S\d")].groupby("design"):
+        m = json.load(open(SM.V17 / f"{k}_mask.json"))
+        P = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)).astype(np.uint8)
+        fam = (m.get("base") or "").split(" · ")[0].split(" (")[0]
+        shapes.append(dict(name=k, fam=fam, r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
+    by_hs = {h: float(g.r.mean()) for h, g in strip.groupby("hotspot")}   # 핫스팟별 (실측이 있으면 이쪽 우선)
+    return dict(strip=float(strip.r.mean()), strip_n=int(len(strip)), strip_hs=by_hs, shapes=shapes)
 
 
 if __name__ == "__main__":

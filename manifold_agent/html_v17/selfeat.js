@@ -39,3 +39,13 @@ function cellScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=s
     let m=M.intercept;M.feats.forEach((k2,i)=>{const x=v[k2];m+=M.coef[i]*(x-M.mu[i])/M.sd[i];const w=(M.xmax[i]-M.xmin[i])*.1;if(x<M.xmin[i]-w||x>M.xmax[i]+w)out++});
     T[k]=20+Math.exp(m);if(T[k]>Tm)Tm=T[k]}
   return {m:Math.log(Tm-20),out,T}}
+
+// [ML 고르기 v3] 실측 보정: 모델이 못 배우는 모양 차이를 실측으로 메움 (ml/cell_model.py residuals)
+//   띠형: 그 핫스팟의 띠 가족 실측 평균 오차(없으면 가족 전체 평균). v17 모양: 같은 종류의 실측 모양(S1, S2 …)과 그림이 비슷한 만큼(겹침²) 그 모양의 오차를 적용
+let ML_RES_SHAPES=null;
+function mlFamOf(name){return (name||'').replace(/^머신러닝 설계 · /,'').split(' · ')[0].split(' (')[0]}
+function mlCorrect(M,m,fam,P,cells){const R=M.resid;if(!R)return {m,w:0,ref:null};
+  if(fam==='띠형'){const k=cells.slice().sort().join('+'),r=(R.strip_hs&&k in R.strip_hs)?R.strip_hs[k]:R.strip;return {m:m+r,w:1,ref:'띠 가족'}}
+  if(!ML_RES_SHAPES)ML_RES_SHAPES=(R.shapes||[]).map(s=>({...s,A:Uint8Array.from(atob(s.P),c=>c.charCodeAt(0))}));
+  let best=null;for(const s of ML_RES_SHAPES){if(s.fam!==fam)continue;let a=0,u=0;for(let i=0;i<P.length;i++){const p=P[i]>0,q=s.A[i]>0;if(p&&q)a++;if(p||q)u++}const w=u?(a/u)**2:0;if(!best||w>best.w)best={w,s}}
+  return best?{m:m+best.w*best.s.r,w:best.w,ref:best.s.name}:{m,w:0,ref:null}}

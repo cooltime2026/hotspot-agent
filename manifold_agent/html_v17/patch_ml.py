@@ -89,7 +89,7 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
   const cells=mlCells(hs);if(!cells.length)return null;let n=0;const jobs=[],res=[];
   const mm=m=>m==='full'?'전폭 슬롯':`좌우 여유 ${m} mm`;
   const tryG=(fam,name,make)=>jobs.push([fam,name,make]),run=(fam,name,make)=>{let g;try{g=make()}catch(e){return}if(!g||aCheck(g))return;n++;
-    const r=cellScore(SEL_M,mlPool(g.cav),false,cells,Qml);if(r.out)return;res.push({m:r.m,fam,name,make})};
+    const P=mlPool(g.cav),r=cellScore(SEL_M,P,false,cells,Qml);if(r.out)return;const c=mlCorrect(SEL_M,r.m,fam,P,cells);res.push({m:c.m,fam,name,make})};
   const R=(a,b,st)=>{const o=[];for(let v=a;v<=b+1e-9;v+=st)o.push(+v.toFixed(2));return o};
   for(const gg of [0,1])for(const m of [...R(0,3,.5),'full'])for(const s of R(.4,1.2,.2)){
     tryG('흡입형',`흡입형 (양끝 공급, 핫스팟 위 배출) · 슬롯 ${s} mm · ${mm(m)}${gg?' · 가운데 한 줄':''}`,()=>aSwap(famDirect(hs,s,m,gg)));
@@ -103,7 +103,7 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
   // 띠 가족: 1,671개 전부 점수 (마스크만 그림)
   const C=ML_M.cand;let bs=null;
   for(let i=0;i<C.length;i++){if(i%100===99){if(prog)prog(jobs.length+i+1,jobs.length+C.length);await tk();if(alive&&!alive())return null}const c=C[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]},{P}=mlMasks(p),Ph=P.map(v=>v===1?2:v===2?1:0);
-    const r=cellScore(SEL_M,Ph,true,cells,Qml);n++;if(r.out)continue;if(!bs||r.m<bs.m)bs={m:r.m,p}}
+    const r=cellScore(SEL_M,Ph,true,cells,Qml);n++;if(r.out)continue;const cm=mlCorrect(SEL_M,r.m,'띠형',Ph,cells).m;if(!bs||cm<bs.m)bs={m:cm,p}}
   res.sort((a,b)=>a.m-b.m);const specs=[],seenF={};
   for(const r of res){if(specs.length>=5)break;if((seenF[r.fam]=(seenF[r.fam]||0)+1)>2)continue;specs.push({fam:r.fam,name:'머신러닝 설계 · '+r.name,make:r.make,mlopt:true})}   // 종류마다 2개까지, 모두 5개
   const top=res[0];return {specs,strip:bs&&bs.p,stripM:bs&&bs.m,m:Math.min(top?top.m:Infinity,bs?bs.m:Infinity),n};
@@ -160,7 +160,7 @@ src = rep(src, "st(`3D 나비에–스토크스 + 열전달로 상위 후보 ${c
           "st((b.c.ml?`3D 나비에–스토크스 + 열전달로 머신러닝 상위 후보 ${cand.length}개를 계산했습니다. 선택은 머신러닝 ${b.c.ml}위입니다.`:`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽).`)+` [${tbl}]")
 # 14) 모든 후보(원래 모양 + 띠 모양)를 머신러닝 고르기 모델로 줄 세움
 src = rep(src, "  const ok=AUTO.cands.filter(c=>c.d);\n",
-          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=cellScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));{const o=sc.findIndex(c=>/^머신러닝 설계/.test(c.base)&&!c.mlOut);if(o>0)sc.unshift(sc.splice(o,1)[0])}sc.forEach((c,i)=>{c.ml=i+1;c.name=i===0&&/^머신러닝 설계/.test(c.base)?`1위 머신러닝 최적 · ${c.base.replace(/^머신러닝 설계 · /,'')}`:`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
+          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=cellScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q),fam=c.d.head?'띠형':mlFamOf(c.base),k=mlCorrect(SEL_M,r.m,fam,c.d.P,cells);c.mls=k.m;c.mlOut=r.out;c.mlRef=k.w>.5&&k.ref&&k.ref!=='띠 가족'?k.ref:null}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));sc.forEach((c,i)=>{c.ml=i+1;c.name=i===0&&!c.mlOut?`1위 머신러닝 최적${c.mlRef?` (실측 ${c.mlRef} 반영)`:''} · ${c.base.replace(/^머신러닝 설계 · /,'')}`:`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''}${c.mlRef?` (실측 ${c.mlRef} 반영)`:''} · ${c.base}`})}   // ← ML\n")
 src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>p.c.r.Tmax-q.c.r.Tmax)",
           "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>(p.c.ml&&q.c.ml)?p.c.ml-q.c.ml:p.c.r.Tmax-q.c.r.Tmax)   /* ← ML: 머신러닝 순위 */")
 # 6) 제목

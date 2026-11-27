@@ -227,3 +227,4 @@ A1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",78.83,38960.0,-4366.0,"us
 A1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",84.44,38970.0,-4381.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1305,1306,1307"
 L1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",82.13,9719.0,-880.5,"user (9,1)+(9,11)","새 가족 L(국소 개방) 첫 검증; img 1308,1309,1310"
 S1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",107.0,2553.0,-764.6,"user (6,1.55)+(6,10.45)","read from Post-processor colorbar; img 1311,1312,1313"
+S2,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",79.55,8374.0,-683.7,"user (4.5,4.5)+(4.5,7.5)","read from Post-processor colorbar; img 1314,1315,1316"
