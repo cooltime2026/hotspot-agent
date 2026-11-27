@@ -124,8 +124,8 @@ src = src[:a] + (
     "    // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
     "    st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;\n"
     "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
-    "    if(AUTO.mlopt&&AUTO.mlopt.strip){const c=mlStripCand(AUTO.mlopt.strip,'머신러닝 설계 · ');if(c.d)list.unshift({name:c.name,g:c.g,d:c.d})}\n"
-    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[a:]
+    "    if(AUTO.mlopt&&AUTO.mlopt.strip){const c=mlStripCand(AUTO.mlopt.strip,'머신러닝 설계 · ');if(c.d)list.unshift({name:c.name,g:c.g,d:c.d,p:c.p})}\n"
+    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d,p:c.p});\n") + src[a:]
 # 2b) 머신러닝 최적 매니폴드를 먼저 설계해서 후보 맨 앞에 넣음
 src = rep(src, "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();",
           "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();\n    st('머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 수천 개 시험)');await tick();if(my!==token)return false;\n    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n)=>st(`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;if(mo&&mo.specs)specs.unshift(...mo.specs);   // ← ML 최적 설계")

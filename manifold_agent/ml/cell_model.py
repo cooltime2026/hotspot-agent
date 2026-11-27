@@ -116,7 +116,9 @@ def residuals(D, M):
         fam = (m.get("base") or "").split(" · ")[0].split(" (")[0]
         shapes.append(dict(name=k, fam=fam, r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
     by_hs = {h: float(g.r.mean()) for h, g in strip.groupby("hotspot")}   # 핫스팟별 (실측이 있으면 이쪽 우선)
-    return dict(strip=float(strip.r.mean()), strip_n=int(len(strip)), strip_hs=by_hs, shapes=shapes)
+    nh = run[run.design.isin(["D0", "D1"]) | run.design.str.match(r"^S\d")]   # 헤더 없는 계열(채널 0.6~11.4): 모양별 평균의 평균
+    nohead = float(nh.groupby("design").r.mean().mean())
+    return dict(strip=float(strip.r.mean()), strip_n=int(len(strip)), strip_hs=by_hs, nohead=nohead, shapes=shapes)
 
 
 if __name__ == "__main__":

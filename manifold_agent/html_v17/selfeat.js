@@ -48,4 +48,5 @@ function mlCorrect(M,m,fam,P,cells){const R=M.resid;if(!R)return {m,w:0,ref:null
   if(fam==='띠형'){const k=cells.slice().sort().join('+'),r=(R.strip_hs&&k in R.strip_hs)?R.strip_hs[k]:R.strip;return {m:m+r,w:1,ref:'띠 가족'}}
   if(!ML_RES_SHAPES)ML_RES_SHAPES=(R.shapes||[]).map(s=>({...s,A:Uint8Array.from(atob(s.P),c=>c.charCodeAt(0))}));
   let best=null;for(const s of ML_RES_SHAPES){if(s.fam!==fam)continue;let a=0,u=0;for(let i=0;i<P.length;i++){const p=P[i]>0,q=s.A[i]>0;if(p&&q)a++;if(p||q)u++}const w=u?(a/u)**2:0;if(!best||w>best.w)best={w,s}}
-  return best?{m:m+best.w*best.s.r,w:best.w,ref:best.s.name}:{m,w:0,ref:null}}
+  const r0=R.nohead||0,w=best?best.w:0;   // 비슷한 실측 모양이 없으면 헤더 없는 계열 평균 오차
+  return {m:m+w*(best?best.s.r:0)+(1-w)*r0,w,ref:best?best.s.name:null}}
