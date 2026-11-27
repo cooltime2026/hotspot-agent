@@ -1,0 +1,32 @@
+{
+ "name": "S10",
+ "source": "머신러닝 설계 · 바람개비형 · 슬롯 0.4 mm · 좌우 여유 1.5 mm · 슬롯 간격 0.2 mm",
+ "inlets": [
+  [
+   1.5,
+   4.5
+  ],
+  [
+   4.5,
+   4.5
+  ]
+ ],
+ "outlets": [
+  [
+   9,
+   1.55
+  ],
+  [
+   6,
+   10.45
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 1,
+ "fluid_mm3": 37.241,
+ "solid_mm3": 178.759,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 16,
+ "dead_fluid_filled_mm3": 0,
+ "min_edge_mm": 0.019
+}
