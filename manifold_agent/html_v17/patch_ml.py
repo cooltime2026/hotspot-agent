@@ -126,6 +126,10 @@ function mlStripCand(p,prefix,masks,side){
   const g=presetGeo(d);if(!g||!port_ok(g))return {name,why:'포트가 유로에 닿지 않음'};
   g.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};d.flow=makeFlow(g,null,null);return {name,d,g,p};
 }
+// 헤더형 진화 모양(g, 0.05 mm) → 계산 엔진 구조 d (M1·M3 프리셋과 같은 방식)
+function mlDFromG(g,name){const M1=DESIGNS.find(x=>x.k==='M1'),bin=v=>v?1:0,P=mlPool(g.cav),U=mlPool(g.gro);
+  const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P,U,ports:[...g.pin,...g.pout],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
+  const g2=presetGeo(d);if(!g2||!port_ok(g2)||aCheck(g2))return null;g2.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};d.flow=makeFlow(g2,null,null);return {d,g:g2}}
 // 0.05 mm 격자(240) → 0.1 mm(120), 2×2 칸 중 큰 값 (aDesign 의 pool 과 같음)
 function mlPool(L){const o=new Uint8Array(120*120);for(let iy=0;iy<120;iy++)for(let ix=0;ix<120;ix++){const k=2*iy*AG+2*ix;o[iy*120+ix]=Math.max(L[k],L[k+1],L[k+AG],L[k+AG+1])}return o}
 // ★ 머신러닝 최적 매니폴드 설계: 모양 종류별 숫자를 촘촘하게 바꿔 그려 보고(v17 규칙 + 띠 가족), SimScale 학습 모델 점수가 가장 좋은 모양을 만든다.
@@ -164,9 +168,18 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
   const opts=[...v17.map(r=>({kind:'v17',m:r.m,spec:{fam:r.fam,name:'머신러닝 설계 · '+r.name,make:r.make,mlopt:true}})),
     ...stripAll.slice(0,1).map(x=>({kind:'strip',m:x.m,p:x.p})),...Fall.slice(0,1).map(x=>({kind:'F',m:x.m,p:x.p,side:x.side}))].sort((a,b)=>a.m-b.m);
   // 진화: 점수 상위 v17 설계(종류별) 3개에서 출발, 각 500번
-  const evo=await mlEvolve(v17.map(r=>({fam:r.fam,name:r.name,make:r.make})),cells,Qml,400,alive,prog?(i,t)=>prog(jobs.length+C.length+i,jobs.length+C.length+t,'진화'):null);
+  // 진화 출발점: 점수 상위 v17 설계 중 실측 모양과 겹침 85 % 미만인 것(종류별 1개, 최대 3개) — 이미 돌려 본 모양에서 출발하면 새 모양이 안 나옴
+  const libS=ML_LIB.S.map(s=>mlPool(mlRLE(s.cav,AG*AG))),evoStarts=[],famE=new Set();
+  {const fl=G&&G.fQ?G.fQ(Qml):(G&&G.f),Qt=Qml*1e-6/60;let tested=0;   // 출발 모양은 v17 유량 계산(quick)이 되는 것만 — 안 되는 모양에서 진화하면 결과도 안 됨
+    for(const r of res){if(evoStarts.length>=3||tested>=10)break;if(famE.has(r.fam))continue;let g=null;try{g=r.make()}catch(e){}if(!g)continue;const P=mlPool(g.cav);if(libS.some(L=>mlIoU(P,L)>=.85))continue;
+      tested++;let sol=null;try{sol=flowSolve(mlCloneG(g),S.inl,Qt,fl,true)}catch(e){}if(prog)prog(jobs.length+C.length,jobs.length+C.length,'출발');await new Promise(r=>setTimeout(r));if(alive&&!alive())return null;
+      if(!(sol&&isFinite(sol.Rl)&&sol.conv))continue;famE.add(r.fam);evoStarts.push({fam:r.fam,name:r.name,make:r.make})}}
+  {const sw=v=>v===1?2:v===2?1:0,libH=Object.values(ML_LIB.strip).map(p=>mlMasks(p).P.map(sw));let k=0;   // 띠형 출발: 제작 검사 통과 + 실측 띠와 85 % 미만으로 겹치는 상위 모양 1개
+    for(const x of stripAll.slice(0,40)){const c=mlStripCand(x.p,'');if(!c.g||aCheck(c.g))continue;const P=mlPool(c.g.cav);if(libH.some(L=>mlIoU(P,L)>=.85))continue;const p=x.p;evoStarts.push({fam:'띠형',head:true,name:'띠형',make:()=>mlStripCand(p,'').g});break}}
+  if(Fall[0]){const x=Fall[0];evoStarts.push({fam:'F형',head:true,name:'F형',make:()=>mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side).g})}
+  const evo=await mlEvolve(evoStarts,cells,Qml,400,alive,prog?(i,t)=>prog(jobs.length+C.length+i,jobs.length+C.length+t,'진화'):null);
   if(alive&&!alive())return null;
-  const out=[];if(evo){const G=evo.g,c=evo.cnt;out.push({kind:'v17',evo:true,m:evo.m,spec:{fam:evo.fam,name:`머신러닝 새 설계 (${evo.fam}에서 진화 · 슬롯 +${c.add} · 홈 +${c.gro})`,make:()=>mlCloneG(G),mlopt:true}})}
+  const out=[];if(evo){const G=evo.g,c=evo.cnt,nm=`머신러닝 새 설계 (${evo.fam}에서 진화 · 슬롯 +${c.add} · 홈 +${c.gro})`;out.push(evo.head?{kind:'hdr',evo:true,m:evo.m,g:G,name:nm}:{kind:'v17',evo:true,m:evo.m,spec:{fam:evo.fam,name:nm,make:()=>mlCloneG(G),mlopt:true}})}
   const libP=ML_LIB.S.map(s=>mlPool(mlRLE(s.cav,AG*AG)));
   for(const o of opts){if(o.kind==='v17'){let g=null;try{g=o.spec.make()}catch(e){}if(g&&libP.some(L=>mlIoU(mlPool(g.cav),L)>=.85))continue}out.push(o)}   // 실측 모양과 거의 같은 설계는 1위 후보에서 뺌
   return {opts:out.slice(0,5),lib:lib.slice(0,5),n:n+(evo?1500:0),m:out.length?out[0].m:Infinity,evo};
@@ -175,28 +188,30 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
 //   매번 v17 제작 검사(aCheck: 벽 0.2 mm·물길 연결·포트)를 통과하고 머신러닝 점수(칸 모델+실측 보정)가 좋아지면 받아들임(담금질).
 //   지금까지 돌려 본 모양과 겹침이 85 % 이상이면 '새 모양'이 아니므로 1위로 쓰지 않음.
 function mlRng(seed){let a=seed>>>0;return ()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296}}
-function mlCloneG(g){const h=aGeo();h.cav.set(g.cav);h.gro.set(g.gro);h.pin=g.pin.map(p=>p.slice());h.pout=g.pout.map(p=>p.slice());return h}
+function mlCloneG(g){const h=aGeo();h.cav.set(g.cav);h.gro.set(g.gro);h.pin=g.pin.map(p=>p.slice());h.pout=g.pout.map(p=>p.slice());for(const k of ['ts','head','chy','ns'])if(g[k]!==undefined)h[k]=Array.isArray(g[k])?g[k].slice():(typeof g[k]==='object'?{...g[k]}:g[k]);return h}
 function mlIoU(A,B){let a=0,u=0;for(let i=0;i<A.length;i++){const p=A[i]>0,q=B[i]>0;if(p&&q)a++;if(p||q)u++}return u?a/u:0}
 async function mlEvolve(starts,cells,Q,iters,alive,prog){
   const rnd=mlRng([...cells.join('')].reduce((a,c)=>a*31+c.charCodeAt(0),7)),libP=[];
   {const seen=new Set();for(const s of ML_LIB.S){const k=JSON.stringify(s.cav);if(seen.has(k))continue;seen.add(k);libP.push(mlPool(mlRLE(s.cav,AG*AG)))}}
-  const novel=P=>libP.every(L=>mlIoU(P,L)<.85);
-  const score=g=>{const P=mlPool(g.cav),r=cellScore(SEL_M,P,false,cells,Q);if(r.out)return null;return {m:mlCorrect(SEL_M,r.m,starts.fam||'',P,cells).m,P}};
+  const libH=[];{const sw=v=>v===1?2:v===2?1:0;for(const p of Object.values(ML_LIB.strip))libH.push(mlMasks(p).P.map(sw));for(const p of Object.values(ML_LIB.F))for(const sd of ['bottom','top']){const mk=mlMasksF(p,sd);if(mk)libH.push(mk.P.map(sw))}}
+  let curHead=false;const novel=P=>(curHead?libH:libP).every(L=>mlIoU(P,L)<.85);
+  const score=g=>{const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!g.head,cells,Q);if(r.out)return null;return {m:mlCorrect(SEL_M,r.m,starts.fam||'',P,cells).m,P}};
   const pick=(L,n)=>{for(let t=0;t<80;t++){const ix=(rnd()*AG)|0,iy=(rnd()*AG)|0;if(L[iy*AG+ix]===n)return [(ix+.5)*AR,(iy+.5)*AR]}return null};
   const ops=[
     (h,c)=>{const n=rnd()<.5?1:2,a=pick(rnd()<.5?h.gro:h.cav,n);if(!a)return false;const w=[.3,.4,.6][(rnd()*3)|0],L=.8+rnd()*3.2;aRect(h,h.cav,Math.max(XL,a[0]-L/2),Math.max(.6,a[1]-w/2),Math.min(XR,a[0]+L/2),Math.min(11.4,a[1]+w/2),n);c.add++;return true},   // 가로 슬롯 더하기(채널을 가로지름)
     (h,c)=>{const n=rnd()<.5?1:2,a=pick(h.cav,n);if(!a)return false;const r=.25+rnd()*.6;for(let iy=aC0(a[1]-r);iy<=aC1(a[1]+r);iy++)for(let ix=aC0(a[0]-r);ix<=aC1(a[0]+r);ix++){const k=iy*AG+ix;if(h.cav[k]===n)h.cav[k]=0}c.cut++;return true},   // 슬롯 일부 지우기
-    (h,c)=>{const n=rnd()<.5?1:2,a=pick(h.gro,n);if(!a)return false;const L=1+rnd()*2.5,hz=rnd()<.5;hz?aRect(h,h.gro,Math.max(.6,a[0]-L/2),a[1]-.4,Math.min(11.4,a[0]+L/2),a[1]+.4,n):aRect(h,h.gro,a[0]-.4,Math.max(.6,a[1]-L/2),a[0]+.4,Math.min(11.4,a[1]+L/2),n);c.gro++;return true}];   // 덮개 홈 늘리기
-  let best=null,k=0;const tot=starts.length*iters,snaps=[];
-  for(const st of starts){starts.fam=st.fam;let g;try{g=st.make()}catch(e){continue}if(!g||aCheck(g))continue;let cur=score(g);if(!cur)continue;let cnt={add:0,cut:0,gro:0};
+    (h,c)=>{const n=rnd()<.5?1:2,a=pick(h.gro,n);if(!a)return false;const L=1+rnd()*2.5,hz=rnd()<.5;const cl=v=>Math.max(.6,Math.min(11.4,v));hz?aRect(h,h.gro,cl(a[0]-L/2),cl(a[1]-.4),cl(a[0]+L/2),cl(a[1]+.4),n):aRect(h,h.gro,cl(a[0]-.4),cl(a[1]-L/2),cl(a[0]+.4),cl(a[1]+L/2),n);   /* 판 가장자리에서 0.6 mm 안쪽만 (바깥벽 두께) */c.gro++;return true}];   // 덮개 홈 늘리기
+  let best=null,k=0;const tot=starts.length*iters,snaps=[];const D=window.ML_DBG={starts:[],tries:0,opok:0,chk:0,acc:0,snaps:0,solves:[]};
+  for(const st of starts){starts.fam=st.fam;curHead=!!st.head;let g;try{g=st.make()}catch(e){D.starts.push([st.fam,'make 실패']);continue}if(!g||aCheck(g)){D.starts.push([st.fam,'검사 실패 '+(g&&aCheck(g))]);continue}let cur=score(g);D.starts.push([st.fam,cur?'점수 '+cur.m.toFixed(3):'범위 밖']);if(!cur)continue;let cnt={add:0,cut:0,gro:0};
     for(let i=0;i<iters;i++,k++){if(k%60===59){if(prog)prog(k+1,tot);await new Promise(r=>setTimeout(r));if(alive&&!alive())return null}
-      if(cnt.add+cnt.cut+cnt.gro>=12)break;   // 12번 바꾸면 멈춤: 너무 복잡하면 v17 유량 계산이 수렴하지 않음
-      const h=mlCloneG(g),c={...cnt};h.bad=null;const op=ops[rnd()<.6?0:2];   // 지우기(ops[1])는 얇은 조각을 남겨 유량 계산이 깨져서 안 씀if(!op(h,c)||h.bad||aCheck(h))continue;const sc=score(h);if(!sc)continue;
-      const T=.03*Math.pow(.02,i/iters);if(sc.m<cur.m||rnd()<Math.exp(-(sc.m-cur.m)/T)){g=h;cur=sc;cnt=c;
-        if((cnt.add+cnt.cut+cnt.gro)>=3&&novel(sc.P)&&(!snaps.length||sc.m<snaps[snaps.length-1].m+.02)){best={m:sc.m,g:mlCloneG(h),fam:st.fam,from:st.name,cnt:{...cnt}};snaps.push(best)}}}}
+      if(cnt.add+cnt.cut+cnt.gro>=(st.head?20:12))break;   // v17 형은 12번, 헤더형(띠·F)은 20번 바꾸면 멈춤: 너무 복잡하면 v17 유량 계산이 수렴하지 않음
+      const h=mlCloneG(g),c={...cnt};h.bad=null;D.tries++;const op=ops[rnd()<.6?0:2];if(!op(h,c)||h.bad)continue;D.opok++;if(aCheck(h))continue;D.chk++;   // 지우기(ops[1])는 얇은 조각을 남겨 유량 계산이 깨져서 안 씀
+     const sc=score(h);if(!sc)continue;
+      const T=.03*Math.pow(.02,i/iters);if(sc.m<cur.m||rnd()<Math.exp(-(sc.m-cur.m)/T)){g=h;cur=sc;cnt=c;D.acc++;
+        if((cnt.add+cnt.cut+cnt.gro)>=3&&novel(sc.P)){best={m:sc.m,g:mlCloneG(h),fam:st.fam,from:st.name,cnt:{...cnt},nch:cnt.add+cnt.cut+cnt.gro,head:!!st.head};snaps.push(best);D.snaps++}}}}
   // 유량 계산(v17 flowSolve, quick)이 되는 것 중 가장 좋은 것 — 복잡한 모양은 수렴 안 할 수 있어 좋은 순으로 최대 10개 시험
-  snaps.sort((a,b)=>a.m-b.m);const fl=G&&G.fQ?G.fQ(Q):(G&&G.f),Qt=Q*1e-6/60;
-  for(const sn of snaps.slice(0,12)){let sol=null;try{sol=flowSolve(mlCloneG(sn.g),S.inl,Qt,fl,true)}catch(e){}if(sol&&isFinite(sol.Rl)&&sol.conv)return sn;await new Promise(r=>setTimeout(r));if(alive&&!alive())return null}
+  snaps.sort((a,b)=>((b.nch>=5)-(a.nch>=5))||a.m-b.m);const fl=G&&G.fQ?G.fQ(Q):(G&&G.f),Qt=Q*1e-6/60;   // 5번 이상 바뀐(더 새로운) 모양 먼저, 그다음 3~4번
+  for(const sn of snaps.slice(0,16)){let sol=null;try{sol=flowSolve(mlCloneG(sn.g),S.inl,Qt,fl,true)}catch(e){}D.solves.push(sol?[sol.conv,isFinite(sol.Rl)]:null);if(sol&&isFinite(sol.Rl)&&(sol.conv||sn.head))return sn;   /* 헤더형은 기존 띠형 후보와 같은 기준(값이 유한하면 사용) */await new Promise(r=>setTimeout(r));if(alive&&!alive())return null}
   return null}
 // 실측 모양 목록 → 점수 (낮을수록 시원할 것). 그 핫스팟·유량(±3 mL/min)에서 돌려 본 적 있으면 실측값을 씀
 function mlRLE(a,n){const o=new Uint8Array(n);let k=0;for(let i=0;i<a.length;i+=2){o.fill(a[i],k,k+a[i+1]);k+=a[i+1]}return o}
@@ -240,7 +255,7 @@ a = src.index("    AUTO.key=key;AUTO.cands=list;")
 src = src[:a] + (
     "    // ← ML: 1위 후보(띠·F 설계)와 2~5위 후보(실측 띠·F 모양)\n"
     "    AUTO.ml={list:[]};{const mo=AUTO.mlopt||{opts:[],lib:[]};\n"
-    "      for(const o of mo.opts){if(o.kind==='strip'||o.kind==='F'){const c=o.kind==='F'?mlStripCand(o.p,'머신러닝 설계 · ',mlMasksF(o.p,o.side),o.side):mlStripCand(o.p,'머신러닝 설계 · ');if(c.d)list.push({name:o.same?'머신러닝 설계 · '+mlLibName(o).replace(/^실측 모양 /,'실측 '):c.name,g:c.g,d:c.d,p:c.p})}}\n"
+    "      for(const o of mo.opts){if(o.kind==='hdr'){const c=mlDFromG(o.g,o.name);if(c)list.push({name:o.name,g:c.g,d:c.d})}if(o.kind==='strip'||o.kind==='F'){const c=o.kind==='F'?mlStripCand(o.p,'머신러닝 설계 · ',mlMasksF(o.p,o.side),o.side):mlStripCand(o.p,'머신러닝 설계 · ');if(c.d)list.push({name:o.same?'머신러닝 설계 · '+mlLibName(o).replace(/^실측 모양 /,'실측 '):c.name,g:c.g,d:c.d,p:c.p})}}\n"
     "      for(const x of mo.lib){if(x.kind==='strip'||x.kind==='F'){const c=x.kind==='F'?mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side):mlStripCand(x.p,'');if(c.d)list.push({name:mlLibName(x),g:c.g,d:c.d,p:c.p})}}}\n") + src[a:]
 # 2b) 머신러닝 최적 매니폴드를 먼저 설계해서 후보 맨 앞에 넣음
 src = rep(src, "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();",
