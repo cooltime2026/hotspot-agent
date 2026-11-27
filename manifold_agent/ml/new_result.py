@@ -46,20 +46,24 @@ def ml_predict(design, hotspot, Q):
             m = json.loads((ROOT / f"out/step_v17/{design}_mask.json").read_text())
             Ph = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3))
             fam = (m.get("base") or "").replace("머신러닝 설계 · ", "").split(" · ")[0].split(" (")[0]
+        if design in CM.PRESET_SHAPES:      # 프리셋 D1: 핫스팟마다 실측 보정 (위치 맞춰 비교)
+            Ph = CM.preset_mask(design); fam = design
+        if re.match(r"^N\d", design):      # 머신러닝 새 설계 (out/new_designs, 페이지 진화와 같은 종류 이름으로 보정)
+            m = json.loads((ROOT / f"out/new_designs/{design}_mask.json").read_text())
+            Ph = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)); fam = m["fam"]
     rows = pd.DataFrame(CM.cell_rows(s, cells, Q))
     lm = float(np.log(CM.pred_cells({"mu": np.array(M["mu"]), "sd": np.array(M["sd"]), "m": type("L", (), {"predict": lambda self, X: X @ np.array(M["coef"]) + M["intercept"]})()}, rows).max() - 20))
-    if fam == "띠형":
+    if fam == "띠형" and Ph is None:
         lm += R["strip_hs"].get(key, R["strip"])
     elif fam and Ph is not None:
         best = (0.0, None)
         for sh_ in R["shapes"]:
             if sh_["fam"] != fam:
                 continue
-            A = np.frombuffer(base64.b64decode(sh_["P"]), np.uint8).reshape(120, 120) > 0
-            for B in (A, A[::-1]):
-                u = ((Ph > 0) | B).sum(); w = (((Ph > 0) & B).sum() / u) ** 2 if u else 0
-                if w > best[0]: best = (w, sh_)
-        r0 = R["strip_hs"].get(key, R["strip"]) if fam == "F형" else R.get("nohead", 0)
+            A = np.frombuffer(base64.b64decode(sh_["P"]), np.uint8).reshape(120, 120)
+            w = CM.align_w(Ph, A, sh_["hs"], key)        # 핫스팟 위치를 맞춰 옮긴 뒤 겹침² (2026-11-28)
+            if w > best[0]: best = (w, sh_)
+        r0 = R["strip_hs"].get(key, R["strip"]) if fam in ("F형", "띠형") else R.get("nohead", 0)
         lm += best[0] * (best[1]["r"] if best[1] else 0) + (1 - best[0]) * r0
     return 20 + np.exp(lm)
 

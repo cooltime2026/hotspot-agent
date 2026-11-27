@@ -44,11 +44,17 @@ function cellScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=s
 //   띠형: 그 핫스팟의 띠 가족 실측 평균 오차(없으면 가족 전체 평균). v17 모양: 같은 종류의 실측 모양(S1, S2 …)과 그림이 비슷한 만큼(겹침²) 그 모양의 오차를 적용
 let ML_RES_SHAPES=null;
 function mlFamOf(name){return (name||'').replace(/^머신러닝 설계 · /,'').split(' · ')[0].split(' (')[0]}
+function mlAlignB(s,kk){if(!s._B)s._B={};if(s._B[kk]!==undefined)return s._B[kk];   // 실측 모양 A(핫스팟 s.hs) → 핫스팟 kk 위치로 옮긴 마스크 2개(그대로·뒤집기), 방향이 다르면 null
+  const cv=h=>h.split('+').map(c=>c.split('_').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]),ca=cv(s.hs||kk),cb=cv(kk),ori=c=>c.length===1?'s':(c[0][0]===c[1][0]?'h':'v');
+  if(ori(ca)!==ori(cb)&&ori(ca)!=='s'&&ori(cb)!=='s')return s._B[kk]=null;const out=[];
+  for(const flip of [0,1]){const c2=flip?ca.map(([r,c])=>[5-r,c]):ca,dr=(Math.min(...cb.map(x=>x[0]))-Math.min(...c2.map(x=>x[0])))*30,dc=(Math.min(...cb.map(x=>x[1]))-Math.min(...c2.map(x=>x[1])))*30,B=new Uint8Array(14400);
+    for(let iy=0;iy<120;iy++){const sy0=iy-dr;if(sy0<0||sy0>=120)continue;const sy=flip?119-sy0:sy0;for(let ix=0;ix<120;ix++){const sx=ix-dc;if(sx<0||sx>=120)continue;B[iy*120+ix]=s.A[sy*120+sx]}}out.push(B)}
+  return s._B[kk]=out}
+function mlAlignW(P,s,kk){const Bs=mlAlignB(s,kk);if(!Bs)return 0;let best=0;for(const B of Bs){let a=0,u=0;for(let i=0;i<14400;i++){const p=P[i]>0,q=B[i]>0;if(p&&q)a++;if(p||q)u++}if(u)best=Math.max(best,a/u)}return best*best}
 function mlCorrect(M,m,fam,P,cells){const R=M.resid;if(!R)return {m,w:0,ref:null};
-  if(fam==='띠형'){const k=cells.slice().sort().join('+'),r=(R.strip_hs&&k in R.strip_hs)?R.strip_hs[k]:R.strip;return {m:m+r,w:1,ref:'띠 가족'}}
+  if(fam==='띠형'&&!(R.shapes||[]).some(s=>s.fam==='띠형')){const k=cells.slice().sort().join('+'),r=(R.strip_hs&&k in R.strip_hs)?R.strip_hs[k]:R.strip;return {m:m+r,w:1,ref:'띠 가족'}}   // 실측된 띠형 새 설계(N)가 생기면 아래처럼 겹침 만큼 섞음
   if(!ML_RES_SHAPES)ML_RES_SHAPES=(R.shapes||[]).map(s=>({...s,A:Uint8Array.from(atob(s.P),c=>c.charCodeAt(0))}));
-  // 판은 위아래 대칭(y → 12−y) → 뒤집은 모양과도 비교
-  const iou=(A,flip)=>{let a=0,u=0;for(let iy=0;iy<120;iy++){const sy=flip?119-iy:iy;for(let ix=0;ix<120;ix++){const p=P[iy*120+ix]>0,q=A[sy*120+ix]>0;if(p&&q)a++;if(p||q)u++}}return u?(a/u)**2:0};
-  let best=null;for(const s of ML_RES_SHAPES){if(s.fam!==fam)continue;const w=Math.max(iou(s.A,false),iou(s.A,true));if(!best||w>best.w)best={w,s}}
-  const kk=cells.slice().sort().join('+'),r0=fam==='F형'?((R.strip_hs&&kk in R.strip_hs)?R.strip_hs[kk]:R.strip):(R.nohead||0),w=best?best.w:0;   // 비슷한 실측 모양이 없으면: F형은 띠 가족 오차, 그 밖은 헤더 없는 계열 평균 오차
+  // 실측 모양을 후보 핫스팟 위치로 옮겨(3 mm 칸 단위, 위아래 뒤집기 포함) 겹침² — ml/cell_model.py align_w 와 같은 식 (2026-11-28)
+  const kk=cells.slice().sort().join('+');let best=null;for(const s of ML_RES_SHAPES){if(s.fam!==fam)continue;const w=mlAlignW(P,s,kk);if(!best||w>best.w)best={w,s}}
+  const r0=(fam==='F형'||fam==='띠형')?((R.strip_hs&&kk in R.strip_hs)?R.strip_hs[kk]:R.strip):(R.nohead||0),w=best?best.w:0;   // 비슷한 실측 모양이 없으면: F형은 띠 가족 오차, 그 밖은 헤더 없는 계열 평균 오차
   return {m:m+w*(best?best.s.r:0)+(1-w)*r0,w,ref:best?best.s.name:null}}

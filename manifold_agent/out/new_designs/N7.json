@@ -1,0 +1,34 @@
+{
+ "name": "N7",
+ "hotspot": "1_4+2_4",
+ "design": "머신러닝 새 설계 (바람개비형에서 진화 · 슬롯 +9 · 홈 +2)",
+ "head": 0,
+ "inlets": [
+  [
+   10.5,
+   2.3
+  ],
+  [
+   10.5,
+   4.5
+  ]
+ ],
+ "outlets": [
+  [
+   6,
+   1.55
+  ],
+  [
+   6,
+   10.45
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 1,
+ "fluid_mm3": 42.269,
+ "solid_mm3": 173.731,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 16,
+ "dead_fluid_filled_mm3": 0,
+ "ml_pred_C": 95.2
+}

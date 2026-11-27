@@ -53,8 +53,28 @@ def _lib():
         m = json.loads(f.read_text()); base = (m.get("base") or "").replace("머신러닝 설계 · ", "").replace("1위 머신러닝 최적 · ", "")
         base = re.sub(r"^(머신러닝 \d+위( \([^)]*\))? · )", "", base)
         S.append(dict(name=k, base=base, fam=base.split(" · ")[0].split(" (")[0], pin=m["pin"], pout=m["pout"], cav=rle(m["cav"]), gro=rle(m["gro"])))
-    return dict(strip=strip, F=F, S=S, meas=meas)
+    for f in sorted((HERE.parent / "out/new_designs").glob("N*_mask.json"), key=lambda x: int(x.stem.split("_")[0][1:])):   # 머신러닝 새 설계 중 돌려 본 것
+        k = f.stem.split("_")[0]
+        if k not in meas: continue
+        m = json.loads(f.read_text())
+        S.append(dict(name=k, base=f"{m['fam']} · 머신러닝 새 설계(진화)", fam=m["fam"], head=int(m.get("head", 0)), pin=m["pin"], pout=m["pout"], cav=rle(m["cav"]), gro=rle(m["gro"])))
+    P_ = [k for k in ["D1", "M1", "M3"] if k in meas]      # 실측 프리셋(페이지 DESIGNS 에 있음): 그 핫스팟에서 돌려 본 경우만 2~5위 후보, D1 은 진화 출발점
+    return dict(strip=strip, F=F, S=S, P=P_, meas=meas)
 import re
+def _new():
+    """머신러닝 새 설계 N* (ml/build_new.py, out/new_designs) → 핫스팟별 1위 설계 (페이지가 진화를 다시 돌리지 않고 이 모양을 씀 = 보낸 STEP 과 같은 모양)"""
+    out = {}
+    for f in sorted((HERE.parent / "out/new_designs").glob("N*_mask.json"), key=lambda x: int(x.stem.split("_")[0][1:])):
+        m = json.loads(f.read_text()); k = "+".join(sorted(m["hotspot"].split("+")))
+        def rle(a):
+            o, prev, n = [], a[0], 0
+            for v in a:
+                if v == prev: n += 1
+                else: o += [int(prev), n]; prev, n = v, 1
+            return o + [int(prev), n]
+        out[k] = dict(name=m["name"], fam=m["fam"], seed=m.get("seed"), head=int(m.get("head", 0)), cnt=m["cnt"], pin=m["pin"], pout=m["pout"], cav=rle(m["cav"]), gro=rle(m["gro"]))
+    return out
+sel += "const ML_NEW=" + json.dumps(_new(), ensure_ascii=False, separators=(",", ":")) + ";   // 핫스팟별 머신러닝 새 설계 (out/new_designs/N*_mask.json, STEP 과 같은 모양)\n"
 sel += "const ML_LIB=" + json.dumps(_lib(), ensure_ascii=False, separators=(",", ":")) + ";   // 실측 모양 목록 (patch_ml.py 가 data/direct_runs.csv·out/ 에서 만듦)\n"
 
 ML = r'''<script id="mlManifold">
@@ -169,18 +189,21 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
     ...stripAll.slice(0,1).map(x=>({kind:'strip',m:x.m,p:x.p})),...Fall.slice(0,1).map(x=>({kind:'F',m:x.m,p:x.p,side:x.side}))].sort((a,b)=>a.m-b.m);
   // 진화: 점수 상위 v17 설계(종류별) 3개에서 출발, 각 500번
   // 진화 출발점: 점수 상위 v17 설계 중 실측 모양과 겹침 85 % 미만인 것(종류별 1개, 최대 3개) — 이미 돌려 본 모양에서 출발하면 새 모양이 안 나옴
-  const libS=ML_LIB.S.map(s=>mlPool(mlRLE(s.cav,AG*AG))),evoStarts=[],famE=new Set();
+  const libS=ML_LIB.S.filter(s=>!s.head).map(s=>mlPool(mlRLE(s.cav,AG*AG))),evoStarts=[],famE=new Set();
   {const fl=G&&G.fQ?G.fQ(Qml):(G&&G.f),Qt=Qml*1e-6/60;let tested=0;   // 출발 모양은 v17 유량 계산(quick)이 되는 것만 — 안 되는 모양에서 진화하면 결과도 안 됨
     for(const r of res){if(evoStarts.length>=3||tested>=10)break;if(famE.has(r.fam))continue;let g=null;try{g=r.make()}catch(e){}if(!g)continue;const P=mlPool(g.cav);if(libS.some(L=>mlIoU(P,L)>=.85))continue;
-      tested++;let sol=null;try{sol=flowSolve(mlCloneG(g),S.inl,Qt,fl,true)}catch(e){}if(prog)prog(jobs.length+C.length,jobs.length+C.length,'출발');await new Promise(r=>setTimeout(r));if(alive&&!alive())return null;
+      tested++;let sol=null;try{sol=flowSolve(mlCloneG(g),S.inl,Qt,fl,true)}catch(e){}if(!(sol&&isFinite(sol.Rl)&&sol.conv)){try{sol=flowSolve(mlCloneG(g),S.inl,Qt,fl,false)}catch(e){}}   /* quick 실패 → 정식 */if(prog)prog(jobs.length+C.length,jobs.length+C.length,'출발');await new Promise(r=>setTimeout(r));if(alive&&!alive())return null;
       if(!(sol&&isFinite(sol.Rl)&&sol.conv))continue;famE.add(r.fam);evoStarts.push({fam:r.fam,name:r.name,make:r.make})}}
-  {const sw=v=>v===1?2:v===2?1:0,libH=Object.values(ML_LIB.strip).map(p=>mlMasks(p).P.map(sw));let k=0;   // 띠형 출발: 제작 검사 통과 + 실측 띠와 85 % 미만으로 겹치는 상위 모양 1개
+  {const sw=v=>v===1?2:v===2?1:0,libH=[...Object.values(ML_LIB.strip).map(p=>mlMasks(p).P.map(sw)),...ML_LIB.S.filter(s=>s.head).map(s=>mlPool(mlRLE(s.cav,AG*AG)))];let k=0;   // 띠형 출발: 제작 검사 통과 + 실측 띠와 85 % 미만으로 겹치는 상위 모양 1개
     for(const x of stripAll.slice(0,40)){const c=mlStripCand(x.p,'');if(!c.g||aCheck(c.g))continue;const P=mlPool(c.g.cav);if(libH.some(L=>mlIoU(P,L)>=.85))continue;const p=x.p;evoStarts.push({fam:'띠형',head:true,name:'띠형',make:()=>mlStripCand(p,'').g});break}}
   if(Fall[0]){const x=Fall[0];evoStarts.push({fam:'F형',head:true,name:'F형',make:()=>mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side).g})}
-  const evo=await mlEvolve(evoStarts,cells,Qml,400,alive,prog?(i,t)=>prog(jobs.length+C.length+i,jobs.length+C.length+t,'진화'):null);
+  // 핫스팟별로 미리 깊게 찾아 둔 새 설계(ML_NEW, STEP 으로 보낸 모양)가 있으면 그것을 씀 (유량 55±3 mL/min, 아직 실측 안 된 것). 없으면 여기서 진화
+  let evo=null;{const pre=ML_NEW[cells.slice().sort().join('+')];if(pre&&Math.abs(Qml-55)<=3&&!ML_LIB.meas[pre.name]){const g=aGeo();g.cav.set(mlRLE(pre.cav,AG*AG));g.gro.set(mlRLE(pre.gro,AG*AG));g.pin=pre.pin.map(p=>p.slice());g.pout=pre.pout.map(p=>p.slice());if(pre.head)g.head=1;
+    const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!pre.head,cells,Qml);evo={m:mlCorrect(SEL_M,r.m,pre.fam,P,cells).m,g,fam:pre.fam,from:pre.seed,cnt:pre.cnt,nch:pre.cnt.add+pre.cnt.gro,head:!!pre.head,pre:pre.name}}}
+  if(!evo)evo=await mlEvolve(evoStarts,cells,Qml,400,alive,prog?(i,t)=>prog(jobs.length+C.length+i,jobs.length+C.length+t,'진화'):null);
   if(alive&&!alive())return null;
-  const out=[];if(evo){const G=evo.g,c=evo.cnt,nm=`머신러닝 새 설계 (${evo.fam}에서 진화 · 슬롯 +${c.add} · 홈 +${c.gro})`;out.push(evo.head?{kind:'hdr',evo:true,m:evo.m,g:G,name:nm}:{kind:'v17',evo:true,m:evo.m,spec:{fam:evo.fam,name:nm,make:()=>mlCloneG(G),mlopt:true}})}
-  const libP=ML_LIB.S.map(s=>mlPool(mlRLE(s.cav,AG*AG)));
+  const out=[];if(evo){const G=evo.g,c=evo.cnt,nm=`머신러닝 새 설계 ${evo.pre?evo.pre+' ':''}(${evo.fam}에서 진화 · 슬롯 +${c.add} · 홈 +${c.gro})`;out.push(evo.head?{kind:'hdr',evo:true,m:evo.m,g:G,name:nm}:{kind:'v17',evo:true,m:evo.m,spec:{fam:evo.fam,name:nm,make:()=>mlCloneG(G),mlopt:true}})}
+  const libP=ML_LIB.S.filter(s=>!s.head).map(s=>mlPool(mlRLE(s.cav,AG*AG)));
   for(const o of opts){if(o.kind==='v17'){let g=null;try{g=o.spec.make()}catch(e){}if(g&&libP.some(L=>mlIoU(mlPool(g.cav),L)>=.85))continue}out.push(o)}   // 실측 모양과 거의 같은 설계는 1위 후보에서 뺌
   return {opts:out.slice(0,5),lib:lib.slice(0,5),n:n+(evo?1500:0),m:out.length?out[0].m:Infinity,evo};
 }
@@ -192,8 +215,8 @@ function mlCloneG(g){const h=aGeo();h.cav.set(g.cav);h.gro.set(g.gro);h.pin=g.pi
 function mlIoU(A,B){let a=0,u=0;for(let i=0;i<A.length;i++){const p=A[i]>0,q=B[i]>0;if(p&&q)a++;if(p||q)u++}return u?a/u:0}
 async function mlEvolve(starts,cells,Q,iters,alive,prog){
   const rnd=mlRng([...cells.join('')].reduce((a,c)=>a*31+c.charCodeAt(0),7)),libP=[];
-  {const seen=new Set();for(const s of ML_LIB.S){const k=JSON.stringify(s.cav);if(seen.has(k))continue;seen.add(k);libP.push(mlPool(mlRLE(s.cav,AG*AG)))}}
-  const libH=[];{const sw=v=>v===1?2:v===2?1:0;for(const p of Object.values(ML_LIB.strip))libH.push(mlMasks(p).P.map(sw));for(const p of Object.values(ML_LIB.F))for(const sd of ['bottom','top']){const mk=mlMasksF(p,sd);if(mk)libH.push(mk.P.map(sw))}}
+  {const seen=new Set();for(const s of ML_LIB.S){if(s.head)continue;const k=JSON.stringify(s.cav);if(seen.has(k))continue;seen.add(k);libP.push(mlPool(mlRLE(s.cav,AG*AG)))}}
+  const libH=[];{const sw=v=>v===1?2:v===2?1:0;for(const p of Object.values(ML_LIB.strip))libH.push(mlMasks(p).P.map(sw));for(const p of Object.values(ML_LIB.F))for(const sd of ['bottom','top']){const mk=mlMasksF(p,sd);if(mk)libH.push(mk.P.map(sw))}for(const s of ML_LIB.S)if(s.head)libH.push(mlPool(mlRLE(s.cav,AG*AG)))}
   let curHead=false;const novel=P=>(curHead?libH:libP).every(L=>mlIoU(P,L)<.85);
   const score=g=>{const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!g.head,cells,Q);if(r.out)return null;return {m:mlCorrect(SEL_M,r.m,starts.fam||'',P,cells).m,P}};
   const pick=(L,n)=>{for(let t=0;t<80;t++){const ix=(rnd()*AG)|0,iy=(rnd()*AG)|0;if(L[iy*AG+ix]===n)return [(ix+.5)*AR,(iy+.5)*AR]}return null};
@@ -211,21 +234,27 @@ async function mlEvolve(starts,cells,Q,iters,alive,prog){
         if((cnt.add+cnt.cut+cnt.gro)>=3&&novel(sc.P)){best={m:sc.m,g:mlCloneG(h),fam:st.fam,from:st.name,cnt:{...cnt},nch:cnt.add+cnt.cut+cnt.gro,head:!!st.head};snaps.push(best);D.snaps++}}}}
   // 유량 계산(v17 flowSolve, quick)이 되는 것 중 가장 좋은 것 — 복잡한 모양은 수렴 안 할 수 있어 좋은 순으로 최대 10개 시험
   snaps.sort((a,b)=>((b.nch>=5)-(a.nch>=5))||a.m-b.m);const fl=G&&G.fQ?G.fQ(Q):(G&&G.f),Qt=Q*1e-6/60;   // 5번 이상 바뀐(더 새로운) 모양 먼저, 그다음 3~4번
-  for(const sn of snaps.slice(0,16)){let sol=null;try{sol=flowSolve(mlCloneG(sn.g),S.inl,Qt,fl,true)}catch(e){}D.solves.push(sol?[sol.conv,isFinite(sol.Rl)]:null);if(sol&&isFinite(sol.Rl)&&(sol.conv||sn.head))return sn;   /* 헤더형은 기존 띠형 후보와 같은 기준(값이 유한하면 사용) */await new Promise(r=>setTimeout(r));if(alive&&!alive())return null}
+  for(const sn of snaps.slice(0,16)){let sol=null;try{sol=flowSolve(mlCloneG(sn.g),S.inl,Qt,fl,true)}catch(e){}if(!(sol&&isFinite(sol.Rl)&&sol.conv)){try{sol=flowSolve(mlCloneG(sn.g),S.inl,Qt,fl,false)}catch(e){}}   /* quick 이 수렴 못 하면 정식 계산 (바람개비형 등) */D.solves.push(sol?[sol.conv,isFinite(sol.Rl)]:null);if(sol&&isFinite(sol.Rl)&&(sol.conv||sn.head))return sn;   /* 헤더형은 기존 띠형 후보와 같은 기준(값이 유한하면 사용) */await new Promise(r=>setTimeout(r));if(alive&&!alive())return null}
   return null}
 // 실측 모양 목록 → 점수 (낮을수록 시원할 것). 그 핫스팟·유량(±3 mL/min)에서 돌려 본 적 있으면 실측값을 씀
 function mlRLE(a,n){const o=new Uint8Array(n);let k=0;for(let i=0;i<a.length;i+=2){o.fill(a[i],k,k+a[i+1]);k+=a[i+1]}return o}
 function mlMeasured(name,cells,Q){const t=ML_LIB.meas[name];if(!t)return null;const k=cells.slice().sort().join('+');let b=null;for(const [h,q,T] of t)if(h===k&&Math.abs(q-Q)<=3)b=T;return b}
 function mlLibrary(cells,Q){const out=[],sw=v=>v===1?2:v===2?1:0,sc=(name,P,head,fam,extra)=>{const r=cellScore(SEL_M,P,head,cells,Q),meas=mlMeasured(name,cells,Q);
     out.push({name,meas,out:r.out,m:meas!=null?Math.log(meas-20):mlCorrect(SEL_M,r.m,fam,P,cells).m,...extra})};
-  const seenS=new Set();for(const s of ML_LIB.S){const key=JSON.stringify([s.cav,s.gro]);if(seenS.has(key))continue;seenS.add(key);sc(s.name,mlPool(mlRLE(s.cav,AG*AG)),false,s.fam,{kind:'S',s})}   // 같은 모양(S6=S7)은 하나만 — 그 핫스팟 실측이 있는 쪽은 mlMeasured 가 이름으로 찾음
+  const seenS=new Set();for(const s of ML_LIB.S){const key=JSON.stringify([s.cav,s.gro]);if(seenS.has(key))continue;seenS.add(key);sc(s.name,mlPool(mlRLE(s.cav,AG*AG)),!!s.head,s.fam,{kind:s.head?'H':'S',s})}   // 같은 모양(S6=S7)은 하나만 — 그 핫스팟 실측이 있는 쪽은 mlMeasured 가 이름으로 찾음
   for(const [k,p] of Object.entries(ML_LIB.strip))sc(k,mlMasks(p).P.map(sw),true,'띠형',{kind:'strip',p});
+  for(const k of ML_LIB.P||[]){const d=DESIGNS.find(q=>q.k===k);if(!d||mlMeasured(k,cells,Q)==null)continue;let P=null;try{P=d.head?Uint8Array.from(d.P):mlPool(presetGeo(d).cav)}catch(e){}if(P)sc(k,P,!!d.head,k,{kind:'P',head:!!d.head,pname:d.name})}   // 실측 프리셋 (돌려 본 핫스팟만, 실측값으로 순위)
   const rows=cells.map(c=>+c.split('_')[0]),side=rows.every(r=>r===4)?'top':'bottom';
   for(const [k,p] of Object.entries(ML_LIB.F)){const mk=mlMasksF(p,side);if(mk)sc(k,mk.P.map(sw),true,'F형',{kind:'F',p,side})}
   return out.sort((a,b)=>((a.out>0)-(b.out>0))||a.m-b.m)}
+// 실측 헤더형 프리셋(M1·M3) → 계산 엔진 후보 (mlStripCand 와 같은 방식)
+function mlPresetCand(k,name){const d0=DESIGNS.find(q=>q.k===k);if(!d0)return null;const d={...d0,k:'A',name:'자동 최적 매니폴드',note:name};const g=presetGeo(d);if(!g||!port_ok(g))return null;
+  g.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};d.flow=makeFlow(g,null,null);return {name,d,g}}
+// 실측 헤더형 새 설계(N, head) → 계산 엔진 후보
+function mlLibH(s,name){const g=aGeo();g.cav.set(mlRLE(s.cav,AG*AG));g.gro.set(mlRLE(s.gro,AG*AG));g.pin=s.pin.map(p=>p.slice());g.pout=s.pout.map(p=>p.slice());g.head=1;return mlDFromG(g,name)}
 // 실측 S 모양 → 계산 엔진 형상(g)
 function mlLibSpec(s,name){return {fam:s.fam,name,make:()=>{const g=aGeo();g.cav.set(mlRLE(s.cav,AG*AG));g.gro.set(mlRLE(s.gro,AG*AG));g.pin=s.pin.map(p=>p.slice());g.pout=s.pout.map(p=>p.slice());return g}}}
-function mlLibName(x){const fam=x.kind==='S'?x.s.base:x.kind==='F'?`F형 (핫스팟 줄 전용 입구${x.side==='top'?' · 위':' · 아래'}) · 띠 ${x.p.n}개`:`띠형 · 띠 ${x.p.n}개 · 폭 ${x.p.wf.toFixed(2)}`;return `실측 모양 ${x.name} · ${fam}`}
+function mlLibName(x){if(x.kind==='P')return `실측 모양 ${x.name} · ${x.pname} (프리셋)`;const fam=(x.kind==='S'||x.kind==='H')?x.s.base:x.kind==='F'?`F형 (핫스팟 줄 전용 입구${x.side==='top'?' · 위':' · 아래'}) · 띠 ${x.p.n}개`:`띠형 · 띠 ${x.p.n}개 · 폭 ${x.p.wf.toFixed(2)}`;return `실측 모양 ${x.name} · ${fam}`}
 // 순위: 1위 = 머신러닝 설계(계산된 것 중 점수 최고), 2~5위 = 실측 모양. 나머지는 숨김
 function mlRank(ok,hs,Q){const cells=mlCells(hs);
   for(const c of ok){if(!c.base)c.base=c.name;c.hide=false;c.ml=undefined;
@@ -256,10 +285,10 @@ src = src[:a] + (
     "    // ← ML: 1위 후보(띠·F 설계)와 2~5위 후보(실측 띠·F 모양)\n"
     "    AUTO.ml={list:[]};{const mo=AUTO.mlopt||{opts:[],lib:[]};\n"
     "      for(const o of mo.opts){if(o.kind==='hdr'){const c=mlDFromG(o.g,o.name);if(c)list.push({name:o.name,g:c.g,d:c.d})}if(o.kind==='strip'||o.kind==='F'){const c=o.kind==='F'?mlStripCand(o.p,'머신러닝 설계 · ',mlMasksF(o.p,o.side),o.side):mlStripCand(o.p,'머신러닝 설계 · ');if(c.d)list.push({name:o.same?'머신러닝 설계 · '+mlLibName(o).replace(/^실측 모양 /,'실측 '):c.name,g:c.g,d:c.d,p:c.p})}}\n"
-    "      for(const x of mo.lib){if(x.kind==='strip'||x.kind==='F'){const c=x.kind==='F'?mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side):mlStripCand(x.p,'');if(c.d)list.push({name:mlLibName(x),g:c.g,d:c.d,p:c.p})}}}\n") + src[a:]
+    "      for(const x of mo.lib){if(x.kind==='P'&&x.head){const c=mlPresetCand(x.name,mlLibName(x));if(c)list.push(c)}if(x.kind==='H'){const c=mlLibH(x.s,mlLibName(x));if(c)list.push({name:mlLibName(x),g:c.g,d:c.d})}if(x.kind==='strip'||x.kind==='F'){const c=x.kind==='F'?mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side):mlStripCand(x.p,'');if(c.d)list.push({name:mlLibName(x),g:c.g,d:c.d,p:c.p})}}}\n") + src[a:]
 # 2b) 머신러닝 최적 매니폴드를 먼저 설계해서 후보 맨 앞에 넣음
 src = rep(src, "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();",
-          "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();\n    st('머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 수천 개 시험)');await tick();if(my!==token)return false;\n    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n,ph)=>st(ph?`머신러닝이 새 모양을 진화시키는 중입니다 (시도 ${i}/${n})`:`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;specs.length=0;if(mo){for(const o of mo.opts){if(o.kind==='v17')specs.push(o.spec);else if(o.kind==='S')specs.push(mlLibSpec(o.s,'머신러닝 설계 · '+mlLibName(o).replace(/^실측 모양 /,'실측 ')))}for(const x of mo.lib)if(x.kind==='S')specs.push(mlLibSpec(x.s,mlLibName(x)))}   // ← ML: 후보 = 머신러닝 설계 + 실측 모양 (원래 v17 후보는 뺌)")
+          "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();\n    st('머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 수천 개 시험)');await tick();if(my!==token)return false;\n    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n,ph)=>st(ph?`머신러닝이 새 모양을 진화시키는 중입니다 (시도 ${i}/${n})`:`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;specs.length=0;if(mo){for(const o of mo.opts){if(o.kind==='v17')specs.push(o.spec);else if(o.kind==='S')specs.push(mlLibSpec(o.s,'머신러닝 설계 · '+mlLibName(o).replace(/^실측 모양 /,'실측 ')))}for(const x of mo.lib){if(x.kind==='S')specs.push(mlLibSpec(x.s,mlLibName(x)));if(x.kind==='P'&&!x.head){const k=x.name;specs.push({fam:k,name:mlLibName(x),make:()=>presetGeo(DESIGNS.find(q=>q.k===k))})}}}   // ← ML: 후보 = 머신러닝 설계 + 실측 모양 (원래 v17 후보는 뺌)")
 # 4) 헤더형 그대로 전달
 _o = "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:0,"
 assert src.count(_o) == 2          # autoDesign 과 nsStage 두 곳
@@ -294,8 +323,16 @@ src = rep(src, "  const ok=AUTO.cands.filter(c=>c.d);\n",
           "  const ok=AUTO.cands.filter(c=>c.d);\n  mlRank(ok,HSN,S.Q);   // ← ML\n")
 src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>p.c.r.Tmax-q.c.r.Tmax)",
           "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r&&!x.c.hide).sort((p,q)=>(p.c.ml&&q.c.ml)?p.c.ml-q.c.ml:p.c.r.Tmax-q.c.r.Tmax)   /* ← ML: 머신러닝 순위, 5개만 */")
+# 5) 후보 유량장: quick 이 수렴 못 하면 정식(quick=false)으로 다시 풂 — 바람개비형·D1 진화형 등은 quick 만 실패함 (2026-11-28, 식은 그대로)
+src = rep(src, "const sols=await Promise.all(grp.map(async m=>{try{return FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,true):flowSolve(m.g,S.inl,Qt,fS,true)}catch(e){return null}}));",
+          "const sols=await Promise.all(grp.map(async m=>{try{let s=FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,true):flowSolve(m.g,S.inl,Qt,fS,true);if(!(s&&isFinite(s.Rl)&&s.conv))s=FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,false):flowSolve(m.g,S.inl,Qt,fS,false);return s}catch(e){return null}}));   // ← ML: quick 실패 → 정식 풀이")
 # 6) 제목
 src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>")
 
 (HERE / "hotspot_agent_v17_ml.html").write_text(src, encoding="utf-8")
 print("저장:", HERE / "hotspot_agent_v17_ml.html", len(src))
+# 아티팩트에 올릴 본문 (<body> 안쪽) — new_result.py 와 같은 방식 (2026-11-28: patch_ml 만 돌려도 만들어지게)
+_b = src[src.index("<body>") + 6:].lstrip("\n").rstrip()
+if _b.endswith("</body></html>"):
+    _b = _b[:-14].rstrip()
+(HERE / "artifact_body.html").write_text(_b, encoding="utf-8")

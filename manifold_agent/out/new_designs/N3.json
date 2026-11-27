@@ -1,0 +1,34 @@
+{
+ "name": "N3",
+ "hotspot": "1_2+1_3",
+ "design": "머신러닝 새 설계 (V자 빗살형에서 진화 · 슬롯 +1 · 홈 +2)",
+ "head": 0,
+ "inlets": [
+  [
+   0.95,
+   3.15
+  ],
+  [
+   0.95,
+   6.25
+  ]
+ ],
+ "outlets": [
+  [
+   11.05,
+   3.3
+  ],
+  [
+   11.05,
+   8.7
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 1,
+ "fluid_mm3": 58.17,
+ "solid_mm3": 157.83,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 16,
+ "dead_fluid_filled_mm3": 0,
+ "ml_pred_C": 100.2
+}

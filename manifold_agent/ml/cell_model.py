@@ -10,7 +10,7 @@
 목표: log(칸 최고온도 − 20). 모델: 릿지(선형, 상호작용 몇 개) — 자바스크립트로 옮기기 쉬움.
 """
 from __future__ import annotations
-import json, sys, warnings
+import json, re, sys, warnings
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -76,7 +76,7 @@ def test(alpha=3.0):
         D.loc[~tr, "p"] = pred_cells(fit_model(D[tr], alpha), D[~tr])
     run = D.groupby("run").agg(design=("design", "first"), hotspot=("hotspot", "first"), v=("v", "first"),
                                Tmax=("Tmax", "first"), pred=("p", "max"))
-    fam = run.design.where(run.design.isin(SM.PRESET) | run.design.str.match(r"^S\d"), "띠가족")
+    fam = run.design.where(run.design.isin(SM.PRESET) | run.design.str.match(r"^[SN]\d"), "띠가족")
     print(f"시험: 모양 하나를 통째로 빼고 맞히기 (칸 모델, 릿지 alpha={alpha}, {len(run)} Run, 칸 {len(D)}개)")
     print(run.assign(err=(run.pred - run.Tmax).abs(), bias=run.pred - run.Tmax, fam=fam).groupby("fam")[["err", "bias"]].mean().round(1).to_string())
     rows = []
@@ -113,15 +113,21 @@ def residuals(D, M):
     run["r"] = np.log(run.Tmax - 20) - np.log(run.p - 20)
     strip = run[run.design.str.match(r"^[ABC]\d")]
     shapes = []
-    for k, g in run[run.design.str.match(r"^S\d")].groupby("design"):
+    # 모양·핫스팟마다 하나 (hs = 그 실측의 핫스팟). 후보와 비교할 때 핫스팟 위치를 맞춰 옮긴 뒤 겹침을 봄 (align_w, 2026-11-28)
+    for (k, h), g in run[run.design.str.match(r"^S\d")].groupby(["design", "hotspot"]):
         m = json.load(open(SM.V17 / f"{k}_mask.json"))
         P = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)).astype(np.uint8)
         fam = (m.get("base") or "").replace("머신러닝 설계 · ", "").split(" · ")[0].split(" (")[0]
-        shapes.append(dict(name=k, fam=fam, r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
+        shapes.append(dict(name=k, fam=fam, hs=h, r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
+    for (k, h), g in run[run.design.str.match(r"^N\d")].groupby(["design", "hotspot"]):   # 머신러닝 새 설계 (ml/build_new.py) — 진화 출발 종류 이름으로
+        m = json.load(open(ROOT / f"out/new_designs/{k}_mask.json"))
+        P = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3)).astype(np.uint8)
+        shapes.append(dict(name=k, fam=m["fam"], hs=h, head=int(m.get("head", 0)), r=float(g.r.mean()), P=base64.b64encode(P.tobytes()).decode()))
     by_hs = {h: float(g.r.mean()) for h, g in strip.groupby("hotspot")}   # 핫스팟별 (실측이 있으면 이쪽 우선)
-    nh = run[run.design.isin(["D0", "D1"]) | run.design.str.match(r"^S\d")]   # 헤더 없는 계열(채널 0.6~11.4): 모양별 평균의 평균
+    nnh = [k for k in run.design.unique() if re.match(r"^N\d", k) and not json.load(open(ROOT / f"out/new_designs/{k}_mask.json")).get("head")]
+    nh = run[run.design.isin(["D0", "D1"] + nnh) | run.design.str.match(r"^S\d")]   # 헤더 없는 계열(채널 0.6~11.4): 모양별 평균의 평균
     nohead = float(nh.groupby("design").r.mean().mean())
-    shapes += f_shapes(M)
+    shapes += f_shapes(M) + preset_shapes(M)
     return dict(strip=float(strip.r.mean()), strip_n=int(len(strip)), strip_hs=by_hs, nohead=nohead, shapes=shapes)
 
 
@@ -134,17 +140,65 @@ def f_shapes(M):
     runs = pd.read_csv(ROOT / "data/direct_runs.csv"); runs = runs[runs.design.isin(list(SFd.F))]
     out = []
     for k, g in runs.groupby("design"):
-        rs = []
         for _, x in g.iterrows():
             hs = x.heat.split("at ")[1].replace(",", "+"); cells = [tuple(map(int, c.split("_"))) for c in hs.split("+")]
             side = "top" if all(r == 4 for r, _ in cells) else "bottom"
             P, _ = FF.f_masks(SFd.F[k], side)
             s = SF.shape_summary(SF.openings_from_mask(P, 2, 1.5, 10.5))
             p = pred_cells(M, pd.DataFrame(cell_rows(s, cells, x.total_flow_mL_min))).max()
-            rs.append(np.log(x.Tmax_bottom_C - 20) - np.log(p - 20))
-        Ph = np.where(P == 2, 1, np.where(P == 1, 2, 0)).astype(np.uint8)       # HTML 규칙 (1 = 입구망)
-        out.append(dict(name=k, fam="F형", r=float(np.mean(rs)), P=base64.b64encode(Ph.tobytes()).decode()))
+            Ph = np.where(P == 2, 1, np.where(P == 1, 2, 0)).astype(np.uint8)       # HTML 규칙 (1 = 입구망)
+            out.append(dict(name=k, fam="F형", hs="+".join(sorted(hs.split("+"))), r=float(np.log(x.Tmax_bottom_C - 20) - np.log(p - 20)), P=base64.b64encode(Ph.tobytes()).decode()))
     return out
+
+
+PRESET_SHAPES = ["D1"]      # 실측이 많은 프리셋 (v17 형, 1 = 입구망). 진화 출발점·2~5위 후보에도 씀 (2026-11-28)
+
+
+def preset_mask(k):
+    P = np.array(SF._designs()[k]["P"]).reshape(120, 120)
+    inl = [tuple(p) for p in SF._meta()[k]["inlets"]]; ports = [tuple(p) for p in SF._designs()[k]["ports"]]
+    sv = 1 if any(np.hypot(a[0] - b[0], a[1] - b[1]) < 0.3 for a in inl for b in ports[:2]) else 2
+    return np.where(P == sv, 1, np.where(P > 0, 2, 0)).astype(np.uint8)
+
+
+def preset_shapes(M):
+    """프리셋(D1) 실측 — 최고온도로 핫스팟마다 보정값 (칸 사진 없는 Run 도 씀)."""
+    import base64
+    runs = pd.read_csv(ROOT / "data/direct_runs.csv"); out = []
+    for k in PRESET_SHAPES:
+        Ph = preset_mask(k); s = SM.summary_of(k); rs = {}
+        for _, x in runs[runs.design == k].iterrows():
+            hs = "+".join(sorted(x.heat.split("at ")[1].split(","))); cells = [tuple(map(int, c.split("_"))) for c in hs.split("+")]
+            p = pred_cells(M, pd.DataFrame(cell_rows(s, cells, x.total_flow_mL_min))).max()
+            rs.setdefault(hs, []).append(np.log(x.Tmax_bottom_C - 20) - np.log(p - 20))
+        for hs, r in rs.items():
+            out.append(dict(name=k, fam=k, hs=hs, r=float(np.mean(r)), P=base64.b64encode(Ph.tobytes()).decode()))
+    return out
+
+
+def align_w(P, A, hs_a, hs_b):
+    """실측 모양 A(핫스팟 hs_a)를 후보 핫스팟 hs_b 위치로 옮겨(3 mm 칸 단위, 위아래 뒤집기 포함) 후보 P 와 겹침² (2026-11-28).
+    모양의 실측 보정은 '그 핫스팟에 맞춘 배치'의 효과이므로, 다른 핫스팟 후보에는 같은 배치로 옮겨서 비교.
+    두 칸 핫스팟의 방향(가로·세로)이 다르면 0. 같은 핫스팟이면 그냥 겹침² (= 예전과 같음).
+    P, A: 120×120 (행 = y/0.1). hs: '2_2+3_2' 또는 [(2,2),(3,2)]."""
+    cv = lambda h: sorted(tuple(map(int, c.split("_"))) for c in h.split("+")) if isinstance(h, str) else sorted(h)
+    ca, cb = cv(hs_a), cv(hs_b)
+    ori = lambda c: "s" if len(c) == 1 else ("h" if c[0][0] == c[1][0] else "v")
+    if ori(ca) != ori(cb) and "s" not in (ori(ca), ori(cb)):
+        return 0.0
+    Pb = P > 0; best = 0.0
+    for flip in (False, True):
+        A2 = A[::-1] if flip else A
+        c2 = [(5 - r, c) for r, c in ca] if flip else ca
+        dr = (min(r for r, _ in cb) - min(r for r, _ in c2)) * 30; dc = (min(c for _, c in cb) - min(c for _, c in c2)) * 30
+        B = np.zeros_like(A2)
+        ys, yd = (slice(0, 120 - dr), slice(dr, 120)) if dr >= 0 else (slice(-dr, 120), slice(0, 120 + dr))
+        xs, xd = (slice(0, 120 - dc), slice(dc, 120)) if dc >= 0 else (slice(-dc, 120), slice(0, 120 + dc))
+        B[yd, xd] = A2[ys, xs]
+        u = (Pb | (B > 0)).sum()
+        if u:
+            best = max(best, (Pb & (B > 0)).sum() / u)
+    return best ** 2
 
 
 if __name__ == "__main__":

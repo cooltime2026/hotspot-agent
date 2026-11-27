@@ -10,7 +10,7 @@
 목표: log(Tmax − 20). 모델: 릿지(선형) — 자바스크립트로 그대로 옮기기 쉬움.
 """
 from __future__ import annotations
-import json, sys, warnings
+import json, re, sys, warnings
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -50,6 +50,11 @@ def summary_of(design):
         from geometry import split_feed as SFd
         P, _ = FF.f_masks(SFd.F[design], "bottom")
         return SF.shape_summary(SF.openings_from_mask(P, 2, 1.5, 10.5))
+    nf = ROOT / "out" / "new_designs" / f"{design}_mask.json"     # 머신러닝 새 설계 N* (ml/build_new.py): head 1 = 헤더형(채널 1.5~10.5)
+    if re.match(r"^N\d", design) and nf.exists():
+        m = json.load(open(nf)); P = np.array(m["cav"]).reshape(240, 240).reshape(120, 2, 120, 2).max(axis=(1, 3))
+        lo, hi = (1.5, 10.5) if m.get("head") else (0.6, 11.4)
+        return SF.shape_summary(SF.openings_from_mask(P, 1, lo, hi), (lo, hi))
     mf = V17 / f"{design}_mask.json"
     if mf.exists():
         cav = np.array(json.load(open(mf))["cav"]).reshape(240, 240)
