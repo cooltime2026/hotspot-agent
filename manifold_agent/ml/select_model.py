@@ -36,9 +36,17 @@ def plate_features(s):
     return dict(dead_all=float(np.mean([f["dead"] for f in cf])), log_flow_min_all=float(np.log(min(f["flow_loc"] for f in cf) + 1e-4)))
 
 
+V17 = ROOT / "out" / "step_v17"     # HTML v17(ML 판)에서 꺼낸 모양 (S0, S1 …): <이름>_mask.json, 1 = 입구망, 채널 0.6~11.4
+
+
 def summary_of(design):
     if design in PRESET:
         return SF.design_summary(design)
+    mf = V17 / f"{design}_mask.json"
+    if mf.exists():
+        cav = np.array(json.load(open(mf))["cav"]).reshape(240, 240)
+        P = cav.reshape(120, 2, 120, 2).max(axis=(1, 3))
+        return SF.shape_summary(SF.openings_from_mask(P, 1, 0.6, 11.4), (0.6, 11.4))
     p = json.load(open(ROOT / f"out/step_param_v3/{design}.json"))["params"]
     return SF.shape_summary(PM.openings({k: p[k] for k in ["n", "yf", "s", "xf", "b", "wf"]}))
 
@@ -73,7 +81,7 @@ def test(alpha=1.0):
         tr = (d.design != k).values
         pred[~tr] = predict(fit_model(X[tr], y[tr], alpha), X[~tr])
     d["pred"] = 20 + np.exp(pred)
-    fam = d.design.where(d.design.isin(PRESET), "띠가족")
+    fam = d.design.where(d.design.isin(PRESET) | d.design.str.match(r"^S\d"), "띠가족")
     print(f"시험: 모양 하나를 통째로 빼고 맞히기 (릿지 alpha={alpha}, {len(d)} Run, 모양 {d.design.nunique()}개)")
     print((d.assign(err=(d.pred - d.Tmax_C).abs(), bias=d.pred - d.Tmax_C, fam=fam)
            .groupby("fam")[["err", "bias"]].mean().round(1).to_string()))

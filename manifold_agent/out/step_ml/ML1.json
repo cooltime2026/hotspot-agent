@@ -1,0 +1,20 @@
+{
+ "name": "ML1",
+ "params": {
+  "n": 13,
+  "yf": 7.63,
+  "s": 0.98,
+  "xf": 9.84,
+  "b": 0.68,
+  "wf": 0.64,
+  "s_eff": 0.001,
+  "s_max": 0.001
+ },
+ "valid": true,
+ "min_gap_mm": 0.2,
+ "fluid_solids": 1,
+ "dead_fluid_filled_mm3": 0,
+ "fluid_mm3": 60.468,
+ "bottom_faces": 16,
+ "height_mm": 1.2
+}

@@ -1699,7 +1699,19 @@ function selScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=se
   let out=0;if(M.xmin)for(let i=0;i<X.length;i++){const w=(M.xmax[i]-M.xmin[i])*.1;if(X[i]<M.xmin[i]-w||X[i]>M.xmax[i]+w)out++}
   return {m,X,out}}
 
-const SEL_M={ "note": "ml/select_model.py — 모양 특징 릿지. 순위 전용.", "alpha": 3.0, "sfeats": [  "log_flow_worst",  "log_flow_mean",  "dead_max",  "dfresh_max",  "dfresh_mean",  "path_max",  "logG",  "dead_all",  "log_flow_min_all" ], "mu": [  0.23672566371681417,  0.5060840707964602,  0.41150442477876104,  0.11414546460176991,  0.08611808806396297,  0.027098476613458267,  0.04803289151789524,  0.02534297362266666,  0.013934821786193105,  -4.985041027132444,  -4.789505766379189,  0.28648844641101257,  0.36315388397246784,  0.24637844149459193,  0.36256774418223553,  3.542704253135718,  0.25948477445919366,  -5.932126879972307 ], "sd": [  0.12429317054781107,  0.23990465944683098,  0.4921062224260881,  0.0769683022409164,  0.41912798631820025,  0.110269098976355,  0.23606274493406498,  0.2749307786023816,  0.057664867384220504,  1.3802614303512688,  1.318470629364287,  0.2555874989162433,  0.18686209066176476,  0.16495626166862404,  0.17998331589440347,  2.0108539590005154,  0.18629544920256821,  1.9487735635103485 ], "xmin": [  0.125,  0.125,  0.0,  0.015625,  -0.6068026925580193,  -0.22755100970925723,  -0.530952355988267,  -0.6068026925580193,  -0.17066325728194293,  -9.210340371976182,  -9.210340371976182,  0.0,  0.013194444444444472,  0.010069444444444445,  0.027777777777777814,  0.7884573603642703,  0.0,  -9.210340371976182 ], "xmax": [  0.375,  0.875,  1.0,  0.28125,  0.5979369957559538,  0.22422637340848267,  0.5231948712864596,  0.5979369957559538,  0.16816978005636202,  -3.0888448698148285,  -3.0888448698148285,  1.0,  0.7999999999999999,  0.7916666666666666,  1.0,  6.0673026234994865,  0.6,  -3.4932129945170503 ], "coef": [  -0.07867519051577518,  0.047433856537809044,  -0.13009320219117404,  -0.08597739158987984,  -0.13932609837530374,  -0.045677091957287294,  0.005511105615544194,  -0.03321229216121366,  0.01217221189867819,  -0.10055599475218487,  -0.13684887657655412,  -0.1704401145141397,  0.039383593511452195,  -0.004034780555570969,  -0.027092989557487367,  -0.14657423332321232,  -0.06364920843118718,  -0.07138823669021335 ], "intercept": 4.481337188736477, "n_runs": 226, "designs": [  "A1",  "A2",  "A3",  "A4",  "A5",  "A6",  "A7",  "A8",  "B1",  "B2",  "B3",  "B4",  "B5",  "B6",  "B7",  "B8",  "C1",  "C2",  "C3",  "C4",  "D0",  "D1",  "M0",  "M1",  "M3",  "M4" ]};   // ml/select_model.py fit 결과
+
+// [ML 고르기 v2] 칸별 온도 모델 (ml/cell_model.py): 16칸 온도를 따로 예측해 최댓값 = 최고온도. 핫스팟 밖이 뜨거운 모양(S1)도 잡음
+function cellScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=selSummary(P,lo,hi),hot=new Set(cells),lq=Math.log(Math.max(30,Math.min(100,Q))/55),lG=Math.log(S.G);
+  const cf={};for(let r=1;r<=4;r++)for(let c=1;c<=4;c++)cf[r+'_'+c]=selCell(S,r+'_'+c);
+  let Tm=-1,out=0;const T={};
+  for(let r=1;r<=4;r++)for(let c=1;c<=4;c++){const k=r+'_'+c,f=cf[k],nb=[[r+1,c],[r-1,c],[r,c+1],[r,c-1]].filter(([a,b])=>a>=1&&a<=4&&b>=1&&b<=4).map(([a,b])=>a+'_'+b);
+    const h=hot.has(k)?1:0,nh=nb.filter(n=>hot.has(n)).length,lf=Math.log(f.flow+1e-4),fr=f.fresh/12,pa=Math.min(f.path,12)/12;
+    const v={hot:h,nhot:nh,lflow:lf,dead:f.dead,fresh:fr,path:pa,nlflow:nb.reduce((a,n)=>a+Math.log(cf[n].flow+1e-4),0)/nb.length,ndead:nb.reduce((a,n)=>a+cf[n].dead,0)/nb.length,
+      edge_r:(r===1||r===4)?1:0,edge_c:(c===1||c===4)?1:0,lq,logG:lG,hot_lq:h*lq,hot_lflow:h*lf,hot_dead:h*f.dead,hot_fresh:h*fr,nhot_lq:nh*lq,dead_lq:f.dead*lq};
+    let m=M.intercept;M.feats.forEach((k2,i)=>{const x=v[k2];m+=M.coef[i]*(x-M.mu[i])/M.sd[i];const w=(M.xmax[i]-M.xmin[i])*.1;if(x<M.xmin[i]-w||x>M.xmax[i]+w)out++});
+    T[k]=20+Math.exp(m);if(T[k]>Tm)Tm=T[k]}
+  return {m:Math.log(Tm-20),out,T}}
+const SEL_M={ "type": "cell", "note": "ml/cell_model.py — 칸별 릿지, 최고온도 = 16칸 최댓값. 순위 전용.", "alpha": 10.0, "feats": [  "hot",  "nhot",  "lflow",  "dead",  "fresh",  "path",  "nlflow",  "ndead",  "edge_r",  "edge_c",  "lq",  "logG",  "hot_lq",  "hot_lflow",  "hot_dead",  "hot_fresh",  "nhot_lq",  "dead_lq" ], "mu": [  0.125,  0.39655172413793105,  -5.383454330516042,  0.3007228807471264,  0.27945038114623244,  0.2853736492162318,  -5.282372969588796,  0.26960820262611745,  0.5,  0.5,  0.09562823760336141,  4.049761183957063,  0.011953529700420176,  -0.6360618900356193,  0.026342592592592588,  0.029975854086845468,  0.040245651806520406,  0.04414138745548694 ], "sd": [  0.33071891488307387,  0.4964699016658332,  1.527472860647887,  0.30455595031412186,  0.20873535219229808,  0.24557813637057183,  1.2489754272781581,  0.19031331619521596,  0.500000001,  0.500000001,  0.411687130131154,  1.9014260789799224,  0.1489496389405577,  1.7476669579522943,  0.11715368210550621,  0.11040952895616664,  0.2651036694810204,  0.17074706903319858 ], "coef": [  0.17370183085253538,  0.20656034098163173,  -0.10916320840940018,  0.007194632830416109,  0.13474380018773222,  -0.11232762354648437,  -0.29144664178273677,  -0.11547137529810679,  0.06054735104043591,  -0.05948996970357663,  -0.29256882377206456,  -0.35256230915332115,  0.024412775783045664,  0.04105444747168628,  0.0293004545616802,  -0.0025774898876587044,  0.01365966730990139,  0.02514794733292224 ], "intercept": 3.846019736933454, "xmin": [  0.0,  0.0,  -9.210340371976182,  0.0,  0.0,  0.017708333333333364,  -8.089514336161171,  0.0,  0.0,  0.0,  -0.6068026925580193,  0.7884573603642703,  -0.6068026925580193,  -9.210340371976182,  0.0,  0.0,  -1.2136053851160387,  -0.5299410181673369 ], "xmax": [  1.0,  2.0,  -3.067905987382549,  1.0,  0.7999999999999999,  1.0,  -3.189936900990384,  0.9166666666666666,  1.0,  1.0,  0.5979369957559538,  6.0673026234994865,  0.5979369957559538,  -0.0,  1.0,  0.7999999999999999,  1.1958739915119077,  0.5979369957559538 ], "n_runs": 174, "designs": [  "A1",  "A2",  "A3",  "A4",  "A5",  "A6",  "A7",  "A8",  "B1",  "B2",  "B3",  "B4",  "B5",  "B6",  "B7",  "B8",  "C1",  "C2",  "C3",  "C4",  "D0",  "D1",  "M0",  "M1",  "M3",  "M4",  "S1" ]};   // ml/cell_model.py fit 결과 (칸별 온도 모델)
 
 const ML_RES=0.1,ML_N=120;
 // 핫스팟(위치·크기·열유속) → 4×4 칸 이름. 칸마다 받는 발열(겹친 면적×열유속)이 큰 순서로 최대 2칸
@@ -1759,10 +1771,10 @@ function mlPool(L){const o=new Uint8Array(120*120);for(let iy=0;iy<120;iy++)for(
 // ★ 머신러닝 최적 매니폴드 설계: 모양 종류별 숫자를 촘촘하게 바꿔 그려 보고(v17 규칙 + 띠 가족), SimScale 학습 모델 점수가 가장 좋은 모양을 만든다.
 //   학습 범위 밖 모양(특징이 학습 데이터 범위를 10 % 넘게 벗어남)은 고르지 않는다. 계산(유량장·온도)은 하지 않음 — 모양 그림만으로 점수.
 async function mlOptimize(hs,Qml,direct,alive,prog){
-  const cells=mlCells(hs);if(!cells.length)return null;let best=null,n=0;const jobs=[];
+  const cells=mlCells(hs);if(!cells.length)return null;let n=0;const jobs=[],res=[];
   const mm=m=>m==='full'?'전폭 슬롯':`좌우 여유 ${m} mm`;
   const tryG=(fam,name,make)=>jobs.push([fam,name,make]),run=(fam,name,make)=>{let g;try{g=make()}catch(e){return}if(!g||aCheck(g))return;n++;
-    const r=selScore(SEL_M,mlPool(g.cav),false,cells,Qml);if(r.out)return;if(!best||r.m<best.m)best={m:r.m,fam,name,make}};
+    const r=cellScore(SEL_M,mlPool(g.cav),false,cells,Qml);if(r.out)return;res.push({m:r.m,fam,name,make})};
   const R=(a,b,st)=>{const o=[];for(let v=a;v<=b+1e-9;v+=st)o.push(+v.toFixed(2));return o};
   for(const gg of [0,1])for(const m of [...R(0,3,.5),'full'])for(const s of R(.4,1.2,.2)){
     tryG('흡입형',`흡입형 (양끝 공급, 핫스팟 위 배출) · 슬롯 ${s} mm · ${mm(m)}${gg?' · 가운데 한 줄':''}`,()=>aSwap(famDirect(hs,s,m,gg)));
@@ -1776,9 +1788,10 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
   // 띠 가족: 1,671개 전부 점수 (마스크만 그림)
   const C=ML_M.cand;let bs=null;
   for(let i=0;i<C.length;i++){if(i%100===99){if(prog)prog(jobs.length+i+1,jobs.length+C.length);await tk();if(alive&&!alive())return null}const c=C[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]},{P}=mlMasks(p),Ph=P.map(v=>v===1?2:v===2?1:0);
-    const r=selScore(SEL_M,Ph,true,cells,Qml);n++;if(r.out)continue;if(!bs||r.m<bs.m)bs={m:r.m,p}}
-  if(bs&&(!best||bs.m<best.m))return {strip:bs.p,m:bs.m,n,fam:'띠형'};
-  return best?{spec:{fam:best.fam,name:'머신러닝 최적 · '+best.name,make:best.make,mlopt:true},m:best.m,n,fam:best.fam}:{n};
+    const r=cellScore(SEL_M,Ph,true,cells,Qml);n++;if(r.out)continue;if(!bs||r.m<bs.m)bs={m:r.m,p}}
+  res.sort((a,b)=>a.m-b.m);const specs=[],seenF={};
+  for(const r of res){if(specs.length>=5)break;if((seenF[r.fam]=(seenF[r.fam]||0)+1)>2)continue;specs.push({fam:r.fam,name:'머신러닝 설계 · '+r.name,make:r.make,mlopt:true})}   // 종류마다 2개까지, 모두 5개
+  const top=res[0];return {specs,strip:bs&&bs.p,stripM:bs&&bs.m,m:Math.min(top?top.m:Infinity,bs?bs.m:Infinity),n};
 }
 </script>
 <script type="text/plain" id="nsSrc">
@@ -2448,7 +2461,7 @@ async function autoDesign(my){
     if(drag){st('핫스팟을 놓으면 그 위치에 맞는 모양을 다시 찾습니다.');return true}
     const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();
     st('머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 수천 개 시험)');await tick();if(my!==token)return false;
-    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n)=>st(`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;if(mo&&mo.spec)specs.unshift(mo.spec);   // ← ML 최적 설계
+    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n)=>st(`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;if(mo&&mo.specs)specs.unshift(...mo.specs);   // ← ML 최적 설계
     // ← 15차: 후보 형상은 먼저 만들어 검사하고, 유량장은 워커 2개에서 2개씩 병렬로 푼다(quick). 워커가 없으면 동기 풀이
     const fS=G&&G.fQ?G.fQ(S.Q):(G&&G.f),Qt=S.Q*1e-6/60,made=[];
     for(let i=0;i<specs.length;i++){
@@ -2468,12 +2481,12 @@ async function autoDesign(my){
     // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로
     st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;
     let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}
-    if(AUTO.mlopt&&AUTO.mlopt.strip){const c=mlStripCand(AUTO.mlopt.strip,'머신러닝 최적 · ');if(c.d)list.unshift({name:c.name,g:c.g,d:c.d})}
+    if(AUTO.mlopt&&AUTO.mlopt.strip){const c=mlStripCand(AUTO.mlopt.strip,'머신러닝 설계 · ');if(c.d)list.unshift({name:c.name,g:c.g,d:c.d})}
     AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});
     AUTO.key=key;AUTO.cands=list;
   }
   const ok=AUTO.cands.filter(c=>c.d);
-  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));{const o=sc.findIndex(c=>/^머신러닝 최적/.test(c.base));if(o>0)sc.unshift(sc.splice(o,1)[0])}sc.forEach((c,i)=>{c.ml=i+1;c.name=/^머신러닝 최적/.test(c.base)?`1위 ${c.base}`:`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML
+  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=cellScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));{const o=sc.findIndex(c=>/^머신러닝 설계/.test(c.base)&&!c.mlOut);if(o>0)sc.unshift(sc.splice(o,1)[0])}sc.forEach((c,i)=>{c.ml=i+1;c.name=i===0&&/^머신러닝 설계/.test(c.base)?`1위 머신러닝 최적 · ${c.base.replace(/^머신러닝 설계 · /,'')}`:`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML
   for(const c of ok)if(c.d.flow)c.d.flow.quickOK=true;   // ← 14차: 후보 선별은 quick 유량장(분배 오차 ~1 % 이하)으로 평가. 아래에서 고른 설계만 정밀 풀이로 바꿈
   {const fQ=G&&G.fQ?G.fQ(S.Q):(G&&G.f),need=ok.filter(c=>c.d.flow&&c.d.flow.prefetch);   // ← 16차: 유량만 바뀌어 후보를 재사용할 때도 유량장은 워커에서 미리 푼다(화면 멈춤 방지)
     for(let i=0;i<need.length;i+=2){st(`후보 유량장을 ${S.Q} ml/min으로 다시 푸는 중입니다 (${Math.min(i+2,need.length)}/${need.length}, 관성 포함)`);await Promise.all(need.slice(i,i+2).map(c=>c.d.flow.prefetch(S.Q,fQ).catch(()=>{})));if(my!==token)return false}}
