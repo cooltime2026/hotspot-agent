@@ -518,7 +518,7 @@ python ml/cellmaps.py; python ml/chantemps.py; python ml/dataset.py; python ml/i
 
 ### 21-8. HTML v17 + 머신러닝 매니폴드 판 (2026-11-27)
 - 사용자 의도: "매니폴드만 ML로 '이게 베스트일 것' 정도로 정하고, 그 뒤 계산은 HTML v17 계산식 그대로". (21-7 처럼 계산식 비교를 길게 설명하지 말 것 — 사용자가 헷갈려 함)
-- 결과물: html_v17/hotspot_agent_v17_ml.html (만들기 python html_v17/patch_ml.py). 브라우저(Playwright)에서 오류 없이 돎 확인.
+- 결과물: html_v17/hotspot_agent_v17_ml.html (만들기 python html_v17/patch_ml.py). 앱에서 파일은 안 열림 → claude.ai 아티팩트로 올림 https://claude.ai/artifact/WMq3nfa1Bog7EYCdzLm3MY (사용자 소유, 비공개; 올릴 때 <body> 앞 뼈대는 떼고 올림). 브라우저(Playwright)에서 오류 없이 돎 확인.
   · 핫스팟 → 칸(발열 큰 2칸) → family_model v2b 로 띠 모양 선택(유량 55~100으로 묶음, 목표 = 화면 한도 또는 85 ℃, 목표 지키며 펌프 최소)
   · 그 모양을 M1·M3 프리셋과 같은 방식(presetGeo, 헤더, 0.15/0.4)으로 계산 엔진에 넣음. 3D NS 는 건너뜀.
   · 상태 문구에 ML 예상 온도도 같이 표시. 예: 2_2+3_2 55 mL/min → ML 81.1 ℃, 계산식 139.0 ℃ (매니폴드 없음 114.9).
