@@ -26,7 +26,14 @@ from scipy.stats import spearmanr  # noqa: E402
 warnings.filterwarnings("ignore")
 OUT = ROOT / "ml" / "select_model.json"
 PRESET = ["M0", "M1", "M3", "M4", "D0", "D1"]
-SFEATS = ["log_flow_worst", "log_flow_mean", "dead_max", "dfresh_max", "dfresh_mean", "path_max", "logG"]
+SFEATS = ["log_flow_worst", "log_flow_mean", "dead_max", "dfresh_max", "dfresh_mean", "path_max", "logG", "dead_all", "log_flow_min_all"]
+CELLS = [f"{r}_{c}" for r in range(1, 5) for c in range(1, 5)]
+
+
+def plate_features(s):
+    """판 전체(16칸): 죽은 구간 평균, 가장 물이 적은 칸 — 핫스팟 밖이 뜨거워지는 모양을 알아보려고 (2026-11-27 추가)"""
+    cf = [SF.cell_features(s, c) for c in CELLS]
+    return dict(dead_all=float(np.mean([f["dead"] for f in cf])), log_flow_min_all=float(np.log(min(f["flow_loc"] for f in cf) + 1e-4)))
 
 
 def summary_of(design):
@@ -40,7 +47,7 @@ def table():
     d = pd.read_csv(ROOT / "data/ml/thermal.csv")
     d = d[(d.augmented == "original") & (d.design != "L1")].reset_index(drop=True)
     S = {k: summary_of(k) for k in d.design.unique()}
-    F = pd.DataFrame([SF.hotspot_features(S[k], h, q) for k, h, q in zip(d.design, d.hotspot, d.Q_mLmin)])
+    F = pd.DataFrame([{**SF.hotspot_features(S[k], h, q), **plate_features(S[k])} for k, h, q in zip(d.design, d.hotspot, d.Q_mLmin)])
     return d, F
 
 

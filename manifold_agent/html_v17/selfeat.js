@@ -20,6 +20,7 @@ function selHsPos(cells){const cs=cells.map(c=>c.split('_').map(Number)),ys=cs.m
 function selScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=selSummary(P,lo,hi),cf=cells.map(c=>selCell(S,c)),eps=1e-4;
   const f={log_flow_worst:Math.log(Math.min(...cf.map(c=>c.flow))+eps),log_flow_mean:Math.log(cf.reduce((a,c)=>a+c.flow,0)/cf.length+eps),dead_max:Math.max(...cf.map(c=>c.dead)),
     dfresh_max:Math.max(...cf.map(c=>c.fresh))/12,dfresh_mean:cf.reduce((a,c)=>a+c.fresh,0)/cf.length/12,path_max:Math.max(...cf.map(c=>c.path))/12,logG:Math.log(S.G)};
+  {const all=[];for(let r=1;r<=4;r++)for(let c=1;c<=4;c++)all.push(selCell(S,r+'_'+c));f.dead_all=all.reduce((a,c)=>a+c.dead,0)/16;f.log_flow_min_all=Math.log(Math.min(...all.map(c=>c.flow))+1e-4)}   // 판 전체
   const H=selHsPos(cells),lq=Math.log(Math.max(30,Math.min(100,Q))/55),X=[...H,lq,...H.map(h=>h*lq),...M.sfeats.map(k=>f[k])];
   let m=M.intercept;for(let i=0;i<X.length;i++)m+=M.coef[i]*(X[i]-M.mu[i])/M.sd[i];
   // 학습 범위 밖: 특징이 학습 데이터 최소~최대를 (폭의 10 % 넘게) 벗어난 개수

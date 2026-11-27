@@ -119,7 +119,7 @@ src = rep(src, "st(`3D 나비에–스토크스 + 열전달로 상위 후보 ${c
           "st((b.c.ml?`3D 나비에–스토크스 + 열전달로 머신러닝 상위 후보 ${cand.length}개를 계산했습니다. 선택은 머신러닝 ${b.c.ml}위입니다.`:`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽).`)+` [${tbl}]")
 # 14) 모든 후보(원래 모양 + 띠 모양)를 머신러닝 고르기 모델로 줄 세움
 src = rep(src, "  const ok=AUTO.cands.filter(c=>c.d);\n",
-          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>a.mls-b.mls);sc.forEach((c,i)=>{c.ml=i+1;c.name=`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
+          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));sc.forEach((c,i)=>{c.ml=i+1;c.name=`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
 src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>p.c.r.Tmax-q.c.r.Tmax)",
           "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>(p.c.ml&&q.c.ml)?p.c.ml-q.c.ml:p.c.r.Tmax-q.c.r.Tmax)   /* ← ML: 머신러닝 순위 */")
 # 6) 제목

@@ -1,0 +1,32 @@
+{
+ "name": "S1",
+ "source": "흡입형 (양끝 공급, 핫스팟 위 배출) · 좌우 여유 1.5 mm",
+ "inlets": [
+  [
+   6,
+   1.55
+  ],
+  [
+   6,
+   10.45
+  ]
+ ],
+ "outlets": [
+  [
+   4.5,
+   4.5
+  ],
+  [
+   4.5,
+   7.5
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 1,
+ "fluid_mm3": 38.076,
+ "solid_mm3": 177.924,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 16,
+ "dead_fluid_filled_mm3": 0,
+ "min_edge_mm": 0.019
+}
