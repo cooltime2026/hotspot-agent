@@ -1,4 +1,4 @@
-# ★★ 새 채팅은 맨 아래 "21장. 새 채팅 시작 (2026-11-27)"부터 읽을 것 (그 위는 과거 기록) ★★
+# ★★ 새 채팅은 맨 아래 "22장. 새 채팅 시작 (2026-11-28)"부터 읽을 것 (21장은 어제 기록, 그 위는 과거 기록) ★★
 
 # 인수인계: 핫스팟 → 매니폴드 추천 에이전트 (SimScale 데이터 + 머신러닝)
 
@@ -666,3 +666,46 @@ python ml/cellmaps.py; python ml/chantemps.py; python ml/dataset.py; python ml/i
 - 브라우저 확인 7곳(1_3+1_4, 2_2+3_2, 4_3+4_4, 2_1+2_2, 3_3+3_4, 4_1+4_2, 1_1+1_2) 모두 1위 '머신러닝 새 설계'. 그림 out/step_v17/ml_new_design_examples.png.
 - 버그 기록: 패치 중 '//' 주석이 한 줄짜리 코드 뒤를 주석 처리해 ML 스크립트 전체가 죽은 적 있음 → 수정 후 node --check 로 모든 스크립트 문법 확인.
 - 주의: 새 설계는 실측이 없는 모양이라 예측이 크게 틀릴 수 있음(돌려서 확인 필요).
+
+
+---
+
+## 22. ★★★ 새 채팅 시작 (2026-11-28) — 여기부터 읽을 것 ★★★
+
+### 22-0. 목표 (사용자 말)
+- SimScale 데이터 → 파이썬 머신러닝 → 최적 매니폴드 형상(STEP)·유량. 새 결과마다 등록·재학습. 모델이 못 하는 건 데이터로 원인 찾아 새 모양 발명.
+- HTML v17(사용자 에이전트) 안에서: **1위 = 머신러닝이 새로 만든 특이한 모양(진화 설계)**, **2~5위 = 지금까지 SimScale 로 돌려 본 모양 중 좋은 것**. v17 계산식(간이·3D NS)은 그대로.
+- 대화: 한국어, 쉬운 말, 짧게. 확인 안 된 건 '확인 안 됨'. 사진 보기 전 예측 → 결과와 비교. 진행마다 GitHub 푸시. STEP 은 압축 말고 .step 그대로 보냄(저장소엔 zip).
+  설정 안내 그림은 '앞면(윗면) = 입구·출구 좌표', '뒷면(바닥) = 핫스팟 칸' 따로 (geometry/plot_front_back.py S8:2_1,2_2 처럼).
+
+### 22-1. 준비
+- 저장소 cooltime2026/hotspot-agent, 브랜치 ml-data-1120, 작업 폴더 manifold_agent/. 푸시: `git -c push.negotiate=true push origin ml-data-1120`
+- `pip install numpy pandas scikit-learn matplotlib pillow scipy cadquery shapely tabulate`, node·playwright(브라우저 시험용) 있음.
+- 점검: `python ml/intake.py check` → '이상 없음' (현재 **238 Run**, 사진 1~1339).
+- 페이지(아티팩트, 사용자 소유 비공개): https://claude.ai/artifact/WMq3nfa1Bog7EYCdzLm3MY
+  갱신: `python html_v17/patch_ml.py` → html_v17/artifact_body.html (new_result.py 가 자동으로 만듦) → Artifact publish(file_path=그 파일, url=위 주소).
+  원본 v17: html_v17/hotspot_agent_v17.html (수정 안 함). 패치 결과: html_v17/hotspot_agent_v17_ml.html. 패치 후 `node --check` 로 스크립트 문법 확인(한 줄 코드 뒤 '//' 주석 금지 — 두 번 사고 남).
+
+### 22-2. 새 SimScale 결과 받으면 (이것 하나)
+```
+python ml/new_result.py --design S10 --hotspot 2_1,2_2 --tmax .. --pmax .. --pmin .. --inlet "user (1.5,4.5)+(4.5,4.5)" --photos <바닥> <채널층> <압력>
+```
+- 사진 순서: 바닥 온도, 채널층 온도(세로 줄 보이는 Z 0.0003 단면), 윗면 압력. 파일로 안 오면 --photos 빼고 숫자만(칸 학습 안 됨). webp 는 png 로 변환 먼저.
+- 하는 일: 등록·칸 온도(사진 방향 고정: 바닥 보기 x 오른쪽·y 아래쪽 = cellmaps (2,True))·check·사전 예측 vs 실측 runs_log·재학습(cell_model, select_model, 띠면 family_model)·HTML 패치.
+- 그 뒤: 아티팩트 publish + git push + HANDOFF 한 줄. 압력 사진이 따로 오면 direct_runs.csv 의 p_max/p_min 직접 채움.
+- 압력 사진으로 입구(높은 압력)·출구 위치 확인, find_hotspot 이 '확신 낮음'이면 사진(가장 뜨거운 칸)과 설정으로 판정.
+
+### 22-3. 머신러닝 구성 (ml/)
+- cell_model.py: 칸 16개 온도 릿지(최고 = 최댓값) + **실측 보정**(띠: 핫스팟별 가족 평균 / S·F 모양: 같은 종류 실측 모양과 겹침² 만큼 / 헤더 없는 계열 기본 −0.21). E 가족은 학습 제외(지름길 현상).
+- select_model.py(핫스팟 칸 특징 릿지, 참고용), family_model.py(띠 가족 v2b), new_result.py, f_family.py(F형 마스크).
+- HTML 쪽: html_v17/selfeat.js(cellScore·mlCorrect, 파이썬과 같은 계산), patch_ml.py(ML_LIB 실측 모양 목록 자동 생성, mlOptimize·mlEvolve·mlRank).
+
+### 22-4. 핫스팟별 실측 최선 (0.912 m/s, 55 mL/min)
+| 2_2+3_2 S2 바람개비 79.55 | 1_3+1_4 F1 F형 111.6 | 2_1+2_2 S5 V자 88.82 | 3_3+3_4 A7 띠 89.8 | 4_3+4_4 B1 108.7 |
+- 실패에서 배운 것: S1(출구 한쪽만 → 채널 절반 죽음 107), E1(등뼈 안 끊은 구멍 → 지름길 201.5), V자 계열은 핫스팟 따라 들쭉날쭉(S4~S9 중 기록은 S5 하나).
+- 모양 이름: A·B·C(띠, out/step_param_v3), F1(geometry/split_feed.py), E1(edge_feed), S1~S10(HTML v17 모양, out/step_v17/S*_mask.json → geometry/build_v17_auto.py 로 STEP).
+
+### 22-5. 남은 일
+1. **S10**(2_1+2_2 바람개비, 입구 (1.5,4.5),(4.5,4.5) / 출구 (9,1.55),(6,10.45), 예측 85.6) 결과 기다리는 중.
+2. 사용자가 원하면 페이지 1위 '머신러닝 새 설계' 모양을 STEP 으로: 페이지에서 그 후보의 g(cav·gro·pin·pout, 헤더형이면 d.P/U) 꺼내 → v17 형은 build_v17_auto.py, 헤더형은 아직 STEP 도구 없음(만들어야 함: param 띠 STEP 과 같은 층 0.15/0.4 + 헤더).
+3. 새 설계를 실제로 돌려 보면 진화 설계의 예측 정확도 확인 가능(지금은 확인 안 됨).
