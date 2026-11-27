@@ -90,7 +90,7 @@ def fit(alpha=1.0):
     d, F = table(); X = X_of(d.hotspot, d.Q_mLmin, F); y = np.log(d.Tmax_C - 20)
     M = fit_model(X, y, alpha)
     js = dict(note="ml/select_model.py — 모양 특징 릿지. 순위 전용.", alpha=alpha, sfeats=SFEATS,
-              mu=M["mu"].tolist(), sd=M["sd"].tolist(), coef=M["m"].coef_.tolist(), intercept=float(M["m"].intercept_),
+              mu=M["mu"].tolist(), sd=M["sd"].tolist(), xmin=X.min(0).tolist(), xmax=X.max(0).tolist(), coef=M["m"].coef_.tolist(), intercept=float(M["m"].intercept_),
               n_runs=len(d), designs=sorted(d.design.unique().tolist()))
     OUT.write_text(json.dumps(js, ensure_ascii=False, indent=1))
     print("저장:", OUT, len(d), "Run")

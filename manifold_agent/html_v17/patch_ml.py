@@ -16,6 +16,8 @@ i1 = next(i for i in range(i0, len(des)) if des[i].startswith("})();"))
 core = "\n".join(des[i0:i1 + 1]).replace("return { design, mask, bandLayout,", "return { design, mask, squeeze, bandLayout,")
 assert "squeeze, bandLayout" in core
 model = next(l for l in des if l.startswith("const M = CORE.prepare(")).replace("const M = CORE.prepare(", "const ML_M = CORE.prepare(", 1)
+sel = (HERE / "selfeat.js").read_text(encoding="utf-8").replace("if(typeof module!=='undefined')module.exports={selScore};", "")
+sel += "const SEL_M=" + (HERE.parent / "ml" / "select_model.json").read_text(encoding="utf-8").replace("\n", "") + ";   // ml/select_model.py fit 결과\n"
 
 ML = r'''<script id="mlManifold">
 /* ============================== [ML] 머신러닝 매니폴드 선택 (2026-11-27 추가) ==============================
@@ -25,7 +27,7 @@ ML = r'''<script id="mlManifold">
    층: 채널 y 1.5~10.5 + 헤더, 관통층 0.15 / 덮개 홈층 0.4 mm (M1·M3 프리셋과 같은 방식으로 계산 엔진에 넣음).
    입구 (9,1),(9,11) / 출구 (3,1),(3,11) — SimScale 학습 데이터와 같은 방향.
    ============================================================================================================== */
-''' + core + "\n" + model + r'''
+''' + core + "\n" + model + "\n" + sel + r'''
 const ML_RES=0.1,ML_N=120;
 // 핫스팟(위치·크기·열유속) → 4×4 칸 이름. 칸마다 받는 발열(겹친 면적×열유속)이 큰 순서로 최대 2칸
 function mlCells(hs){
@@ -61,7 +63,7 @@ function mlCands(hs,Qml,K){
     const c=M.cand[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]};
     const key=[p.n,p.wf.toFixed(1),p.s_eff>.05?Math.round(p.yf/1.5):'-',p.b>.15?'+':p.b<-.15?'-':'0'].join('|');if(seen.has(key))continue;seen.add(key);
     const {P,U}=mlMasks(p);
-    const name=`머신러닝 ${out.filter(o=>!o.why).length+1}위 · 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
+    const name=`띠형 (SimScale 학습 가족) · 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
     const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
       ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
     const g=presetGeo(d);if(!g||!port_ok(g)){out.push({name,why:'포트가 유로에 닿지 않음'});continue}
@@ -85,10 +87,7 @@ src = src[:a] + (
     "    // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
     "    st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;\n"
     "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
-    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});let rk=0;for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d,ml:++rk});\n") + src[a:]
-# 3) 다시 고를 조건에 유량·목표 온도 추가
-src = rep(src, "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q])]);",
-          "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q]),Math.max(55,Math.min(100,Math.round(S.Q))),S.Tlim]);   // ← ML: 유량·목표 온도 추가")
+    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[a:]
 # 4) 헤더형 그대로 전달
 _o = "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:0,"
 assert src.count(_o) == 2          # autoDesign 과 nsStage 두 곳
@@ -98,7 +97,7 @@ src = rep(src, "  const okv=ok.filter(c=>validR(c.r));\n",
           "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
 # 8) 상태 문장: 선택은 머신러닝 1위 (머신러닝 예상 온도는 표시 안 함)
 src = rep(src, "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`);",
-          "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':(best&&best.ml?`머신러닝(SimScale 227 Run 학습)이 이 핫스팟에 가장 시원할 것으로 고른 모양(1위)을 선택했습니다. 머신러닝 후보 ${ok.filter(c=>c.ml).length}개의 온도·압력은 이 에이전트 계산식 값입니다. 원래 모양(바람개비·대역 등) ${ok.filter(c=>!c.ml).length}개는 SimScale 데이터가 없어 머신러닝이 고를 수 없으므로 참고로 간이 계산만 했습니다.`:`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`));   // ← ML")
+          "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':(best&&best.ml?`머신러닝(SimScale 227 Run 학습)이 후보 ${ok.length}개(원래 모양 ${ok.filter(c=>!c.d.head).length}개 + 띠 모양 ${ok.filter(c=>c.d.head).length}개)의 순위를 매겨 1위를 선택했습니다. 온도·압력은 이 에이전트 계산식 값입니다. ⚠ 바람개비·대역처럼 헤더 없는 원래 모양은 비슷한 실측이 D0·D1 두 개뿐이라 머신러닝 순위가 부정확할 수 있습니다.`:`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`));   // ← ML")
 # 9) 3D NS: 모양마다 격자 형상(층 두께·채널 범위·헤더)을 받게 함 — 식은 그대로
 src = rep(src, "function nsGrid(){const G=NSGEO,", "const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상\nfunction nsGrid(GG){const G=GG||NSGEO,")
 src = rep(src, "function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),", "function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),")
@@ -118,6 +117,11 @@ src = rep(src, "const b=pl.filter(x=>x.ns.Tmax<=tm+.5).reduce((p,q)=>p.ns.dp<=q.
           "const b=cand.find(x=>x.c.ml===1)||pl.filter(x=>x.ns.Tmax<=tm+.5).reduce((p,q)=>p.ns.dp<=q.ns.dp?p:q),d=b.c.d;   // ← ML: 머신러닝 1위")
 src = rep(src, "st(`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽). [${tbl}]",
           "st((b.c.ml?`3D 나비에–스토크스 + 열전달로 머신러닝 상위 후보 ${cand.length}개를 계산했습니다. 선택은 머신러닝 ${b.c.ml}위입니다.`:`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽).`)+` [${tbl}]")
+# 14) 모든 후보(원래 모양 + 띠 모양)를 머신러닝 고르기 모델로 줄 세움
+src = rep(src, "  const ok=AUTO.cands.filter(c=>c.d);\n",
+          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>a.mls-b.mls);sc.forEach((c,i)=>{c.ml=i+1;c.name=`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
+src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>p.c.r.Tmax-q.c.r.Tmax)",
+          "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>(p.c.ml&&q.c.ml)?p.c.ml-q.c.ml:p.c.r.Tmax-q.c.r.Tmax)   /* ← ML: 머신러닝 순위 */")
 # 6) 제목
 src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>")
 
