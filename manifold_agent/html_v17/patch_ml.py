@@ -79,14 +79,13 @@ def rep(s, old, new):
 # 1) 계산 엔진(calcB) 블록 바로 다음에 삽입
 cb = src.index('<script id="calcB">'); ce = src.index('</script>', cb) + len('</script>')
 src = src[:ce] + '\n' + ML.rstrip('\n') + src[ce:]
-# 2) autoDesign: 후보 생성 → 머신러닝 후보 6개
-a = src.index("    const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs)")
-b = src.index("    AUTO.key=key;AUTO.cands=list;", a)
+# 2) autoDesign: 원래 후보(바람개비·대역·V자·직상부 등)는 그대로 두고, 그 뒤에 머신러닝 띠 후보 6개를 더함
+a = src.index("    AUTO.key=key;AUTO.cands=list;")
 src = src[:a] + (
-    "    // ← ML: 후보 모양 생성(autoSpecs 4+1종)을 머신러닝이 고른 띠 모양 후보로 바꿈. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
-    "    const list=[];st('머신러닝으로 매니폴드 후보를 고르는 중입니다');await tick();if(my!==token)return false;\n"
-    "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
-    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[b:]
+    "    // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
+    "    st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;\n"
+    "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
+    "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[a:]
 # 3) 다시 고를 조건에 유량·목표 온도 추가
 src = rep(src, "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q])]);",
           "const key=JSON.stringify([S.inl,!!S.direct,HSN.map(h=>[h.x,h.y,h.lx,h.ly,h.q]),Math.max(55,Math.min(100,Math.round(S.Q))),S.Tlim]);   // ← ML: 유량·목표 온도 추가")
@@ -99,7 +98,7 @@ src = rep(src, "  const okv=ok.filter(c=>validR(c.r));\n",
           "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
 # 8) 원래 '후보 N개를 계산해 골랐습니다' 문장 → '머신러닝 후보 N개'로 (머신러닝 예상 온도는 표시 안 함)
 src = rep(src, "`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.",
-          "`머신러닝(SimScale 학습)이 고른 띠 모양 후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.")
+          "`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개(핫스팟 맞춤 모양 ${ok.length-ok.filter(c=>/^머신러닝/.test(c.name)).length}개 + 머신러닝 띠 모양 ${ok.filter(c=>/^머신러닝/.test(c.name)).length}개)를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다.")
 # 9) 3D NS: 모양마다 격자 형상(층 두께·채널 범위·헤더)을 받게 함 — 식은 그대로
 src = rep(src, "function nsGrid(){const G=NSGEO,", "const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상\nfunction nsGrid(GG){const G=GG||NSGEO,")
 src = rep(src, "function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),", "function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),")
