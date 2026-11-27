@@ -1,0 +1,32 @@
+{
+ "name": "S3",
+ "source": "대역 대향류형 · 방향 반대",
+ "inlets": [
+  [
+   8,
+   1.55
+  ],
+  [
+   2.5,
+   10.45
+  ]
+ ],
+ "outlets": [
+  [
+   2.5,
+   1.55
+  ],
+  [
+   8,
+   10.45
+  ]
+ ],
+ "height_mm": 1.5,
+ "fluid_solids": 2,
+ "fluid_mm3": 36.356,
+ "solid_mm3": 179.644,
+ "overlap_mm3": 0.0,
+ "bottom_faces": 16,
+ "dead_fluid_filled_mm3": 0,
+ "min_edge_mm": 0.019
+}
