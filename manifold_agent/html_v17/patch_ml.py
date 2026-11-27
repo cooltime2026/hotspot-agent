@@ -71,6 +71,42 @@ function mlCands(hs,Qml,K){
     d.flow=makeFlow(g,null,null);out.push({name,d,g,p})}
   return {cells,Qd,list:out};
 }
+
+// 띠 모양 변수 p → 계산 엔진용 후보 {name,d,g}
+function mlStripCand(p,prefix){
+  const M1=DESIGNS.find(x=>x.k==='M1'),sw=v=>v===1?2:v===2?1:0,bin=v=>v?1:0,{P,U}=mlMasks(p);
+  const name=`${prefix||''}띠형 (SimScale 학습 가족) · 띠 ${p.n}개 · 폭 ${p.wf.toFixed(2)}${p.s_eff>.05?` · y ${p.yf.toFixed(1)} 쪽 모음`:''}${Math.abs(p.b)>.05?` · 휨 ${p.b.toFixed(2)}`:''}`;
+  const d={k:'A',name:'자동 최적 매니폴드',note:name,inl:'q',P:Uint8Array.from(P,sw),U:Uint8Array.from(U,sw),
+    ports:[[9,1],[9,11],[3,1],[3,11]],head:1,T:M1.T,layers:[{h:.15,M:Uint8Array.from(P,bin),n:'관통 매니폴드층'},{h:.4,M:Uint8Array.from(U,bin),n:'덮개 홈층'}]};
+  const g=presetGeo(d);if(!g||!port_ok(g))return {name,why:'포트가 유로에 닿지 않음'};
+  g.ns={kCav:11,kGro:19,kSolidTop:11,kEval:29,nz:49,CY:[1.5,10.5],head:1};d.flow=makeFlow(g,null,null);return {name,d,g,p};
+}
+// 0.05 mm 격자(240) → 0.1 mm(120), 2×2 칸 중 큰 값 (aDesign 의 pool 과 같음)
+function mlPool(L){const o=new Uint8Array(120*120);for(let iy=0;iy<120;iy++)for(let ix=0;ix<120;ix++){const k=2*iy*AG+2*ix;o[iy*120+ix]=Math.max(L[k],L[k+1],L[k+AG],L[k+AG+1])}return o}
+// ★ 머신러닝 최적 매니폴드 설계: 모양 종류별 숫자를 촘촘하게 바꿔 그려 보고(v17 규칙 + 띠 가족), SimScale 학습 모델 점수가 가장 좋은 모양을 만든다.
+//   학습 범위 밖 모양(특징이 학습 데이터 범위를 10 % 넘게 벗어남)은 고르지 않는다. 계산(유량장·온도)은 하지 않음 — 모양 그림만으로 점수.
+async function mlOptimize(hs,Qml,direct,alive,prog){
+  const cells=mlCells(hs);if(!cells.length)return null;let best=null,n=0;const jobs=[];
+  const mm=m=>m==='full'?'전폭 슬롯':`좌우 여유 ${m} mm`;
+  const tryG=(fam,name,make)=>jobs.push([fam,name,make]),run=(fam,name,make)=>{let g;try{g=make()}catch(e){return}if(!g||aCheck(g))return;n++;
+    const r=selScore(SEL_M,mlPool(g.cav),false,cells,Qml);if(r.out)return;if(!best||r.m<best.m)best={m:r.m,fam,name,make}};
+  const R=(a,b,st)=>{const o=[];for(let v=a;v<=b+1e-9;v+=st)o.push(+v.toFixed(2));return o};
+  for(const gg of [0,1])for(const m of [...R(0,3,.5),'full'])for(const s of R(.4,1.2,.2)){
+    tryG('흡입형',`흡입형 (양끝 공급, 핫스팟 위 배출) · 슬롯 ${s} mm · ${mm(m)}${gg?' · 가운데 한 줄':''}`,()=>aSwap(famDirect(hs,s,m,gg)));
+    if(direct)tryG('직상부 공급형',`직상부 공급형 · 슬롯 ${s} mm · ${mm(m)}${gg?' · 가운데 한 줄':''}`,()=>famDirect(hs,s,m,gg))}
+  for(const w of R(.4,1.0,.2))for(const pp of R(1.0,3.0,.2))tryG('V자 빗살형',`V자 빗살형 · 빗살 폭 ${w} mm · 간격 ${pp} mm`,()=>famV(hs,w,pp));
+  for(const f of [0,1])tryG('대역 대향류형',`대역 대향류형${f?' · 방향 반대':''}`,()=>famBand(hs,f));
+  for(const m of [...R(.5,2.5,.5),'vor'])for(const s of R(.4,1.0,.2))for(const gp of R(-.6,.4,.2))for(const r of [0,1])
+    tryG('바람개비형',`바람개비형 · 슬롯 ${s} mm · ${m==='vor'?'이웃 핫스팟 중간까지':mm(m)} · 슬롯 간격 ${gp} mm${r?' · 좌우 반전':''}`,()=>famPin(hs,m,r,s,gp));
+  const tk=()=>new Promise(r=>setTimeout(r));
+  for(let j=0;j<jobs.length;j++){run(...jobs[j]);if(j%25===24){if(prog)prog(j+1,jobs.length+ML_M.cand.length);await tk();if(alive&&!alive())return null}}
+  // 띠 가족: 1,671개 전부 점수 (마스크만 그림)
+  const C=ML_M.cand;let bs=null;
+  for(let i=0;i<C.length;i++){if(i%100===99){if(prog)prog(jobs.length+i+1,jobs.length+C.length);await tk();if(alive&&!alive())return null}const c=C[i],p={n:c[0],yf:c[1],s:c[2],xf:c[3],b:c[4],wf:c[5],s_eff:c[6]},{P}=mlMasks(p),Ph=P.map(v=>v===1?2:v===2?1:0);
+    const r=selScore(SEL_M,Ph,true,cells,Qml);n++;if(r.out)continue;if(!bs||r.m<bs.m)bs={m:r.m,p}}
+  if(bs&&(!best||bs.m<best.m))return {strip:bs.p,m:bs.m,n,fam:'띠형'};
+  return best?{spec:{fam:best.fam,name:'머신러닝 최적 · '+best.name,make:best.make,mlopt:true},m:best.m,n,fam:best.fam}:{n};
+}
 </script>
 '''
 
@@ -87,7 +123,11 @@ src = src[:a] + (
     "    // ← ML: 머신러닝(SimScale 학습)이 고른 띠 모양 후보를 더함. 그 뒤 간이 계산 → 3D NS 는 원래 그대로\n"
     "    st('머신러닝 띠 모양 후보를 더하는 중입니다');await tick();if(my!==token)return false;\n"
     "    let mr;try{mr=mlCands(HSN,S.Q,6)}catch(e){mr={why:'머신러닝 후보를 만들지 못함: '+(e.message||e),list:[]}}\n"
+    "    if(AUTO.mlopt&&AUTO.mlopt.strip){const c=mlStripCand(AUTO.mlopt.strip,'머신러닝 최적 · ');if(c.d)list.unshift({name:c.name,g:c.g,d:c.d})}\n"
     "    AUTO.ml=mr;if(mr.why)list.push({name:'머신러닝 후보',why:mr.why});for(const c of mr.list)list.push(c.why?{name:c.name,why:c.why}:{name:c.name,g:c.g,d:c.d});\n") + src[a:]
+# 2b) 머신러닝 최적 매니폴드를 먼저 설계해서 후보 맨 앞에 넣음
+src = rep(src, "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();",
+          "const hs=HSN.map(h=>({...h})),specs=autoSpecs(hs).filter(q=>S.direct||q.fam!=='직상부 공급형'),list=[],seen=new Set();\n    st('머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 수천 개 시험)');await tick();if(my!==token)return false;\n    let mo=null;try{mo=await mlOptimize(hs,S.Q,!!S.direct,()=>my===token,(i,n)=>st(`머신러닝이 이 핫스팟에 맞는 최적 매니폴드를 설계하는 중입니다 (모양 ${i}/${n}개 시험)`))}catch(e){mo=null}if(my!==token)return false;AUTO.mlopt=mo;if(mo&&mo.spec)specs.unshift(mo.spec);   // ← ML 최적 설계")
 # 4) 헤더형 그대로 전달
 _o = "Object.assign(AUTOD,{T:d.T,U:d.U,P:d.P,ports:d.ports,head:0,"
 assert src.count(_o) == 2          # autoDesign 과 nsStage 두 곳
@@ -97,7 +137,7 @@ src = rep(src, "  const okv=ok.filter(c=>validR(c.r));\n",
           "  const okv=ok.filter(c=>validR(c.r));\n  if(!okv.length&&AUTO.ml&&ok.length)okv.push(...ok.filter(c=>c.r));   // ← ML: 모양은 머신러닝이 정함 → 계산식 판정과 상관없이 표시\n")
 # 8) 상태 문장: 선택은 머신러닝 1위 (머신러닝 예상 온도는 표시 안 함)
 src = rep(src, "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`);",
-          "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':(best&&best.ml?`머신러닝(SimScale 227 Run 학습)이 후보 ${ok.length}개(원래 모양 ${ok.filter(c=>!c.d.head).length}개 + 띠 모양 ${ok.filter(c=>c.d.head).length}개)의 순위를 매겨 1위를 선택했습니다. 온도·압력은 이 에이전트 계산식 값입니다. ⚠ 바람개비·대역처럼 헤더 없는 원래 모양은 비슷한 실측이 D0·D1 두 개뿐이라 머신러닝 순위가 부정확할 수 있습니다.`:`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`));   // ← ML")
+          "st(AUTO.pick!=null?'직접 고른 모양입니다. 핫스팟을 옮기면 다시 자동으로 고릅니다.':(best&&best.ml?`머신러닝(SimScale 227 Run 학습)이 이 핫스팟에 맞춰 모양 ${AUTO.mlopt&&AUTO.mlopt.n||0}개를 그려 보고 최적 매니폴드를 설계했습니다(1위). 나머지 후보 ${ok.length-1}개는 머신러닝 순위대로 보여 줍니다. 온도·압력은 이 에이전트 계산식 값입니다. ⚠ 바람개비·대역처럼 헤더 없는 원래 모양은 비슷한 실측이 D0·D1 두 개뿐이라 머신러닝 순위가 부정확할 수 있습니다.`:`${S.direct?'':'직상부 공급형을 뺀 '}후보 ${ok.length}개를 계산해 전체 최고 온도가 가장 낮은 모양을 골랐습니다. 차이가 0.5 °C 이내면 압력강하가 작은 쪽입니다.`));   // ← ML")
 # 9) 3D NS: 모양마다 격자 형상(층 두께·채널 범위·헤더)을 받게 함 — 식은 그대로
 src = rep(src, "function nsGrid(){const G=NSGEO,", "const nsGeoOf=g=>g&&g.ns?Object.assign({},NSGEO,g.ns):NSGEO;   // ← ML: 모양별 격자 형상\nfunction nsGrid(GG){const G=GG||NSGEO,")
 src = rep(src, "function nsMakeSpec(g,Qt,fl){const G=NSGEO,n=G.n,R=nsGrid(),", "function nsMakeSpec(g,Qt,fl){const G=nsGeoOf(g),n=G.n,R=nsGrid(G),")
@@ -119,7 +159,7 @@ src = rep(src, "st(`3D 나비에–스토크스 + 열전달로 상위 후보 ${c
           "st((b.c.ml?`3D 나비에–스토크스 + 열전달로 머신러닝 상위 후보 ${cand.length}개를 계산했습니다. 선택은 머신러닝 ${b.c.ml}위입니다.`:`3D 나비에–스토크스 + 열전달로 상위 후보 ${cand.length}개를 다시 풀어 최고 온도가 가장 낮은 모양을 골랐습니다(0.5 °C 이내면 압력강하가 작은 쪽).`)+` [${tbl}]")
 # 14) 모든 후보(원래 모양 + 띠 모양)를 머신러닝 고르기 모델로 줄 세움
 src = rep(src, "  const ok=AUTO.cands.filter(c=>c.d);\n",
-          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));sc.forEach((c,i)=>{c.ml=i+1;c.name=`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
+          "  const ok=AUTO.cands.filter(c=>c.d);\n  {const cells=mlCells(HSN);const sc=ok.filter(c=>c.d.P).map(c=>{if(!c.base)c.base=c.name;try{const r=selScore(SEL_M,c.d.P,!!c.d.head,cells,S.Q);c.mls=r.m;c.mlOut=r.out}catch(e){c.mls=Infinity}return c}).sort((a,b)=>((a.mlOut>0)-(b.mlOut>0))||(a.mls-b.mls));{const o=sc.findIndex(c=>/^머신러닝 최적/.test(c.base));if(o>0)sc.unshift(sc.splice(o,1)[0])}sc.forEach((c,i)=>{c.ml=i+1;c.name=/^머신러닝 최적/.test(c.base)?`1위 ${c.base}`:`머신러닝 ${i+1}위${c.mlOut?' (학습 범위 밖)':''} · ${c.base}`})}   // ← ML\n")
 src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>p.c.r.Tmax-q.c.r.Tmax)",
           "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).sort((p,q)=>(p.c.ml&&q.c.ml)?p.c.ml-q.c.ml:p.c.r.Tmax-q.c.r.Tmax)   /* ← ML: 머신러닝 순위 */")
 # 6) 제목
