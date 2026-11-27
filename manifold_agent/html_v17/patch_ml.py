@@ -89,11 +89,16 @@ ML = r'''<script id="mlManifold">
 const ML_RES=0.1,ML_N=120;
 // 핫스팟(위치·크기·열유속) → 4×4 칸 이름. 칸마다 받는 발열(겹친 면적×열유속)이 큰 순서로 최대 2칸
 function mlCells(hs){
+  // 핫스팟(위치·크기·열유속) → 4×4 칸. 반환 = 발열이 큰 두 칸(이름표: 실측·미리 만든 설계 찾기용) + w(칸마다 발열 몫, 300 W/cm²가 칸 전체(9 mm²)를 덮으면 1)
+  // 2026-11-28: 예전에는 두 칸만 보고 나머지 핫스팟을 무시함(떨어진 두 곳·세 곳·칸 경계에 걸친 핫스팟). 이제 칸 모델은 모든 칸의 발열 몫(w)을 씀.
+  //   exact = 핫스팟이 칸에 딱 맞는 300 W/cm² 두 칸 이하 → 그때만 실측값·미리 만든 설계(N)를 씀
   const w=new Map();
   for(const h of hs)for(let r=1;r<=4;r++)for(let c=1;c<=4;c++){
     const ox=Math.min(h.x+h.lx/2,c*3)-Math.max(h.x-h.lx/2,(c-1)*3),oy=Math.min(h.y+h.ly/2,r*3)-Math.max(h.y-h.ly/2,(r-1)*3);
-    if(ox>0&&oy>0)w.set(r+'_'+c,(w.get(r+'_'+c)||0)+ox*oy*h.q)}
-  return [...w].sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);
+    if(ox>0&&oy>0)w.set(r+'_'+c,(w.get(r+'_'+c)||0)+ox*oy*h.q/2700)}
+  const all=[...w].filter(x=>x[1]>.02).sort((a,b)=>b[1]-a[1]),out=all.slice(0,2).map(x=>x[0]);
+  out.w=Object.fromEntries(all.map(([k,v])=>[k,Math.min(1,v)]));out.exact=all.length<=2&&all.every(x=>Math.abs(x[1]-1)<.02);
+  return out;
 }
 // 띠 모양 변수 → 관통층 P, 덮개 홈층 U (0.1 mm, 120×120). 우리 규칙: 1 = A망(출구), 2 = B망(입구)
 function mlMasks(p){
@@ -198,7 +203,7 @@ async function mlOptimize(hs,Qml,direct,alive,prog){
     for(const x of stripAll.slice(0,40)){const c=mlStripCand(x.p,'');if(!c.g||aCheck(c.g))continue;const P=mlPool(c.g.cav);if(libH.some(L=>mlIoU(P,L)>=.85))continue;const p=x.p;evoStarts.push({fam:'띠형',head:true,name:'띠형',make:()=>mlStripCand(p,'').g});break}}
   if(Fall[0]){const x=Fall[0];evoStarts.push({fam:'F형',head:true,name:'F형',make:()=>mlStripCand(x.p,'',mlMasksF(x.p,x.side),x.side).g})}
   // 핫스팟별로 미리 깊게 찾아 둔 새 설계(ML_NEW, STEP 으로 보낸 모양)가 있으면 그것을 씀 (유량 55±3 mL/min, 아직 실측 안 된 것). 없으면 여기서 진화
-  let evo=null;{const pre=ML_NEW[cells.slice().sort().join('+')];if(pre&&Math.abs(Qml-55)<=3&&!ML_LIB.meas[pre.name]){const g=aGeo();g.cav.set(mlRLE(pre.cav,AG*AG));g.gro.set(mlRLE(pre.gro,AG*AG));g.pin=pre.pin.map(p=>p.slice());g.pout=pre.pout.map(p=>p.slice());if(pre.head)g.head=1;
+  let evo=null;{const pre=cells.exact!==false&&ML_NEW[cells.slice().sort().join('+')];if(pre&&Math.abs(Qml-55)<=3&&!ML_LIB.meas[pre.name]){const g=aGeo();g.cav.set(mlRLE(pre.cav,AG*AG));g.gro.set(mlRLE(pre.gro,AG*AG));g.pin=pre.pin.map(p=>p.slice());g.pout=pre.pout.map(p=>p.slice());if(pre.head)g.head=1;
     const P=mlPool(g.cav),r=cellScore(SEL_M,P,!!pre.head,cells,Qml);evo={m:mlCorrect(SEL_M,r.m,pre.fam,P,cells).m,g,fam:pre.fam,from:pre.seed,cnt:pre.cnt,nch:pre.cnt.add+pre.cnt.gro,head:!!pre.head,pre:pre.name}}}
   if(!evo)evo=await mlEvolve(evoStarts,cells,Qml,400,alive,prog?(i,t)=>prog(jobs.length+C.length+i,jobs.length+C.length+t,'진화'):null);
   if(alive&&!alive())return null;
@@ -238,7 +243,7 @@ async function mlEvolve(starts,cells,Q,iters,alive,prog){
   return null}
 // 실측 모양 목록 → 점수 (낮을수록 시원할 것). 그 핫스팟·유량(±3 mL/min)에서 돌려 본 적 있으면 실측값을 씀
 function mlRLE(a,n){const o=new Uint8Array(n);let k=0;for(let i=0;i<a.length;i+=2){o.fill(a[i],k,k+a[i+1]);k+=a[i+1]}return o}
-function mlMeasured(name,cells,Q){const t=ML_LIB.meas[name];if(!t)return null;const k=cells.slice().sort().join('+');let b=null;for(const [h,q,T] of t)if(h===k&&Math.abs(q-Q)<=3)b=T;return b}
+function mlMeasured(name,cells,Q){const t=ML_LIB.meas[name];if(!t||cells.exact===false)return null;const k=cells.slice().sort().join('+');let b=null;for(const [h,q,T] of t)if(h===k&&Math.abs(q-Q)<=3)b=T;return b}
 function mlLibrary(cells,Q){const out=[],sw=v=>v===1?2:v===2?1:0,sc=(name,P,head,fam,extra)=>{const r=cellScore(SEL_M,P,head,cells,Q),meas=mlMeasured(name,cells,Q);
     out.push({name,meas,out:r.out,m:meas!=null?Math.log(meas-20):mlCorrect(SEL_M,r.m,fam,P,cells).m,...extra})};
   const seenS=new Set();for(const s of ML_LIB.S){const key=JSON.stringify([s.cav,s.gro]);if(seenS.has(key))continue;seenS.add(key);sc(s.name,mlPool(mlRLE(s.cav,AG*AG)),!!s.head,s.fam,{kind:s.head?'H':'S',s})}   // 같은 모양(S6=S7)은 하나만 — 그 핫스팟 실측이 있는 쪽은 mlMeasured 가 이름으로 찾음

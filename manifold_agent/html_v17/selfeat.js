@@ -33,7 +33,7 @@ function cellScore(M,P,head,cells,Q){const [lo,hi]=head?[1.5,10.5]:[.6,11.4],S=s
   const cf={};for(let r=1;r<=4;r++)for(let c=1;c<=4;c++)cf[r+'_'+c]=selCell(S,r+'_'+c);
   let Tm=-1,out=0;const T={};
   for(let r=1;r<=4;r++)for(let c=1;c<=4;c++){const k=r+'_'+c,f=cf[k],nb=[[r+1,c],[r-1,c],[r,c+1],[r,c-1]].filter(([a,b])=>a>=1&&a<=4&&b>=1&&b<=4).map(([a,b])=>a+'_'+b);
-    const h=hot.has(k)?1:0,nh=nb.filter(n=>hot.has(n)).length,lf=Math.log(f.flow+1e-4),fr=f.fresh/12,pa=Math.min(f.path,12)/12;
+    const hw=x=>cells.w?(cells.w[x]||0):(hot.has(x)?1:0),h=hw(k),nh=nb.reduce((a,n)=>a+hw(n),0),lf=Math.log(f.flow+1e-4),fr=f.fresh/12,pa=Math.min(f.path,12)/12;
     const v={hot:h,nhot:nh,lflow:lf,dead:f.dead,fresh:fr,path:pa,nlflow:nb.reduce((a,n)=>a+Math.log(cf[n].flow+1e-4),0)/nb.length,ndead:nb.reduce((a,n)=>a+cf[n].dead,0)/nb.length,
       edge_r:(r===1||r===4)?1:0,edge_c:(c===1||c===4)?1:0,lq,logG:lG,hot_lq:h*lq,hot_lflow:h*lf,hot_dead:h*f.dead,hot_fresh:h*fr,nhot_lq:nh*lq,dead_lq:f.dead*lq};
     let m=M.intercept;M.feats.forEach((k2,i)=>{const x=v[k2];m+=M.coef[i]*(x-M.mu[i])/M.sd[i];const w=(M.xmax[i]-M.xmin[i])*.1;if(x<M.xmin[i]-w||x>M.xmax[i]+w)out++});
