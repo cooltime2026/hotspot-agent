@@ -1,4 +1,4 @@
-# ★★ 새 채팅은 맨 아래 "20장. 새 채팅 시작"부터 읽을 것 (그 위는 과거 기록) ★★
+# ★★ 새 채팅은 맨 아래 "21장. 새 채팅 시작 (2026-11-27)"부터 읽을 것 (그 위는 과거 기록) ★★
 
 # 인수인계: 핫스팟 → 매니폴드 추천 에이전트 (SimScale 데이터 + 머신러닝)
 
@@ -424,3 +424,65 @@ part1 코드·데이터(STEP 제외) / part2~7 사진 1~1162 / part8 자동설�
 - 예: 2_2+3_2, 85 ℃ → 띠15, 56 mL/min(0.929 m/s), 예상 80.7 ℃(상한 84.9), 10,719 Pa, 10.0 mW.
 - 믿음 표시: 돌려본 이웃 2칸 ±4 ℃ / 안 돌려본 이웃 2칸 ±5 ℃ / 1칸·떨어진 2칸 학습 밖. 1·4행 가로는 낙관 경고.
 - 띠형 가족만 고름(L·E는 검증 부족이라 아직 자동 선택에 안 넣음).
+
+
+---
+
+## 21. ★★★ 새 채팅 시작 (2026-11-27) — 여기부터 읽을 것 ★★★
+
+### 21-0. 목표 (사용자 말 그대로)
+"우리가 데이터를 주면 너가 파이썬 머신러닝을 돌려서 알아서 최적의 매니폴드 형상을 너가 만드는 것."
+→ 사용자가 SimScale 결과(캡처 사진)를 주면: 등록 → 재학습 → 최적 모양(STEP)+유량 자동 생성 → 검증 제안 → 반복.
+  모델이 못 하는 영역(새 구조)은 Claude가 데이터로 원인을 찾아 새 모양 가족을 '발명'해서 제안(L, E 처럼).
+
+### 21-1. 대화 규칙 (0장·20-1장과 같음, 중요)
+- **한국어로만.** 영어로 답했다가 지적받음. 쉬운 말, 짧게. 표 활용.
+- 추측을 사실처럼 말하지 않기. 확인 안 된 건 "확인 안 됨". 신뢰도는 근거와 함께.
+- 사진 보기 전에 예측 → 결과와 비교 보고.
+- 사용자가 메시지에 유속(0.몇/1.몇)·핫스팟을 자주 반대로/한 칸 밀려 씀 → **항상 압력(0.912 대비 ~3.06배 = 1.658)과 find_hotspot 으로 판정**하고, 다르면 알려 주기.
+- 같은 사진을 다시 보내는 실수 있음 → 숫자(Tmax,pmax,pmin)가 기존과 완전히 같으면 등록 전에 확인.
+- 사진이 대화에 파일로 안 들어오는 경우 있음(이미지 폴더에 없음) → 화면 숫자만 등록하고 "사진 파일 없음" 표시(7건, 20-9장).
+- "시뮬 또 돌리라는 거냐" 반응 있었음 → 추가 SimScale 요청은 꼭 필요할 때만, 1번으로 끝나게, 이유를 짧게.
+- 진행 중간·끝에 GitHub 푸시(아래). zip이 필요하면 30 MB 넘으면 나눔.
+
+### 21-2. 파일 받는 법 (새 채팅)
+- GitHub: `cooltime2026/hotspot-agent`, 브랜치 **`ml-data-1120`** 의 `manifold_agent/` 폴더 = 작업 폴더 전체
+  (코드·데이터·사진 images/1~1310·결과. 원래 STEP out/step_html 은 step_html.zip, 새 모양 STEP 은 각 폴더의 *_step.zip).
+- Claude GitHub App 설치됨 → 푸시 가능. 푸시: `git -c push.negotiate=true push origin ml-data-1120`.
+- 패키지: `pip install numpy pandas scikit-learn matplotlib pillow scipy cadquery shapely tabulate`
+- 점검: `python ml/intake.py check` → "이상 없음" (현재 **227 Run**, 사진 1~1310).
+
+### 21-3. 지금 상태 (2026-11-27)
+- 데이터 227 Run: 기존 D0 40, D1 31, M0 22, M1 17, M3 22, M4 13 + 띠 가족 A1~A8·B1~B8 (+계획 밖 핫스팟 일부) + 겨냥 C1~C4 + L1.
+- 모델 `ml/family_model.py` v2b (릿지): log(Tmax−20) = 핫스팟 위치 숫자(+×유량) + log유량 + logG(띠 개수) + wf + dy_hs (+위치×logG).
+  형상 통째로 빼고 맞히기: 돌려본 핫스팟 3.8 ℃, 처음 보는 이웃 2칸 5.1 ℃ (기준선 4.3). 압력(GP) 오차 ~7%. `python ml/family_model.py fit` 로 재학습.
+- 자동 설계 도구:
+  · `python ml/design.py <핫스팟> [--target ℃] [--flow mL/min]` → out/design/… 에 STEP + summary.png + result.txt (30~50초) ★주 도구
+  · `ml/auto_design.py` (제안 3개), `ml/auto_design_all.py` (136가지 핫스팟 표), `ml/local_flow.py` (L 가족 유량)
+  · 웹: `manifold_designer.html` (저장소 맨 위, web/) — 핫스팟 클릭 → 최적 모양·유량·예측 (계산만, STEP은 Claude에게 요청).
+    claude.ai 아티팩트 https://claude.ai/artifact/7YrQgsrpkkNkjBxmY5N8c9 (사용자 소유, 비공개)
+- 알게 된 것: 온도는 대부분 핫스팟 위치·유량이 결정. 띠 많을수록(15) 시원. 띠 몰기(C)는 압력만 손해.
+  가장자리 1·4행 가로 핫스팟은 어떤 띠 모양도 116~151 ℃ (채널 끝 막다른 골목이 원인, 20-16장).
+- 새 모양 가족 (Claude 발명):
+  · L(국소 개방, geometry/local_manifold.py): L1 실측 82.13 ℃ / 9,719 Pa (띠15 B1 83.68 보다 1.5 ℃ 시원, 압력 손해 없음). 효과는 계산의 22%.
+  · E(가장자리 직접 급수, geometry/edge_feed.py): 입구 아래 관통층 구멍 → 헤더로 찬물. E1 STEP 사용자에게 전달, **SimScale 결과 아직 없음**.
+    예측 1_3+1_4, 0.912 → 110~130 ℃ (B4 실측 132.7). E2(위·아래 둘 다)도 있음.
+- 한계: 모델이 띠 7 또는 15 극단만 고름(선형). 1칸·떨어진 2칸 학습 밖. 가장자리 핫스팟 낙관 예측.
+
+### 21-4. 다음 할 일
+1. **E1 결과 받기** (1_3+1_4, 0.912). 125 ℃ 아래면 발명 성공 → E 가족 변형(구멍 위치·크기, 출구쪽 헤더 등) 만들어 데이터 모으고 design.py 후보에 E 추가.
+2. 새 결과마다 21-5 순서로 등록 → `python ml/family_model.py fit` → design.py/웹(model.json) 갱신.
+3. L·E 가족을 모델에 넣으려면 그 가족 데이터 몇 개 더 필요(각 3~5 Run).
+4. 모델 개선 여지: 비선형(띠 개수 중간 최적), 가장자리 핫스팟 보정.
+
+### 21-5. Run 하나 처리 순서 (그대로 반복)
+```
+python ml/intake.py image <사진들>                      # 번호 자동 (webp는 먼저 png로 변환)
+python ml/find_hotspot.py <바닥사진번호> <Tmax>          # 핫스팟 판정
+python ml/intake.py run --design E1 --hotspot 1_3,1_4 --tmax .. --pmax .. --pmin .. --v 0.912 --inlet "user (9,1)+(9,11)" --img 바닥,채널층,압력
+# ml/cellmaps.py BOTTOM dict 끝에 ("E1","1_3+1_4",0.912):<바닥사진> 추가, ml/chantemps.py CHT 에 ("E1","1_3+1_4",0.912):(<채널층사진>, Tmax, "") 추가
+python ml/cellmaps.py; python ml/chantemps.py; python ml/dataset.py; python ml/intake.py check
+# data/runs_log.md 에 한 줄
+```
+- 사진 종류: 바닥 온도(4×4 칸 선만), 채널층 온도(세로 띠 보임, Z 0.0003), 윗면 압력(회색+포트 4개). 순서는 매번 다름.
+- 새 모양 이름(E1, L1 등)은 family_model 학습에 자동으로 안 들어감(띠 가족 A/B/C 만). 새 가족은 따로 다룸.
