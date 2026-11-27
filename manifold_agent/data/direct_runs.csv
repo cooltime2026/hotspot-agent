@@ -1,44 +1,44 @@
 design,inlet_velocity_m_s,total_flow_mL_min,model,heat,Tmax_bottom_C,p_max_Pa,p_min_Pa,inlet,note
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",136.7,1077,-130,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.2,1655,-244,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",103.1,2718,-469.4,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",90.36,4591,-860.3,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",80.6,7587,-1521,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",215.1,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",197.0,1655,-244.2,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",176.4,2718,-469.2,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",155.9,4594,-842.5,corners,read from Post-processor colorbar (cut plane view)
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",137.6,7587,-1563,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",127.0,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",112.5,1655,-243.6,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",99.64,2718,-469.5,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",89.79,4592,-844.2,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",82.46,7590,-1505,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",153.1,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",136.6,1654,-244.2,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",119.7,2718,-469.2,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",104.2,4592,-839.7,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",91.62,7588,-1539,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",132.0,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",117.3,1654,-244.2,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",94.04,4591,-857.2,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",104.3,2718,-469.2,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",86.4,7583,-1548,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",201.2,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",181.8,1655,-244.1,corners,read from Post-processor colorbar; flow identified from pressure/velocity
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",161.0,2718,-469,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",141.4,4593,-836.8,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",124.3,7583,-1510,corners,read from Post-processor colorbar
-D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",137.9,1077,-129.2,corners,read from Post-processor colorbar
-D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",120.6,1654,-244.2,corners,read from Post-processor colorbar
-D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",104.8,2718,-469.3,corners,read from Post-processor colorbar
-D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",92.23,4593,-852.3,corners,read from Post-processor colorbar
-D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",82.58,7585,-1563,corners,read from Post-processor colorbar
-D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",157.3,2044,-90.91,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
-D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",137.4,3119,-166.6,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
-D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.5,5092,-345.8,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
-D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",105.4,8354,-684.3,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
-D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",94.42,13450,-1257,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",136.7,1077.0,-130.0,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.2,1655.0,-244.0,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",103.1,2718.0,-469.4,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",90.36,4591.0,-860.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",80.6,7587.0,-1521.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",215.1,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",197.0,1655.0,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",176.4,2718.0,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",155.9,4594.0,-842.5,corners,read from Post-processor colorbar (cut plane view)
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_4,2_4",137.6,7587.0,-1563.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",127.0,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",112.5,1655.0,-243.6,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",99.64,2718.0,-469.5,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",89.79,4592.0,-844.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,4_3",82.46,7590.0,-1505.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",153.1,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",136.6,1654.0,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",119.7,2718.0,-469.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",104.2,4592.0,-839.7,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,2_3",91.62,7588.0,-1539.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",132.0,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",117.3,1654.0,-244.2,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",94.04,4591.0,-857.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",104.3,2718.0,-469.2,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_2,2_2",86.4,7583.0,-1548.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",201.2,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",181.8,1655.0,-244.1,corners,read from Post-processor colorbar; flow identified from pressure/velocity
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",161.0,2718.0,-469.0,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",141.4,4593.0,-836.8,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_1,4_1",124.3,7583.0,-1510.0,corners,read from Post-processor colorbar
+D0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",137.9,1077.0,-129.2,corners,read from Post-processor colorbar
+D0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",120.6,1654.0,-244.2,corners,read from Post-processor colorbar
+D0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",104.8,2718.0,-469.3,corners,read from Post-processor colorbar
+D0,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",92.23,4593.0,-852.3,corners,read from Post-processor colorbar
+D0,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,2_1",82.58,7585.0,-1563.0,corners,read from Post-processor colorbar
+D1,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",157.3,2044.0,-90.91,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",137.4,3119.0,-166.6,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",119.5,5092.0,-345.8,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,1.243,75,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",105.4,8354.0,-684.3,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
+D1,1.658,100,laminar,"50 W/cm2 + 300 W/cm2 at 3_4,4_4",94.42,13450.0,-1257.0,"HTML (6,3.8)+(6,10.45)",read from Post-processor colorbar
 M0,0.497,30,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",174.4,1163.0,-117.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; inlet from top pressure view (orange ports at low y); converged ~150 it; img 208-213
 M0,0.663,40,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",157.5,1756.0,-214.0,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 214-218
 M0,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_1,1_2",141.0,2831.0,-412.3,"HTML (3,1)+(9,1)",read from Post-processor colorbar; img 220-224
@@ -232,4 +232,6 @@ S3,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",93.35,3426.0,-723.9,"user 
 F1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",111.6,9174.0,-986.8,"user (9,1)+(9,11); 아래 입구 = 헤더 전용","사진 파일 미수신(채팅 화면에서 값만 읽음), 핫스팟은 눈으로 판정(채널층 헤더 위치·압력 방향으로 맞춤, 바닥 사진은 90° 돌아감)"
 E1,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",201.5,9278.0,-1109.0,"user (9,1)+(9,11)","read from Post-processor colorbar; img 1320,1321,1322"
 S5,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_1,2_2",88.82,11010.0,-1056.0,"user (0.95,5.35)+(0.95,7.65)","read from Post-processor colorbar; img 1323,1324,1325"
-S4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",116.3,nan,nan,"user (0.95,3.55)+(0.95,7.45)","read from Post-processor colorbar; img 1326,1327"
+S4,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 1_3,1_4",116.3,4711.0,-980.5,"user (0.95,3.55)+(0.95,7.45)","read from Post-processor colorbar; img 1326,1327"
+S6,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 3_3,3_4",92.22,4465.0,-854.7,"user (0.95,4.85)+(0.95,8.15)","read from Post-processor colorbar; img 1329,1330,1331"
+S7,0.912,55,laminar,"50 W/cm2 + 300 W/cm2 at 2_2,3_2",89.83,4466.0,-854.0,"user (0.95,4.85)+(0.95,8.15)","read from Post-processor colorbar; img 1332,1333,1334"
