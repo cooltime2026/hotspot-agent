@@ -304,8 +304,9 @@ function mlNiceApply(order){if(!ML_NICE)return;const N=order.map(mlNiceOf),cnt={
 //   1위 = 그중 간단 계산 최고 온도가 가장 낮은 것(원본 v23 의 선택 규칙: 한도 만족 우선 → 최저 온도 → 0.5 °C 이내면 압력강하 작은 쪽) → 원본보다 나빠질 수 없음.
 //   2~5위 = 실측 모양만(머신러닝이 고른 5개 중 계산이 유효한 것, 계산 온도 순). 모자라면 그만큼 적게 보임.
 function mlRankCalc(ok){const val=ok.filter(c=>c.r&&validR(c.r)),pool=val.length?val:ok.filter(c=>c.r);if(!pool.length)return;
-  const fe=pool.filter(c=>feas(c.r)),pl=fe.length?fe:pool,tm=Math.min(...pl.map(c=>c.r.Tmax)),first=pl.filter(c=>c.r.Tmax<=tm+.5).reduce((a,b)=>a.r.dp<=b.r.dp?a:b);
-  const byT=(a,b)=>a.r.Tmax-b.r.Tmax,isLib=c=>/^실측 모양/.test(c.base),rest=pool.filter(c=>c!==first);
+  const isLib=c=>/^실측 모양/.test(c.base),byT=(a,b)=>a.r.Tmax-b.r.Tmax;
+  // 1위(자동 최적화 모양)는 '이 핫스팟에 맞춰 만든 모양'(규칙 모양·머신러닝 새 설계) 중에서만 고름 — 다른 핫스팟용으로 만들어 둔 실측 모양은 1위가 될 수 없음 (사용자: "핫스팟에 맞춰 최적화된 매니폴드를 제시")
+  const made=pool.filter(c=>!isLib(c)),src=made.length?made:pool,fe=src.filter(c=>feas(c.r)),pl=fe.length?fe:src,tm=Math.min(...pl.map(c=>c.r.Tmax)),first=pl.filter(c=>c.r.Tmax<=tm+.5).reduce((a,b)=>a.r.dp<=b.r.dp?a:b);
   const more=ok.filter(c=>c.r&&c!==first&&isLib(c)).sort((a,b)=>(validR(b.r)-validR(a.r))||byT(a,b)).slice(0,4),order=[first,...more];   // 계산이 '유효하지 않음'(예: 물 95 °C 초과로 계산 범위 밖)으로 나온 실측 모양도 뒤쪽에 보여 줌(카드에 한도 경고)   // 2~5위는 실측 모양만. 유효한 실측 모양이 모자라도 자동 설계 모양으로 채우지 않음(사용자: "이거 자동설계 아냐?")
   for(const c of ok){c.hide=true;c.ml=undefined}order.forEach((c,i)=>{c.hide=false;c.ml=i+1});mlNiceApply(order);
   if(!ML_NICE)order.forEach((c,i)=>{c.name=`${i+1}위 ${c.base}`});
