@@ -23,8 +23,8 @@ function mlShRes(){
   const L=mlShList();
   shEl('shResSub').textContent=`유량 ${S.Q} ml/min · 핫스팟 ${S.hs.length}개`;
   if(!L){shEl('shResBusy').hidden=true;rail.innerHTML='';
-    if(SH.mlWaitKey!==mlShKey()+'|'+S.Q){SH.mlWaitKey=mlShKey()+'|'+S.Q;SH.mlT0=Date.now()}   // 설계 중 카드: 흐르는 시간과 진행 막대(45초 기준, 끝나기 전에는 95 %에서 멈춤)
-    if(!top.querySelector('#mlWait'))top.innerHTML=`<div class="sh-tb" id="mlWait"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>약 40초 걸립니다 · <b id="mlWaitT" style="color:#0B4BD6;font-variant-numeric:tabular-nums">0초</b> 지남</small><div style="height:8px;border-radius:4px;background:#DCE5F5;margin-top:12px;overflow:hidden"><i id="mlWaitB" style="display:block;height:100%;width:0;background:#0B4BD6;border-radius:4px;transition:width .9s linear"></i></div></div>`;
+    if(SH.mlWaitKey!==mlShKey()+'|'+S.Q){SH.mlWaitKey=mlShKey()+'|'+S.Q;SH.mlT0=Date.now()}   // 설계 중 카드: 흐르는 시간과 진행 막대(100초 기준, 끝나기 전에는 95 %에서 멈춤)
+    if(!top.querySelector('#mlWait'))top.innerHTML=`<div class="sh-tb" id="mlWait"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>최대 100초까지 걸립니다 · <b id="mlWaitT" style="color:#0B4BD6;font-variant-numeric:tabular-nums">0초</b> 지남</small><div style="height:8px;border-radius:4px;background:#DCE5F5;margin-top:12px;overflow:hidden"><i id="mlWaitB" style="display:block;height:100%;width:0;background:#0B4BD6;border-radius:4px;transition:width .9s linear"></i></div></div>`;
     mlWaitTick();return true}
   if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key;ML_VIEW=null}
   const V=L.map(mlShView),m=res.find(r=>r.d.ref),lo=Math.min(...V.map(v=>v.r.Tmin),m?m.Tmin:1e9),hi=Math.max(...V.map(v=>v.r.Tmax),m?m.Tmax:-1e9);
@@ -38,7 +38,7 @@ function mlShRes(){
   if(DESIGNS.indexOf(AUTOD)>=0)SH.pick=AUTOD;if(!SH.inSel)shSel();
   if(shEl('shMore').open)shMoreFill();
   return true}
-function mlWaitTick(){const t=document.getElementById('mlWaitT'),b=document.getElementById('mlWaitB');if(!t||!b)return;const s=Math.max(0,(Date.now()-(SH.mlT0||Date.now()))/1000);t.textContent=Math.floor(s)+'초';b.style.width=Math.min(95,s/45*100).toFixed(1)+'%'}
+function mlWaitTick(){const t=document.getElementById('mlWaitT'),b=document.getElementById('mlWaitB');if(!t||!b)return;const s=Math.max(0,(Date.now()-(SH.mlT0||Date.now()))/1000);t.textContent=Math.floor(s)+'초';b.style.width=Math.min(95,s/100*100).toFixed(1)+'%'}
 setInterval(mlWaitTick,1000);
 {const r0=shRes;shRes=function(){try{if(mlShRes())return}catch(e){console.error('mlShRes',e)}return r0.apply(this,arguments)};
  const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);

@@ -433,6 +433,8 @@ if VER != "v17":
               '<button type="button" data-shfl="w">물</button><button type="button" data-shfl="Al2O3">Al₂O₃ 나노유체</button><button type="button" data-shfl="CuO">CuO 나노유체</button>')
     src = rep(src, '<p class="sh-note" style="margin:12px 0 0">물성(밀도·비열·점도·열전도도)은 이론식(Maxwell·Brinkman)으로, 열전달계수 향상은 마이크로채널 실험 문헌값으로 계산합니다. 문헌의 최대 향상값을 쓰므로 낙관적 예측이며, 실험으로 확인해야 합니다.</p>', '')
     src = rep(src, '<p class="sh-note" id="shLimNote" style="margin:10px 0 0"></p>', '<p class="sh-note" id="shLimNote" hidden></p>')
+    # 5h) 사용자 요청: 입력 화면 아래의 '예상 칩 최고 온도 … 계산 중' 칸을 없앰(값을 쓰는 코드는 그대로 두고 숨기기만, '다음' 버튼은 가로로 꽉 차게)
+    src = rep(src, '<div class="sh-bar"><div class="sh-pv"><span>예상 칩 최고 온도</span>', '<div class="sh-bar" style="grid-template-columns:1fr"><div class="sh-pv" hidden><span>예상 칩 최고 온도</span>')
     # 5d) 결과 화면(모바일 흐름)을 머신러닝 순위로 — html_v23/ml_shell.js (1위 새 설계 · 2~5위 실측 모양 · 간단 계산 값 · 1·2위는 3D 값으로)
     _a = "shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(!b)return;SH.pick=DESIGNS.find(d=>d.k===b.dataset.pick);shRes()});"
     src = rep(src, _a, _a + "\n" + (VDIR / "ml_shell.js").read_text(encoding="utf-8"))
