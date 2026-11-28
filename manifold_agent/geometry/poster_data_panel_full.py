@@ -8,9 +8,9 @@ from matplotlib.patches import FancyBboxPatch
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 from matplotlib import font_manager as _fm
-for _f in Path("/usr/share/fonts/truetype/nanum").glob("NanumSquareRound*.ttf"):   # 포스터 글씨체 (나눔스퀘어라운드, apt fonts-nanum-extra)
+for _f in (ROOT / "fonts/paperlogy").glob("*.ttf"):   # 포스터 글씨체 페이퍼로지 (OFL, fonts/paperlogy)
     _fm.fontManager.addfont(str(_f))
-matplotlib.rcParams.update({"font.family": ["NanumSquareRound", "WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none", "axes.unicode_minus": False,
+matplotlib.rcParams.update({"font.family": ["Paperlogy", "WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none", "axes.unicode_minus": False,
                             "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": "#b3b3b3", "axes.grid": True,
                             "grid.color": "#ececec", "axes.axisbelow": True, "xtick.color": "#666", "ytick.color": "#666", "font.size": 8})
 TXT, PUR, PINK, LP = "#333333", "#6b3a7d", "#e0457b", "#f1e9f3"
