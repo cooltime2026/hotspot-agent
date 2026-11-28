@@ -7,10 +7,13 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-matplotlib.rcParams.update({"font.family": ["WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none", "axes.unicode_minus": False,
+from matplotlib import font_manager as _fm
+for _f in Path("/usr/share/fonts/truetype/nanum").glob("NanumSquareRound*.ttf"):   # 포스터 글씨체 (나눔스퀘어라운드, apt fonts-nanum-extra)
+    _fm.fontManager.addfont(str(_f))
+matplotlib.rcParams.update({"font.family": ["NanumSquareRound", "WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none", "axes.unicode_minus": False,
                             "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": "#b3b3b3", "axes.grid": True,
                             "grid.color": "#ececec", "axes.axisbelow": True, "xtick.color": "#666", "ytick.color": "#666", "font.size": 8})
-TXT, PUR, PINK, LP = "#2b2b2b", "#5b2a6e", "#e0457b", "#f3edf6"
+TXT, PUR, PINK, LP = "#333333", "#6b3a7d", "#e0457b", "#f1e9f3"
 SER = [("M0", "매니폴드 없음", "#9a9a9a", "s"), ("M1", "중앙 집중 빗살형", "#3f7fd8", "^"), ("M3", "V자 빗살형", "#5b2a6e", "o")]
 HS = "2_1+2_2"
 d = pd.read_csv(ROOT / "data/ml/thermal.csv"); d = d[(d.augmented == "original") & (d.hotspot == HS)]
@@ -60,18 +63,8 @@ for i, (n, box, nm, key) in enumerate(PH):
     t = d[(d.design == key) & (d.inlet_v_mps.round(3) == .912)].Tmax_C.iloc[0]
     ax.set_title(f"{nm}\n{t:.1f} °C", fontsize=7.8, color=PINK if best else TXT, weight="bold", linespacing=1.15, pad=3)
 
-# ---- 글 ----
-LINES = [("해석 조건", "정상상태, 층류. 핫스팟 2칸(각 3 × 3 mm) 300 W/cm²,\n그 외 50 W/cm², 물 20 °C, 알루미늄"),
-         ("해석 검증", "문헌 구조를 같은 조건으로 해석해 채널 유속 분포가\n2% 이내로 일치함"),
-         ("해석 결과", "핫스팟 위치 · 유량이 같아도 형상에 따라 칩 최고 온도가\n최대 36 °C 달라짐 (125.1 → 88.8 °C)"),
-         ("머신러닝 모델", "형상 특징, 핫스팟 위치, 유량 → 16칸 온도와 압력 강하 예측.\n해석 전에 예측하고 결과와 비교해 다시 학습함"),
-         ("데이터 분석", "가장자리 핫스팟은 채널 끝 유량이 부족해 덜 식음\n→ 핫스팟 줄 전용 입구(F형) 추가")]
-y = .285
-for head, body in LINES:
-    bg.text(.035, y, "▶", fontsize=8, color=PUR, va="top")
-    bg.text(.065, y, head, fontsize=8.6, color=PUR, weight="bold", va="top")
-    bg.text(.205, y, body, fontsize=8.2, color=TXT, va="top", linespacing=1.35)
-    y -= .057
 out = ROOT / "out/poster_icons"
-fig.savefig(out / "data_panel_full.png", dpi=300, facecolor="white"); fig.savefig(out / "data_panel_full.svg", facecolor="white")
+from matplotlib.transforms import Bbox
+bb = Bbox.from_extents(0, .31 * 9.6, 7.6, 9.6)        # 아래 글(해석 조건 등)은 뺌 — PPT 에서 직접 씀
+fig.savefig(out / "data_panel_full.png", dpi=300, facecolor="white", bbox_inches=bb); fig.savefig(out / "data_panel_full.svg", facecolor="white", bbox_inches=bb)
 print("저장")
