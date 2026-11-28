@@ -350,6 +350,35 @@ src = rep(src, "const sols=await Promise.all(grp.map(async m=>{try{return FLOW_A
 # 5b) (속도) 예비 설계는 1위 새 설계가 계산까지 됐으면 유량장을 풀지 않음
 src = rep(src, "for(let i=0;i<made.length;i+=2){const grp=made.slice(i,i+2);",
           "for(let i=0;i<made.length;i+=2){const grp=made.slice(i,i+2).filter(m=>!(m.sp.fb&&mlEvoOK(list,mo)));if(!grp.length)continue;   // ← ML: 예비 설계 건너뜀")
+# 5c) (v23 판만, 2026-11-28 사용자: "① 머신러닝 설계 ② 간단 계산 ③ 상위 2개 3D — 이 순서로 빠르게") 계산 순서 바꿈. 값·식은 그대로.
+#   원본: 기존 구조 10개 유량장 재풀이(처음 약 25초) → 자동 설계 → 3D.   바꿈: 자동 설계(머신러닝) → 간단 계산 표시 → 기존 구조 재풀이 → 3D.
+#   그동안 기존 구조는 d.flow 를 떼어 저장 유량장(원본의 대체값)으로 임시 계산하고, 재풀이 뒤 원래 값으로 바꿈. 떼고 붙이는 것은 지금 계산(token) 것만.
+if VER != "v17":
+    src = rep(src, "async function compute(){",
+              "let ML_TMP=false;const ML_TMP_NOTE='기존 구조 10개는 유량장을 다시 푸는 중이라 값을 잠시 가렸습니다. 머신러닝 설계(1~5위)를 먼저 보여 드리고, 다 풀리면 표시합니다.';\n"
+              "function mlDetach(){for(const d of DESIGNS)if(d.k!=='A'){if(typeof d.flow==='function')d._mlFlow=d.flow;if(d._mlFlow)d.flow=null}}   // ← ML: 기존 구조 유량장 재풀이를 뒤로 미룸\n"
+              "function mlAttach(){for(const d of DESIGNS)if(d.k!=='A'&&d._mlFlow)d.flow=d._mlFlow}\n"
+              "// 재풀이 전의 기존 구조 값(저장 유량장으로 낸 임시 값)은 화면에서 가림: 그림은 흐리게, 숫자는 '다시 푸는 중…'\n"
+              "function mlMarkTmp(){try{const tmp=i=>ML_TMP&&res[i]&&res[i].d&&res[i].d.k!=='A'&&!!res[i].d._mlFlow;\n"
+              "  document.querySelectorAll('#tiles .tile[data-i],#cmp tr[data-i]').forEach(el=>el.classList.toggle('mltmp',tmp(+el.dataset.i)));\n"
+              "  const v=document.querySelector('.verdict');if(v)v.classList.toggle('mltmp',tmp(sel));\n"
+              "  if(ML_TMP)document.querySelectorAll('#warns li').forEach(li=>{if(li.textContent!==ML_TMP_NOTE)li.style.display='none'})}catch(e){}}   // 임시 값으로 만든 경고 문장도 그동안 가림\n"
+              "{const st=document.createElement('style');st.textContent='.tile.mltmp svg{opacity:.22}.tile.mltmp small{font-size:0}.tile.mltmp small::after{content:\"다시 푸는 중…\";font:500 12px var(--mono);color:var(--muted)}tr.mltmp td:not(:first-child){color:transparent}tr.mltmp td:nth-child(2)::after{content:\"푸는 중\";color:var(--muted);font:400 12px var(--sans)}.verdict.mltmp .kv b{color:transparent}.verdict.mltmp .kv:first-of-type b::after{content:\"다시 푸는 중…\";color:var(--muted);font:500 14px var(--sans);margin-left:-6em}';document.head.appendChild(st);\n"
+              "  const r0=render,d0=drawMaps;render=function(){const x=r0.apply(this,arguments);mlMarkTmp();return x};drawMaps=function(){const x=d0.apply(this,arguments);mlMarkTmp();return x}}\n"
+              "async function compute(){")
+    src = rep(src, "let out;try{G=setup(p);await prefetchFlows(DESIGNS,S.Q,'구조별 유량장');if(my!==token)return;out=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){",
+              "let out;try{G=setup(p);mlDetach();ML_TMP=true;out=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){mlAttach();ML_TMP=false;   /* ← ML: 재풀이는 자동 설계 뒤로 */")
+    src = rep(src, "  res=out;FAILS.length=0;render();\n  if(!(await autoDesign(my)))return;\n",
+              "  res=out;FAILS.length=0;render();\n  if(!(await autoDesign(my))){if(my===token){mlAttach();ML_TMP=false}return}\n")
+    src = rep(src, "  if(!(await nsStage(my)))return;   // ← 16차: 3D NS + 열전달\n",
+              "  // ← ML: 이제 기존 구조 10개를 다시 풀어(그 유량에서 처음 한 번, 이후 캐시) 가렸던 값을 표시\n"
+              "  mlAttach();await prefetchFlows(DESIGNS.filter(d=>d.k!=='A'),S.Q,'구조별 유량장');if(my!==token)return;\n"
+              "  ML_TMP=false;try{res=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){FAILS.push('재계산 오류: '+(e.message||e))}render();\n"
+              "  if(!(await nsStage(my)))return;   // ← 16차: 3D NS + 열전달\n")
+    src = rep(src, "  if(FAILS.length)w.push(`계산 중 오류가 난 조건(건너뜀): ", "  if(ML_TMP)w.push(ML_TMP_NOTE);   // ← ML\n  if(FAILS.length)w.push(`계산 중 오류가 난 조건(건너뜀): ")
+    # 5d) 결과 화면(모바일 흐름)을 머신러닝 순위로 — html_v23/ml_shell.js (1위 새 설계 · 2~5위 실측 모양 · 간단 계산 값 · 1·2위는 3D 값으로)
+    _a = "shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(!b)return;SH.pick=DESIGNS.find(d=>d.k===b.dataset.pick);shRes()});"
+    src = rep(src, _a, _a + "\n" + (VDIR / "ml_shell.js").read_text(encoding="utf-8"))
 # 6) 제목
 src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>" if VER == "v17" else f"<title>핫스팟 에이전트 {VER} (ML 매니폴드)</title>")
 
