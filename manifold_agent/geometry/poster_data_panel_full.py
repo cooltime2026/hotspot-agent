@@ -45,19 +45,14 @@ for r in range(1, 5):
 fig.text(.125, .965, "칩 바닥(12 × 12 mm)을 4 × 4 칸으로 나눔 → 빨간 두 칸 = 핫스팟 (300 W/cm²)", fontsize=8.3, color=TXT, weight="bold", va="center")
 fig.text(.125, .942, "아래 그래프 · 사진은 모두 이 같은 핫스팟 위치에서 SimScale 로 해석한 값", fontsize=7.5, color="#666", va="center")
 
-# ---- 숫자 상자 4개 ----
 bg = fig.add_axes([0, 0, 1, 1]); bg.axis("off"); bg.set_xlim(0, 1); bg.set_ylim(0, 1); bg.set_zorder(-1)
-for i, (big, small) in enumerate([("238건", "SimScale 해석"), ("37종", "매니폴드 형상"), ("20가지", "핫스팟 위치"), ("5단계", "유량 30~100 mL/min")]):
-    x = .035 + i * .2425
-    bg.add_patch(FancyBboxPatch((x, .595), .222, .075, boxstyle="round,pad=0,rounding_size=0.012", fc=LP, ec="none"))
-    bg.text(x + .111, .643, big, ha="center", va="center", fontsize=15, color=PUR, weight="bold")
-    bg.text(x + .111, .607, small, ha="center", va="center", fontsize=7.3, color=TXT)
-
+import sys as _sys; _sys.path.insert(0, str(ROOT / "geometry"))
+from photo_square import square_photo     # 사진 → 판만 네모 반듯하게 + 그 사진 색상바
 # ---- SimScale 사진 4장 ----
-bg.text(.035, .578, "SimScale 칩 바닥 온도 (55 mL/min · 흰색이 가장 뜨거운 곳 · 사진마다 색 범위 다름)", fontsize=8.5, color=TXT, weight="bold", va="center")
+bg.text(.035, .664, "SimScale 칩 바닥 온도 (55 mL/min · 흰색이 가장 뜨거운 곳 · 사진마다 색 범위 다름)", fontsize=8.5, color=TXT, weight="bold", va="center")
 for i, (n, box, nm, key) in enumerate(PH):
-    im = Image.open(ROOT / f"images/{n}.png").convert("RGB").crop(box)
-    ax = fig.add_axes([.035 + i * .2425, .33, .222, .185]); ax.imshow(im); ax.set_xticks([]); ax.set_yticks([])
+    im = square_photo(n)
+    ax = fig.add_axes([.035 + i * .2425, .43, .222, .20]); ax.imshow(im); ax.set_xticks([]); ax.set_yticks([])
     best = key == "S5"
     for s in ax.spines.values(): s.set_visible(best); s.set_edgecolor(PINK); s.set_linewidth(2)
     t = d[(d.design == key) & (d.inlet_v_mps.round(3) == .912)].Tmax_C.iloc[0]
@@ -65,6 +60,6 @@ for i, (n, box, nm, key) in enumerate(PH):
 
 out = ROOT / "out/poster_icons"
 from matplotlib.transforms import Bbox
-bb = Bbox.from_extents(0, .31 * 9.6, 7.6, 9.6)        # 아래 글(해석 조건 등)은 뺌 — PPT 에서 직접 씀
+bb = Bbox.from_extents(0, .415 * 9.6, 7.6, 9.6)        # 아래 글(해석 조건 등)은 뺌 — PPT 에서 직접 씀
 fig.savefig(out / "data_panel_full.png", dpi=300, facecolor="white", bbox_inches=bb); fig.savefig(out / "data_panel_full.svg", facecolor="white", bbox_inches=bb)
 print("저장")
