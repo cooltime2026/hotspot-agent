@@ -14,11 +14,14 @@ C_P, C_U, C_CH, C_PORT = "#5b1d4f", "#a9d8f2", "#d9d9df", "#e0569b"
 STRIP_PORTS = [[3, 1], [3, 11], [9, 1], [9, 11]]
 
 runs = list(csv.DictReader(open(ROOT / "data/direct_runs.csv", encoding="utf-8")))
-def record(d):
-    r = [x for x in runs if x["design"] == d and abs(float(x["inlet_velocity_m_s"]) - 0.912) < 1e-3]
-    if not r: return ""
-    b = min(r, key=lambda x: float(x["Tmax_bottom_C"]))
-    return f"0.912 m/s {len(r)}회 · 최저 {float(b['Tmax_bottom_C']):.1f} ℃ ({b['heat'].split('at ')[1].replace(',', '+')})"
+def record(names):
+    out = []
+    for d in names.split(" = "):
+        r = [x for x in runs if x["design"] == d and abs(float(x["inlet_velocity_m_s"]) - 0.912) < 1e-3]
+        if not r: continue
+        b = min(r, key=lambda x: float(x["Tmax_bottom_C"]))
+        out.append(f"{d + ' ' if ' = ' in names else ''}0.912 m/s {len(r)}회 · 최저 {float(b['Tmax_bottom_C']):.1f} ℃ ({b['heat'].split('at ')[1].replace(',', '+')})")
+    return "\n".join(out)
 
 D = json.loads((ROOT / "geometry/src/designs.json").read_text())
 items = []   # (이름, 설명, P, U, 포트, 헤더형)
@@ -47,6 +50,21 @@ for i in range(1, 20):
     short = base.replace("(양끝 공급, 핫스팟 위 배출) ", "").replace(" · 슬롯이 핫스팟 바깥", "").replace("빗살 폭 ", "폭 ").replace("좌우 여유 ", "여유 ").strip(" ·")
     items.append((f"S{i}", f"{short} (v17·머신러닝)", cav, gro, m["pin"] + m["pout"], 0))
 
+# 같은 모양 합치기: 관통층·덮개 홈이 둘 다 99.9 % 이상 같으면 한 칸 (예: S6 = S7, 핫스팟만 다르게 돌림)
+def _n(A):
+    if A is None: return None
+    A = np.asarray(A)
+    return (A.reshape(120, 2, 120, 2).max(axis=(1, 3)) if A.shape[0] == 240 else A) > 0
+_iou = lambda X, Y: (X & Y).sum() / max((X | Y).sum(), 1)
+merged = []
+for it in items:
+    for m in merged:
+        if it[2] is not None and m[2] is not None and it[5] == m[5] and _iou(_n(it[2]), _n(m[2])) > .999 and _iou(_n(it[3]), _n(m[3])) > .999:
+            m[0] = m[0] + " = " + it[0]; break
+    else:
+        merged.append(list(it))
+items = [tuple(m) for m in merged]
+NOTE = {"F1": "E1 + 오른쪽 등뼈 아래 끝 끊음", "E1": "F1 과 99 % 같지만 등뼈 안 끊음"}
 ncol = 8; nrow = -(-len(items) // ncol)
 fig, axs = plt.subplots(nrow, ncol, figsize=(ncol * 2.6, nrow * 3.25))
 for ax in axs.flat: ax.axis("off")
@@ -65,12 +83,12 @@ for ax, (name, desc, P, U, ports, head) in zip(axs.flat, items):
         ax.add_patch(Circle((px, py), 0.45, fc="white", ec=C_PORT, lw=1.6, zorder=4))
     ax.set_xlim(-.3, 12.3); ax.set_ylim(-.3, 12.3); ax.set_aspect("equal")
     ax.set_title(f"{name}  " + (desc.replace(" (", "\n(", 1) if len(desc) > 22 else desc), fontsize=8.3, weight="bold", pad=3)
-    ax.text(6, -1.1, record(name), ha="center", va="top", fontsize=7, color="#444")
+    ax.text(6, -1.1, record(name) + (("\n" + NOTE[name]) if name in NOTE else ""), ha="center", va="top", fontsize=7, color="#444")
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 fig.legend([Patch(fc=C_P), Patch(fc=C_U), Patch(fc=C_CH), Line2D([], [], marker="o", ls="", mfc="white", mec=C_PORT, ms=9)],
            ["관통층", "덮개 홈층", "마이크로채널", "입·출구 포트"], loc="lower center", ncol=4, fontsize=12, frameon=False)
-fig.suptitle(f"지금까지 SimScale 로 분석한 매니폴드 {len(items)}종 (위에서 내려다봄, 12 × 12 mm)  ·  아래 글자 = 0.912 m/s 실측 횟수와 가장 낮은 최고온도",
+fig.suptitle(f"지금까지 SimScale 로 분석한 매니폴드 {len(items)}종 (같은 모양은 한 칸으로) (위에서 내려다봄, 12 × 12 mm)  ·  아래 글자 = 0.912 m/s 실측 횟수와 가장 낮은 최고온도",
              fontsize=14, weight="bold")
 fig.tight_layout(rect=(0, .03, 1, .97)); out = ROOT / "out/gallery_all_manifolds.png"; fig.savefig(out, dpi=110)
 print("저장", out, len(items), "종")
