@@ -8,8 +8,13 @@
 from pathlib import Path
 import json
 
+import sys
 HERE = Path(__file__).resolve().parent
-src = (HERE / "hotspot_agent_v17.html").read_text(encoding="utf-8")
+# 판 고르기 (2026-11-28): 인자 없으면 v17 을 만들고, 이어서 html_v23 이 있으면 v23 도 만듦. `python html_v17/patch_ml.py v23` = v23 만.
+#   원본은 html_<판>/hotspot_agent_<판>.html (수정 안 함), 결과는 같은 폴더의 hotspot_agent_<판>_ml.html · artifact_body.html. 머신러닝 코드(selfeat.js 등)는 두 판이 같이 씀.
+VER = sys.argv[1] if len(sys.argv) > 1 else "v17"
+VDIR = HERE.parent / f"html_{VER}"
+src = (VDIR / f"hotspot_agent_{VER}.html").read_text(encoding="utf-8")
 des = (HERE.parents[1] / "manifold_designer.html").read_text(encoding="utf-8").split("\n")
 
 i0 = next(i for i, l in enumerate(des) if l.startswith("const CORE = (() => {"))
@@ -340,12 +345,15 @@ src = rep(src, "const ok=AUTO.cands.map((c,i)=>({c,i})).filter(x=>x.c.d&&x.c.r).
 src = rep(src, "const sols=await Promise.all(grp.map(async m=>{try{return FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,true):flowSolve(m.g,S.inl,Qt,fS,true)}catch(e){return null}}));",
           "const sols=await Promise.all(grp.map(async m=>{try{let s=FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,true):flowSolve(m.g,S.inl,Qt,fS,true);if(!(s&&isFinite(s.Rl)&&s.conv))s=FLOW_ASYNC?await FLOW_ASYNC(gSer(m.g),S.inl,Qt,fS,false):flowSolve(m.g,S.inl,Qt,fS,false);return s}catch(e){return null}}));   // ← ML: quick 실패 → 정식 풀이")
 # 6) 제목
-src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>")
+src = rep(src, "<title>핫스팟 에이전트</title>", "<title>핫스팟 에이전트 (ML 매니폴드)</title>" if VER == "v17" else f"<title>핫스팟 에이전트 {VER} (ML 매니폴드)</title>")
 
-(HERE / "hotspot_agent_v17_ml.html").write_text(src, encoding="utf-8")
-print("저장:", HERE / "hotspot_agent_v17_ml.html", len(src))
+(VDIR / f"hotspot_agent_{VER}_ml.html").write_text(src, encoding="utf-8")
+print("저장:", VDIR / f"hotspot_agent_{VER}_ml.html", len(src))
 # 아티팩트에 올릴 본문 (<body> 안쪽) — new_result.py 와 같은 방식 (2026-11-28: patch_ml 만 돌려도 만들어지게)
 _b = src[src.index("<body>") + 6:].lstrip("\n").rstrip()
 if _b.endswith("</body></html>"):
     _b = _b[:-14].rstrip()
-(HERE / "artifact_body.html").write_text(_b, encoding="utf-8")
+(VDIR / "artifact_body.html").write_text(_b, encoding="utf-8")
+if len(sys.argv) < 2 and (HERE.parent / "html_v23" / "hotspot_agent_v23.html").exists():      # v17 다음에 v23 도
+    import subprocess
+    print(subprocess.run([sys.executable, str(Path(__file__).resolve()), "v23"], capture_output=True, text=True, check=True).stdout.strip())

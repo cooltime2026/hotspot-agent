@@ -6,7 +6,7 @@ const {chromium} = require('playwright');
 const fs = require('fs'), path = require('path');
 (async () => {
   const [out, ...hss] = process.argv.slice(2);
-  const file = 'file://' + path.resolve(__dirname, 'hotspot_agent_v17_ml.html');
+  const file = 'file://' + path.resolve(__dirname, process.env.PAGE || 'hotspot_agent_v17_ml.html');   // PAGE=../html_v23/hotspot_agent_v23_ml.html 로 v23 판 확인
   const browser = await chromium.launch();
   const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : {};
   for (const hs of hss) {

@@ -65,7 +65,9 @@ var i_yield=0;`;
 (async () => {
   const [out, ...hss] = process.argv.slice(2);
   const iters = +(process.env.ITERS || 700);
-  const file = 'file://' + path.resolve(__dirname, 'hotspot_agent_v17_ml.html');
+  // 계산 엔진은 v23 판이 있으면 그것(사용자가 쓰는 판), 없으면 v17. PAGE=hotspot_agent_v17_ml.html 로 바꿀 수 있음
+  const v23 = path.resolve(__dirname, '../html_v23/hotspot_agent_v23_ml.html');
+  const file = 'file://' + (process.env.PAGE ? path.resolve(__dirname, process.env.PAGE) : (fs.existsSync(v23) ? v23 : path.resolve(__dirname, 'hotspot_agent_v17_ml.html')));
   const browser = await chromium.launch();
   const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : {};
   for (const spec of hss) {
