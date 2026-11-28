@@ -1969,13 +1969,11 @@ function mlNiceApply(order){if(!ML_NICE)return;const N=order.map(mlNiceOf),cnt={
 // ★ 계산 순위 (v23 판, 2026-11-28 사용자: "자동 최적화가 무조건 냉각이 제일 잘 돼야 한다"). 머신러닝 점수만으로 1위를 정하면 앱 계산으로 더 뜨거운 모양이 1위가 될 수 있었음
 //   (예: 원본 v23 이 80.7 °C 를 고르는 배치에서 86.4 °C 가 1위). 그래서: 후보 = 머신러닝이 만든 모양 + 실측 모양 + 원본 v23 규칙 모양,
 //   1위 = 그중 간단 계산 최고 온도가 가장 낮은 것(원본 v23 의 선택 규칙: 한도 만족 우선 → 최저 온도 → 0.5 °C 이내면 압력강하 작은 쪽) → 원본보다 나빠질 수 없음.
-//   2~5위 = 실측 모양(머신러닝이 고른 5개 중 계산 온도 순). 유효한 실측 모양이 모자라면 다음으로 시원한 모양으로 채움.
+//   2~5위 = 실측 모양만(머신러닝이 고른 5개 중 계산이 유효한 것, 계산 온도 순). 모자라면 그만큼 적게 보임.
 function mlRankCalc(ok){const val=ok.filter(c=>c.r&&validR(c.r)),pool=val.length?val:ok.filter(c=>c.r);if(!pool.length)return;
   const fe=pool.filter(c=>feas(c.r)),pl=fe.length?fe:pool,tm=Math.min(...pl.map(c=>c.r.Tmax)),first=pl.filter(c=>c.r.Tmax<=tm+.5).reduce((a,b)=>a.r.dp<=b.r.dp?a:b);
   const byT=(a,b)=>a.r.Tmax-b.r.Tmax,isLib=c=>/^실측 모양/.test(c.base),rest=pool.filter(c=>c!==first);
-  let more=rest.filter(isLib).sort(byT).slice(0,4);if(more.length<4){const fams=new Set(more.map(c=>mlNiceOf(c)[0]));fams.add(mlNiceOf(first)[0]);
-    for(const c of rest.filter(c=>!isLib(c)).sort(byT)){if(more.length>=4)break;const t=mlNiceOf(c)[0];if(fams.has(t))continue;fams.add(t);more.push(c)}}
-  more.sort(byT);const order=[first,...more];
+  const more=ok.filter(c=>c.r&&c!==first&&isLib(c)).sort((a,b)=>(validR(b.r)-validR(a.r))||byT(a,b)).slice(0,4),order=[first,...more];   // 계산이 '유효하지 않음'(예: 물 95 °C 초과로 계산 범위 밖)으로 나온 실측 모양도 뒤쪽에 보여 줌(카드에 한도 경고)   // 2~5위는 실측 모양만. 유효한 실측 모양이 모자라도 자동 설계 모양으로 채우지 않음(사용자: "이거 자동설계 아냐?")
   for(const c of ok){c.hide=true;c.ml=undefined}order.forEach((c,i)=>{c.hide=false;c.ml=i+1});mlNiceApply(order);
   if(!ML_NICE)order.forEach((c,i)=>{c.name=`${i+1}위 ${c.base}`});
   AUTO.calcKey=AUTO.key;AUTO.calcN=pool.length}
