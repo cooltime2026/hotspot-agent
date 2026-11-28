@@ -106,64 +106,56 @@ def panel(fig, rect, title, color, steps, conds, sub=None):
     x0, y0, w, h = rect
     bg = fig.add_axes(rect); bg.axis("off"); bg.set_xlim(0, 1); bg.set_ylim(0, 1)
     bg.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.025", fc="white", ec=color, lw=2.2))
-    bg.add_patch(FancyBboxPatch((0, .91), 1, .09, boxstyle="round,pad=0,rounding_size=0.025", fc=color, ec=color, lw=2.2))
-    bg.text(.5, .955, title, ha="center", va="center", color="white", fontsize=13, weight="bold")
+    bg.add_patch(FancyBboxPatch((0, .88), 1, .12, boxstyle="round,pad=0,rounding_size=0.025", fc=color, ec=color, lw=2.2))
+    bg.text(.5, .94, title, ha="center", va="center", color="white", fontsize=13, weight="bold")
     n = len(steps); sw = w / n
     for i, (lab, cap, f) in enumerate(steps):
         cx = x0 + sw * (i + .5)
-        bg.text((sw * (i + .5)) / w, .86, f"[{lab}]", ha="center", va="center", fontsize=9.6, color=PUR, weight="bold")
-        ax = fig.add_axes([cx - sw * .36, y0 + h * .57, sw * .72, h * .25]); f(ax)
-        bg.text((sw * (i + .5)) / w, .545, cap, ha="center", va="top", fontsize=8.2, color=TXT, linespacing=1.3)
+        bg.text((sw * (i + .5)) / w, .82, f"[{lab}]", ha="center", va="center", fontsize=9.6, color=PUR, weight="bold")
+        ax = fig.add_axes([cx - sw * .36, y0 + h * .44, sw * .72, h * .33]); f(ax)
+        bg.text((sw * (i + .5)) / w, .40, cap, ha="center", va="top", fontsize=9.5, color=TXT, linespacing=1.3)
         if i < n - 1:
-            fig.patches.append(FancyArrowPatch((cx + sw * .37, y0 + h * .695), (cx + sw * .63, y0 + h * .695), transform=fig.transFigure,
+            fig.patches.append(FancyArrowPatch((cx + sw * .37, y0 + h * .605), (cx + sw * .63, y0 + h * .605), transform=fig.transFigure,
                                                arrowstyle="-|>", mutation_scale=16, color=color, lw=2))
-    bg.plot([.04, .96], [.435, .435], color="#e3dbe8", lw=1.2)
-    y = .41
+    bg.plot([.04, .96], [.30, .30], color="#e3dbe8", lw=1.2)
+    y = .25
     for line in conds:
         if line.startswith("▶"):
             bg.text(.05, y, line, ha="left", va="top", fontsize=9.3, color=PUR, weight="bold"); y -= .046
         else:
-            bg.text(.07, y, line, ha="left", va="top", fontsize=8.7, color=TXT); y -= .04
+            bg.text(.07, y, line, ha="left", va="top", fontsize=10, color=TXT); y -= .075
 
 
 P1 = ("① SimScale 해석 데이터 구축", BLUE,
-      [("형상 설계", "AutoCAD 도면\n또는 코드 자동 생성", pic_manifold),
-       ("STEP 변환", "채널층·관통층·\n덮개 홈층·덮개", pic_layers),
-       ("SimScale 해석", "열유동 연성 해석\n(CHT)", PI.icon1),
-       ("결과 수치화", "사진 → 16칸 온도,\n채널 유량, 압력", pic_chart)],
-      ["▶ 해석 조건", "- 칩 : 12 × 12 mm, 4 × 4 칸, 알루미늄", "- 열유속 : 핫스팟 2칸 300 W/cm², 그 외 50 W/cm²",
-       "- 냉각수 : 물 20 °C, 정상상태 · 층류", "- 입구 2개 (유속), 출구 2개 (0 Pa)",
-       "▶ 변수", "- 매니폴드 형상 38종, 핫스팟 위치 20가지", "- 유량 30 / 40 / 55 / 75 / 100 mL/min"])
-P2 = ("② 매니폴드 형상 규칙화 · 자동 생성", PUR2,
-      [("숫자 6개", "띠 수 · 띠 폭 ·\n모으는 위치 · V자 휨", pic_sliders),
-       ("2층 유로", "관통층 (구멍)\n덮개 홈층 (등뼈)", pic_masks),
-       ("제작 검사", "벽 두께 · 연결 ·\n겹침 자동 검사", pic_check)],
-      ["▶ 형상 변수", "- 띠 수 n : 7 ~ 17개", "- 모으는 위치 · 정도 : yf, s", "- V자 휨 : xf, b   /   띠 폭 비율 wf : 0.5 ~ 0.85",
-       "▶ 제작 조건", "- 띠 폭 ≥ 0.35 mm, 다른 유로 사이 벽 ≥ 0.2 mm", "- 축 정렬 계단 형상 (SimScale 메시 오류 방지)",
-       "- 결과 : 변형 매니폴드 20종 (A · B · C) 자동 생성"])
+      [("형상 설계", "도면 · 코드", pic_manifold),
+       ("STEP 변환", "2층 유로", pic_layers),
+       ("SimScale 해석", "열유동 해석", PI.icon1),
+       ("결과 수치화", "온도 · 압력", pic_chart)],
+      ["- 핫스팟 300 W/cm², 그 외 50 W/cm²", "- 물 20 °C, 30 ~ 100 mL/min", "- 형상 38종 · 핫스팟 20곳 · 238건"])
+P2 = ("② 형상 규칙화 · 자동 생성", PUR2,
+      [("숫자 6개", "띠 수 · 폭 · 휨", pic_sliders),
+       ("2층 유로", "관통층 · 홈층", pic_masks),
+       ("제작 검사", "벽 ≥ 0.2 mm", pic_check)],
+      ["- 숫자만 바꿔 STEP 자동 생성", "- 변형 매니폴드 20종"])
 P3 = ("③ 머신러닝 학습 · 원인 분석", PUR,
-      [("데이터 정리", "Run 238건\n× 16칸 온도", pic_table),
-       ("모델 학습", "칸별 온도 예측\n(릿지 회귀)", PI.icon3),
-       ("빼고 맞히기", "형상 하나를 통째로\n빼고 예측 시험", pic_compare)],
-      ["▶ 입력", "- 형상 특징 : 칸마다 물 흐름량, 죽은 구간,", "   찬물까지 거리 (형상 이름은 안 씀)", "- 핫스팟 위치, 유량",
-       "▶ 출력", "- 16칸 온도 → 칩 최고 온도, 압력 강하",
-       "▶ 데이터 분석", "- 가장자리 핫스팟 = 채널 끝 유량 부족 → 새 구조 필요"])
+      [("데이터 정리", "16칸 온도", pic_table),
+       ("모델 학습", "칸별 온도 예측", PI.icon3),
+       ("빼고 맞히기", "새 형상 시험", pic_compare)],
+      ["- 입력 : 형상 특징, 핫스팟 위치, 유량", "- 가장자리 핫스팟 = 채널 끝 유량 부족"])
 P4 = ("④ 새 구조 고안 · 검증 반복", PINK,
-      [("새 형상", "원인에 맞춘 구조\n+ 머신러닝 설계", PI.icon4),
-       ("사전 예측", "SimScale 전에\n온도 예측 기록", pic_compare),
-       ("검증 · 재학습", "결과 등록 후\n모델 다시 학습", PI.icon5)],
-      ["▶ 고안한 형상", "- L1 : 핫스팟 열만 여는 띠", "- F1 : 핫스팟 줄 전용 입구", "- E1 : 가장자리 직접 급수 (실패 → 원인 분석)",
-       "▶ 머신러닝 설계", "- S1 ~ S9 : 바람개비형 · 대역형 · V자 빗살형 등",
-       "▶ 반복", "- 예측 → SimScale → 비교 → 재학습 (238건까지)"])
+      [("새 형상", "L1 · F1 · S1~S9", PI.icon4),
+       ("사전 예측", "해석 전 예측", pic_compare),
+       ("검증 · 재학습", "결과 다시 학습", PI.icon5)],
+      ["- 예측 → SimScale → 재학습 반복", "- 새 형상 12종 검증"])
 
 if __name__ == "__main__":
-    fig = plt.figure(figsize=(22, 7.2))
+    fig = plt.figure(figsize=(22, 4.6))
     ws = [.295, .222, .222, .222]; gap = .008; x = .004
     for (t, c, s, cd), w in zip([P1, P2, P3, P4], ws):
         panel(fig, [x, .02, w, .96], t, c, s, cd); x += w + gap
     fig.savefig(OUT / "method_all.png", dpi=220, transparent=True); fig.savefig(OUT / "method_all.svg", transparent=True)
     plt.close(fig)
     for k, (P, w) in enumerate(zip([P1, P2, P3, P4], [7.2, 5.6, 5.6, 5.6]), 1):
-        fig = plt.figure(figsize=(w, 7.2)); panel(fig, [.01, .01, .98, .98], *P)
+        fig = plt.figure(figsize=(w, 4.6)); panel(fig, [.01, .01, .98, .98], *P)
         fig.savefig(OUT / f"method_{k}.png", dpi=250, transparent=True); fig.savefig(OUT / f"method_{k}.svg", transparent=True); plt.close(fig)
     print("저장")
