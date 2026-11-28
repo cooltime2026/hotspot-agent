@@ -18,6 +18,9 @@ function mlViewApply(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIG
   const c=(ML_VIEW&&AUTO.cands.includes(ML_VIEW)&&ML_VIEW.r&&ML_VIEW!==AUTO.best)?ML_VIEW:null;
   if(c){if(res[i].d===AUTOD)ML_VIEW_SAVE=res[i];if(!c._vr||c._vr.src!==c.r){const t=mlShName(c);c._vr={...c.r,src:c.r,d:{...c.d,name:t[0],note:`${c.ml}위 · ${t[1]}`}}}res[i]=c._vr}
   else if(res[i].d!==AUTOD&&ML_VIEW_SAVE&&ML_VIEW_SAVE.d===AUTOD)res[i]=ML_VIEW_SAVE}
+// 한도 경고: 어떤 한도를 얼마나 넘는지 구체적으로 (원본 문구 '한도(압력강하·레이놀즈 수·최고 온도)를 넘는 조건입니다'는 뜻이 안 통한다는 사용자 지적)
+function mlWhyOver(v){const r=v.r,w=[],Tl=S.Tlim??85;if(v.T>Tl)w.push(`칩 최고 온도 ${v.T.toFixed(1)} °C가 정해 둔 한도 ${Tl} °C보다 높습니다`);if(S.dpMax!=null&&v.dp>S.dpMax*1e3)w.push(`압력강하 ${(v.dp/1e3).toFixed(1)} kPa가 한도 ${S.dpMax} kPa보다 큽니다`);if(r.ReMax>2300)w.push(`레이놀즈 수 ${r.ReMax.toFixed(0)}이 2300을 넘어 층류 계산 범위 밖입니다`);
+  if(!w.length&&!validR(r))w.push('이 모양은 간단 계산이 범위를 벗어나(예: 물 온도 95 °C 초과) 값이 정확하지 않을 수 있습니다');return w.length?`<p class="sh-warn">${w.join(' · ')}</p>`:''}
 function mlShRes(){
   const top=shEl('shTop'),rail=shEl('shRail');if(!top||!rail||!S.hs.length||!hasHeat()||!res.length)return false;
   const L=mlShList();
@@ -33,7 +36,7 @@ function mlShRes(){
   top.innerHTML=`<div class="sh-tw">${shTile(v.r,lo,hi,true)}<span class="sh-rk">${c.ml}위</span></div>
     <div class="sh-tb"><b class="sh-tn">${esc(nm)}</b><small>${esc(sub)}</small>${v.ns?`<small style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;background:#E3F6EC;color:#0E7A43;font-weight:700">✓ 3D 나비에–스토크스 + 열전달 계산값${v.ns.sec?` (${(v.ns.sec/60).toFixed(1)}분)`:''}</small>`:`<small style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;background:#FFF4D6;color:#8A5A00;font-weight:700">간이 계산값${busy3?' — 3D 계산 중이거나 대기 (1·2위만 3D 로 다시 풉니다)':''}</small>`}
     <div class="sh-kv"><div><span>칩 최고 온도</span><b>${v.T.toFixed(1)} °C</b></div><div><span>매니폴드 없음 대비</span><b class="${dT<0?'good':'bad'}">${(dT>0?'+':'')+dT.toFixed(1)+' °C'}</b></div><div><span>압력강하</span><b>${(v.dp/1e3).toFixed(1)} kPa</b></div></div>
-    ${feas(v.r)?'':'<p class="sh-warn">한도(압력강하·레이놀즈 수·최고 온도)를 넘는 조건입니다.</p>'}</div>`;
+    ${mlWhyOver(v)}</div>`;
   rail.innerHTML=L.map((c2,i)=>{const v2=V[i],[n2]=mlShName(c2);return `<button type="button" class="sh-card2 ${i===SH.mlPick?'on':''}" data-mlpick="${i}"><div class="sh-tw sm">${shTile(v2.r,lo,hi,false)}<span class="sh-rk">${c2.ml}</span></div><b>${esc(n2)}</b><span>${v2.T.toFixed(1)} °C · ${(v2.dp/1e3).toFixed(1)} kPa${v2.ns?' · 3D':''}</span></button>`}).join('');
   if(DESIGNS.indexOf(AUTOD)>=0)SH.pick=AUTOD;if(!SH.inSel)shSel();
   if(shEl('shMore').open)shMoreFill();

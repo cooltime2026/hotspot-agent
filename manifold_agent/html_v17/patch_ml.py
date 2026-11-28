@@ -293,12 +293,12 @@ function mlNiceOf(c){const b=c.base||c.name||'';let m;
     if(/머신러닝 새 설계/.test(all)){const f=all.split(' · ')[0];t=({D1:'말굽형'}[f]||f)+' 진화형';det=[]}
     else if(/\(프리셋\)/.test(all)){t=all.split(' (')[0]+(id==='M1'||id==='M3'?' (헤더형)':'');det=[]}
     else [t,det]=mlShapeOf(all);
-    return [t,[...det,`SimScale 실행 ${id}`].join(' · ')]}
+    return [t,det.join(' · ')]}   // 'SimScale 실행 S4' 같은 출처 글씨는 뺌(사용자 요청)
   const [t,det]=mlShapeOf(b.replace(/^머신러닝 설계 · /,'').replace(/^실측 \S+ · /,''));return [t,det.join(' · ')]}
 // 순위대로 이름 붙이기: 1위 = '자동 최적화 모양'(설명 줄에 형상 이름), 2위부터 = 형상 이름. 같은 이름이 겹치면 ①②
 function mlNiceApply(order){if(!ML_NICE)return;const N=order.map(mlNiceOf),cnt={};N.forEach((x,i)=>{if(i)cnt[x[0]]=(cnt[x[0]]||0)+1});const k={};
   order.forEach((c,i)=>{let [t,sub]=N[i];if(i===0){sub=[t,sub].filter(Boolean).join(' · ');t='자동 최적화 모양'}else if(cnt[t]>1){k[t]=(k[t]||0)+1;t+=' '+'①②③④⑤'[k[t]-1]}
-    if(c.sameAs&&i===0)sub+=` · SimScale 실행 ${c.sameAs}와 같은 모양`;if(c.meas!=null)sub+=` · 이 핫스팟 실측 ${c.meas.toFixed(1)} °C`;c.nice=[t,sub];c.name=`${i+1}위 ${t}${sub?' · '+sub:''}`})}
+    if(c.meas!=null)sub+=` · 이 핫스팟 실측 ${c.meas.toFixed(1)} °C`;c.nice=[t,sub];c.name=`${i+1}위 ${t}${sub?' · '+sub:''}`})}
 // ★ 계산 순위 (v23 판, 2026-11-28 사용자: "자동 최적화가 무조건 냉각이 제일 잘 돼야 한다"). 머신러닝 점수만으로 1위를 정하면 앱 계산으로 더 뜨거운 모양이 1위가 될 수 있었음
 //   (예: 원본 v23 이 80.7 °C 를 고르는 배치에서 86.4 °C 가 1위). 그래서: 후보 = 머신러닝이 만든 모양 + 실측 모양 + 원본 v23 규칙 모양,
 //   1위 = 그중 간단 계산 최고 온도가 가장 낮은 것(원본 v23 의 선택 규칙: 한도 만족 우선 → 최저 온도 → 0.5 °C 이내면 압력강하 작은 쪽) → 원본보다 나빠질 수 없음.
