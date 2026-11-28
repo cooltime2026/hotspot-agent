@@ -20,7 +20,7 @@ PH = [(261, (80, 45, 690, 740), "매니폴드 없음", "M0"), (733, (45, 40, 640
 
 fig = plt.figure(figsize=(7.6, 9.6))
 # ---- (a)(b) 그래프 ----
-a1 = fig.add_axes([.09, .735, .38, .215]); a2 = fig.add_axes([.60, .735, .38, .215])
+a1 = fig.add_axes([.09, .72, .38, .18]); a2 = fig.add_axes([.60, .72, .38, .18])
 for k, nm, c, m in SER:
     g = d[d.design == k].sort_values("Q_mLmin")
     a1.plot(g.Q_mLmin, g.Tmax_C, "-", color=c, lw=1.8, marker=m, ms=5, mec="white", mew=1, label=nm)
@@ -32,7 +32,15 @@ for ax, t, yl in [(a1, "(a) 유량별 칩 최고 온도", "칩 최고 온도 (°
     ax.set_title(t, fontsize=9, loc="left", color=TXT, weight="bold", pad=4); ax.set_xlabel("총 유량 (mL/min)", fontsize=7.5); ax.set_ylabel(yl, fontsize=7.5)
     ax.set_xticks([30, 55, 75, 100]); ax.tick_params(labelsize=7)
 a1.legend(frameon=False, fontsize=6.6, loc="upper right", handlelength=1.6); a2.legend(frameon=False, fontsize=6.6, loc="upper left", handlelength=1.6)
-fig.text(.09, .975, f"같은 핫스팟 ({HS}) · SimScale 해석값", fontsize=7.5, color="#666")
+# 핫스팟 위치 그림 (글자 대신): 칩 바닥 4 × 4 칸, 빨간 2칸 = 핫스팟. 사진과 같은 방향(바닥에서 봄: 1행이 위)
+from matplotlib.patches import Rectangle
+mp = fig.add_axes([.035, .93, .075, .075 * 7.6 / 9.6]); mp.set_xlim(0, 4); mp.set_ylim(4, 0); mp.set_aspect("equal"); mp.axis("off"); mp.add_patch(Rectangle((0, 0), 4, 4, fill=False, ec="#8a7a92", lw=1.2, zorder=5))
+hot = {(int(c.split("_")[0]), int(c.split("_")[1])) for c in HS.split("+")}
+for r in range(1, 5):
+    for c in range(1, 5):
+        mp.add_patch(Rectangle((c - 1, r - 1), 1, 1, fc="#e8463c" if (r, c) in hot else "#ebe3ee", ec="white", lw=1.5))
+fig.text(.125, .965, "칩 바닥(12 × 12 mm)을 4 × 4 칸으로 나눔 → 빨간 두 칸 = 핫스팟 (300 W/cm²)", fontsize=8.3, color=TXT, weight="bold", va="center")
+fig.text(.125, .942, "아래 그래프 · 사진은 모두 이 같은 핫스팟 위치에서 SimScale 로 해석한 값", fontsize=7.5, color="#666", va="center")
 
 # ---- 숫자 상자 4개 ----
 bg = fig.add_axes([0, 0, 1, 1]); bg.axis("off"); bg.set_xlim(0, 1); bg.set_ylim(0, 1); bg.set_zorder(-1)
@@ -43,7 +51,7 @@ for i, (big, small) in enumerate([("238건", "SimScale 해석"), ("37종", "매�
     bg.text(x + .111, .607, small, ha="center", va="center", fontsize=7.3, color=TXT)
 
 # ---- SimScale 사진 4장 ----
-bg.text(.035, .578, "SimScale 칩 바닥 온도 (55 mL/min, 사진마다 색 범위 다름)", fontsize=8.5, color=TXT, weight="bold", va="center")
+bg.text(.035, .578, "SimScale 칩 바닥 온도 (55 mL/min · 흰색이 가장 뜨거운 곳 · 사진마다 색 범위 다름)", fontsize=8.5, color=TXT, weight="bold", va="center")
 for i, (n, box, nm, key) in enumerate(PH):
     im = Image.open(ROOT / f"images/{n}.png").convert("RGB").crop(box)
     ax = fig.add_axes([.035 + i * .2425, .33, .222, .185]); ax.imshow(im); ax.set_xticks([]); ax.set_yticks([])
@@ -55,7 +63,7 @@ for i, (n, box, nm, key) in enumerate(PH):
 # ---- 글 ----
 LINES = [("해석 조건", "정상상태, 층류. 핫스팟 2칸(각 3 × 3 mm) 300 W/cm²,\n그 외 50 W/cm², 물 20 °C, 알루미늄"),
          ("해석 검증", "문헌 구조를 같은 조건으로 해석해 채널 유속 분포가\n2% 이내로 일치함"),
-         ("해석 결과", "같은 핫스팟 · 유량에서도 형상에 따라 칩 최고 온도가\n최대 36 °C 달라짐 (125.1 → 88.8 °C)"),
+         ("해석 결과", "핫스팟 위치 · 유량이 같아도 형상에 따라 칩 최고 온도가\n최대 36 °C 달라짐 (125.1 → 88.8 °C)"),
          ("머신러닝 모델", "형상 특징, 핫스팟 위치, 유량 → 16칸 온도와 압력 강하 예측.\n해석 전에 예측하고 결과와 비교해 다시 학습함"),
          ("데이터 분석", "가장자리 핫스팟은 채널 끝 유량이 부족해 덜 식음\n→ 핫스팟 줄 전용 입구(F형) 추가")]
 y = .285
