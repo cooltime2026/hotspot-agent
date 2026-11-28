@@ -14,21 +14,25 @@ items, C_P, C_U, C_CH, C_PORT = g["items"], g["C_P"], g["C_U"], g["C_CH"], g["C_
 matplotlib.rcParams.update({"font.family": ["WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none"})
 PUR, PINK, TXT = "#5b2a6e", "#e0457b", "#2b2b2b"
 BY = {it[0].split(" = ")[0]: it for it in items}
-import re
-SHORT = {"M0": "매니폴드 없음", "M1": "중앙 빗살형", "M3": "V자 빗살형", "M4": "직상부 공급형", "D0": "이중 바람개비형", "D1": "말굽형",
-         "L1": "국소 개방형", "E1": "가장자리 급수형", "F1": "전용 입구형",
-         "S1": "흡입형", "S2": "바람개비형", "S3": "대역 대향류형", "S4": "V자 빗살형", "S5": "V자 빗살형", "S6": "V자 빗살형",
-         "S8": "넓은 V자 빗살", "S9": "넓은 V자 빗살"}
+import re, json as _json
+# 이름 = HTML v23 (hotspot_agent_v23_ML) 화면 이름 규칙(mlShapeOf / mlNiceOf) 그대로. (줄1 이름, 줄2 세부)
+SHORT = {"M0": ("매니폴드 없음", ""), "M1": ("중앙 집중 빗살형", "헤더형"), "M3": ("V자 빗살형", "헤더형"),
+         "M4": ("핫스팟 직상부 공급형", ""), "D0": ("이중 바람개비형", ""), "D1": ("말굽형", ""),
+         "L1": ("가로 띠형 15줄", "국소 개방"), "E1": ("가로 띠형 15줄", "가장자리 급수"), "F1": ("F형", "핫스팟 줄 전용 입구"),
+         "S1": ("흡입형", "핫스팟 위 배출"), "S2": ("바람개비형", "슬롯 0.4"), "S3": ("대역 대향류형", "방향 반대"),
+         "S4": ("V자 빗살형", "폭 0.4 · 간격 1.2"), "S5": ("V자 빗살형", "폭 0.4 · 간격 2"), "S6": ("V자 빗살형", "폭 0.4 · 간격 1"),
+         "S8": ("V자 빗살형", "폭 0.8 · 간격 1"), "S9": ("V자 빗살형", "폭 0.8 · 간격 1")}
 for _it in items:
-    _k = _it[0].split(" = ")[0]; _n = re.search(r"띠 (\d+)개", _it[1])
-    if _k[0] in "AB": SHORT[_k] = f"빗살 {_n.group(1)}개"
-    if _k[0] == "C": SHORT[_k] = "모은 빗살형"
+    _k = _it[0].split(" = ")[0]
+    if _k[0] in "ABC":
+        _p = _json.loads((ROOT / f"out/step_param_v3/{_k}.json").read_text())["params"]
+        SHORT[_k] = (f"가로 띠형 {_p['n']}줄", f"띠 폭 비율 {_p['wf']:.2f}")
 BEST = {"S2": "2_2+3_2", "S5": "2_1+2_2", "F1": "1_3+1_4", "A7": "3_3+3_4"}     # 0.912 m/s 핫스팟별 1등
-ROWS = [("기본형", "6종", ["M0", "M1", "M3", "M4", "D0", "D1"]),
-        ("빗살형", "8종", [f"A{i}" for i in range(1, 9)]),
-        ("빗살형", "8종", [f"B{i}" for i in range(1, 9)]),
-        ("모은 빗살형\n· 새 구조", "4종 + 3종", ["C1", "C2", "C3", "C4", None, "L1", "E1", "F1"]),
-        ("바람개비 · 흡입\n· V자 빗살형", "8종", ["S1", "S2", "S3", "S4", "S5", "S6", "S8", "S9"])]
+ROWS = [("기본 형상", "6종", ["M0", "M1", "M3", "M4", "D0", "D1"]),
+        ("가로 띠형", "8종", [f"A{i}" for i in range(1, 9)]),
+        ("가로 띠형", "8종", [f"B{i}" for i in range(1, 9)]),
+        ("가로 띠형\n· F형", "4종 + 3종", ["C1", "C2", "C3", "C4", None, "L1", "E1", "F1"]),
+        ("흡입 · 바람개비\n· 대역 · V자 빗살", "8종", ["S1", "S2", "S3", "S4", "S5", "S6", "S8", "S9"])]
 
 
 def tile(ax, it, key):
@@ -50,7 +54,9 @@ def tile(ax, it, key):
         ax.add_patch(Rectangle((-.5, -.5), 13, 13, fill=False, ec=PINK, lw=2.6, zorder=6, clip_on=False))
         ax.text(12.4, 12.4, "★", ha="center", va="center", fontsize=11, color=PINK, zorder=7, clip_on=False)
     lab = name.replace(" = ", "=")
-    ax.text(6, -1.2, f"{SHORT.get(key, '')}\n{lab}", ha="center", va="top", fontsize=7.4, color=TXT, linespacing=1.15)
+    t1, t2 = SHORT.get(key, (lab, ""))
+    ax.text(6, -1.0, t1, ha="center", va="top", fontsize=7.0, color=TXT, weight="bold")
+    ax.text(6, -3.0, (t2 + f"  ({lab})").strip(), ha="center", va="top", fontsize=5.9, color="#555555")
     ax.set_xlim(-.6, 12.6); ax.set_ylim(-.6, 12.6); ax.set_aspect("equal"); ax.axis("off")
 
 
