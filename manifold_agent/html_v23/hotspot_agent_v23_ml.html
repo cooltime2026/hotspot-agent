@@ -2435,7 +2435,7 @@ async function nsStage(my){
   const base=nsBase(),bk=JSON.stringify(base),keyOf=c=>aSig(c.g)+'|'+bk,prog=top.map(()=>'대기'),t0=Date.now();
   NS_LIVE={t0,n:top.length,it:top.map(()=>0),stage:top.map(()=>'대기'),last:Date.now(),done:false};
   const upd=()=>{st(`3D 나비에–스토크스(관성 포함) + 열전달 계산 중 — ${top.some(c=>c.ml)?'머신러닝':'간이 모델'} 상위 후보 ${top.length}개: ${prog.map((p,i)=>`${i+1}) ${p}`).join(' · ')} · 경과 ${((Date.now()-t0)/1000).toFixed(0)} s (워커 ${NS_POOL.n}개). 끝나면 화면 값이 3D 값으로 바뀝니다.`);
-    const b=document.getElementById('shResBusy');if(b){b.hidden=false;b.textContent=`지금 보이는 값은 간이 계산입니다. 3D 나비에–스토크스 + 열전달 계산 중 (후보 ${top.length}개: ${prog.map((p,i)=>`${i+1}) ${p}`).join(' · ')}, 경과 ${Math.floor((Date.now()-t0)/60000)}분 ${Math.floor((Date.now()-t0)/1000)%60}초) — 보통 20~30분 뒤 3D 값으로 바뀝니다(채널 세분 격자).`}};
+    const b=document.getElementById('shResBusy');if(b){b.hidden=false;b.textContent=`3D 나비에–스토크스 + 정밀 열전달 계산 중 · 약 20~30분 걸립니다 · ${Math.floor((Date.now()-t0)/60000)}분 ${Math.floor((Date.now()-t0)/1000)%60}초 지남`}};   // ← ML
   const tick2=setInterval(()=>{if(my===token)upd()},1000);
   let out;
   try{out=await Promise.all(top.map((c,i)=>{const k=keyOf(c);if(NS_CACHE.has(k)){prog[i]='완료';return NS_CACHE.get(k)}
@@ -2463,7 +2463,7 @@ async function nsStage(my){
 
 // ── 실시간 진행 표시 (모든 화면 위에 떠 있음). 숫자가 1초마다 바뀌면 계산 중, 멈춰 있으면 화면이 멈춘 것 ──
 var NS_LIVE=null;
-(function(){const css=document.createElement('style');css.textContent=`#liveBox{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:84px;width:min(440px,94vw);background:#FFC53D;color:#0A1F5C;border-radius:12px;padding:10px 14px;font:12.5px/1.45 'IBM Plex Sans KR','Noto Sans KR',sans-serif;box-shadow:0 6px 20px #0004}#liveBox b{font-weight:700}#liveBox .bar{height:5px;background:#0A1F5C26;border-radius:3px;margin-top:6px;overflow:hidden}#liveBox .bar i{display:block;height:100%;background:#0B4BD6;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#0A1F5C99;font-size:14px;cursor:pointer}`;document.head.appendChild(css);
+(function(){const css=document.createElement('style');css.textContent=`#liveBox{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:84px;width:min(440px,94vw);background:#FFF4D6;color:#8A5A00;border:1px solid #F1DDA6;border-radius:12px;padding:10px 14px;font:12.5px/1.45 'IBM Plex Sans KR','Noto Sans KR',sans-serif;box-shadow:0 6px 20px #0004}#liveBox b{font-weight:700}#liveBox .bar{height:5px;background:#8A5A0026;border-radius:3px;margin-top:6px;overflow:hidden}#liveBox .bar i{display:block;height:100%;background:#C98500;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#8A5A0099;font-size:14px;cursor:pointer}`;document.head.appendChild(css);
  const box=document.createElement('div');box.id='liveBox';box.hidden=true;box.setAttribute('role','status');box.setAttribute('aria-live','polite');
  let tBusy=null,hideAt=0,closed=false;const mmss=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
  const EXP=1150;   // 후보 하나의 유동 반복 횟수 대략값(실측 약 1,100~1,600)
@@ -2471,9 +2471,7 @@ var NS_LIVE=null;
   if(busy&&!tBusy){tBusy=now;closed=false}if(!busy&&tBusy){tBusy=null;hideAt=now+6000}
   const L=NS_LIVE;let h='';
   if(L&&!L.done){const per=L.it.map((it,i)=>L.stage[i]==='완료'?1:L.stage[i]==='heat'?0.97:Math.min(0.95,it/EXP));const pct=Math.round(per.reduce((a,b)=>a+b,0)/L.n*100);const quiet=(now-L.last)/1000;
-    h=`<button type="button" aria-label="닫기" data-x>✕</button><b>3D 나비에–스토크스 + 열전달 계산 중</b> · 경과 <b>${mmss(now-L.t0)}</b><br>`+
-      L.stage.map((st,i)=>`후보 ${i+1}: ${st==='완료'?'완료 ✓':st==='heat'?'열전달 계산':st==='flow'?`유동 반복 ${L.it[i]}`:'대기(앞 후보 끝나면 시작)'}`).join(' · ')+
-      `<br>${quiet>60?`<span class="warn">⚠ ${Math.round(quiet)}초째 계산 신호가 없습니다. 오래 이어지면 새로고침해 주세요.</span>`:`마지막 계산 신호 ${Math.round(quiet)}초 전 · 전체 약 ${pct}%`}<div class="bar"><i style="width:${pct}%"></i></div>`}
+    h=`<button type="button" aria-label="닫기" data-x>✕</button><b>3D 나비에–스토크스 + 정밀 열전달 계산 중</b><br>약 20~30분 걸립니다 · <b>${Math.floor((now-L.t0)/60000)}분 ${Math.floor((now-L.t0)/1000)%60}초</b> 지남${quiet>60?`<br><span class="warn">⚠ ${Math.round(quiet)}초째 계산 신호가 없습니다. 오래 이어지면 새로고침해 주세요.</span>`:''}<div class="bar"><i style="width:${pct}%"></i></div>`}
   else if(busy){let st='';try{st=$('autoStatus').textContent}catch(e){}h=`<button type="button" aria-label="닫기" data-x>✕</button><b>${esc(mlBusyText(st))}</b> · 경과 <b>${mmss(now-Math.max(tBusy,window.__busyT0||0))}</b>`}   // ← ML
   else if(now<hideAt||(L&&L.done&&now-L.tDone<8000)){h=L&&L.done?`<b>계산 완료 ✓</b> · 3D 나비에–스토크스 + 열전달 값이 화면에 표시되었습니다 (${mmss(L.tDone-L.t0)} 걸림)`:`<b>계산 완료 ✓</b>`}
   if(!h||closed){box.hidden=true;return}box.hidden=false;box.innerHTML=h},1000);

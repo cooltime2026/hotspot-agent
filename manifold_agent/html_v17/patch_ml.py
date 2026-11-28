@@ -427,6 +427,14 @@ if VER != "v17":
     src = rep(src, "for(let i=0;i<made.length;i+=2){const grp=made.slice(i,i+2).filter(", "for(let i=0,KW=(FLOW_ASYNC&&FLOW_ASYNC.n)||2;i<made.length;i+=KW){const grp=made.slice(i,i+KW).filter(")
     src = rep(src, "for(let i=0;i<need.length;i+=2){", "for(let i=0,KW=(FLOW_ASYNC&&FLOW_ASYNC.n)||2;i<need.length;i+=KW){")
     src = rep(src, "await Promise.all(need.slice(i,i+2).map(c=>c.d.flow.prefetch(S.Q,fQ).catch(()=>{})));", "await Promise.all(need.slice(i,i+KW).map(c=>c.d.flow.prefetch(S.Q,fQ).catch(()=>{})));")
+    # 5i) 사용자 요청: 3D 진행 문구를 짧게 — '3D 나비에–스토크스 + 정밀 열전달 계산 중 · 약 20~30분 걸립니다 · N분 M초 지남' (결과 화면 위 띠와 떠 있는 알림 둘 다). 알림 배경은 연노랑(#FFF4D6)·갈색 글자.
+    src = rep(src, "b.textContent=`지금 보이는 값은 간이 계산입니다. 3D 나비에–스토크스 + 열전달 계산 중 (후보 ${top.length}개: ${prog.map((p,i)=>`${i+1}) ${p}`).join(' · ')}, 경과 ${Math.floor((Date.now()-t0)/60000)}분 ${Math.floor((Date.now()-t0)/1000)%60}초) — 보통 20~30분 뒤 3D 값으로 바뀝니다(채널 세분 격자).`}};",
+              "b.textContent=`3D 나비에–스토크스 + 정밀 열전달 계산 중 · 약 20~30분 걸립니다 · ${Math.floor((Date.now()-t0)/60000)}분 ${Math.floor((Date.now()-t0)/1000)%60}초 지남`}};   // ← ML")
+    _a = src.index('h=`<button type="button" aria-label="닫기" data-x>✕</button><b>3D 나비에–스토크스 + 열전달 계산 중</b>'); _b = src.index("  else if(busy){let st='';", _a)
+    src = src[:_a] + 'h=`<button type="button" aria-label="닫기" data-x>✕</button><b>3D 나비에–스토크스 + 정밀 열전달 계산 중</b><br>약 20~30분 걸립니다 · <b>${Math.floor((now-L.t0)/60000)}분 ${Math.floor((now-L.t0)/1000)%60}초</b> 지남${quiet>60?`<br><span class="warn">⚠ ${Math.round(quiet)}초째 계산 신호가 없습니다. 오래 이어지면 새로고침해 주세요.</span>`:\'\'}<div class="bar"><i style="width:${pct}%"></i></div>`}\n' + src[_b:]
+    src = rep(src, "background:#FFC53D;color:#0A1F5C;border-radius:12px;padding:10px 14px;", "background:#FFF4D6;color:#8A5A00;border:1px solid #F1DDA6;border-radius:12px;padding:10px 14px;")
+    src = rep(src, "#liveBox .bar{height:5px;background:#0A1F5C26;", "#liveBox .bar{height:5px;background:#8A5A0026;")
+    src = rep(src, "background:#0B4BD6;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#0A1F5C99;", "background:#C98500;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#8A5A0099;")
     # 5f) 사용자 요청: 냉각 유체 버튼의 '(기본)'·제조사 이름 지움, 나노유체 긴 설명 두 문단 지움
     src = rep(src, '<button type="button" data-shfl="w">물<small>(기본)</small></button><button type="button" data-shfl="Al2O3">Al₂O₃ 나노유체<small>(99% · 나비엠알오)</small></button><button type="button" data-shfl="CuO">CuO 나노유체<small>(95% · 덕산화학)</small></button>',
               '<button type="button" data-shfl="w">물</button><button type="button" data-shfl="Al2O3">Al₂O₃ 나노유체</button><button type="button" data-shfl="CuO">CuO 나노유체</button>')
