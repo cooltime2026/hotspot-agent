@@ -2,7 +2,7 @@
    ① 1위 = 머신러닝 새 설계, 2~5위 = SimScale 로 돌려 본 모양(머신러닝이 고름)  ② 카드 숫자 = 이 에이전트의 간단 계산  ③ 3D 계산이 끝난 1·2위는 3D 값으로 바뀜.
    설계가 끝나기 전에는 '설계 중'만 보여 줌(기존 구조 순위를 대신 보여 주지 않음). 핫스팟이 없거나 발열이 0 이면 원래 화면 그대로. 계산식은 건드리지 않음. */
 function mlShKey(){const H=(G&&G.p&&G.p.hs)||S.hs;return JSON.stringify([S.inl,!!S.direct,H.map(h=>[h.x,h.y,h.lx,h.ly,h.q])])}
-function mlShList(){if(!AUTO||AUTO.key!==mlShKey())return null;const all=AUTO.cands.filter(c=>c.ml&&!c.hide);if(!all.length||all.some(c=>c.r===undefined))return null;
+function mlShList(){if(!AUTO||AUTO.key!==mlShKey()||(ML_CALC&&AUTO.calcKey!==AUTO.key))return null;const all=AUTO.cands.filter(c=>c.ml&&!c.hide);if(!all.length||all.some(c=>c.r===undefined))return null;
   const L=all.filter(c=>c.r).sort((a,b)=>a.ml-b.ml);return L.length?L:null}
 function mlShView(c){   // 카드에 보일 값: 3D 값이 있으면 3D, 없으면 간단 계산
   const ra=c===AUTO.best?mlAutoRes():null,r=ra||c.r,nx=(AUTO.nsList||[]).find(x=>x.c===c),ns=r.ns||(nx&&nx.ns)||null;
@@ -21,9 +21,11 @@ function mlViewApply(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIG
 function mlShRes(){
   const top=shEl('shTop'),rail=shEl('shRail');if(!top||!rail||!S.hs.length||!hasHeat()||!res.length)return false;
   const L=mlShList();
-  shEl('shResSub').textContent=`머신러닝 순위 · 유량 ${S.Q} ml/min · 핫스팟 ${S.hs.length}개`;
+  shEl('shResSub').textContent=`유량 ${S.Q} ml/min · 핫스팟 ${S.hs.length}개`;
   if(!L){shEl('shResBusy').hidden=true;rail.innerHTML='';
-    top.innerHTML=`<div class="sh-tb"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>약 20초 걸립니다.</small></div>`;return true}
+    if(SH.mlWaitKey!==mlShKey()+'|'+S.Q){SH.mlWaitKey=mlShKey()+'|'+S.Q;SH.mlT0=Date.now()}   // 설계 중 카드: 흐르는 시간과 진행 막대(45초 기준, 끝나기 전에는 95 %에서 멈춤)
+    if(!top.querySelector('#mlWait'))top.innerHTML=`<div class="sh-tb" id="mlWait"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>약 40초 걸립니다 · <b id="mlWaitT" style="color:#0B4BD6;font-variant-numeric:tabular-nums">0초</b> 지남</small><div style="height:8px;border-radius:4px;background:#DCE5F5;margin-top:12px;overflow:hidden"><i id="mlWaitB" style="display:block;height:100%;width:0;background:#0B4BD6;border-radius:4px;transition:width .9s linear"></i></div></div>`;
+    mlWaitTick();return true}
   if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key;ML_VIEW=null}
   const V=L.map(mlShView),m=res.find(r=>r.d.ref),lo=Math.min(...V.map(v=>v.r.Tmin),m?m.Tmin:1e9),hi=Math.max(...V.map(v=>v.r.Tmax),m?m.Tmax:-1e9);
   const c=L[SH.mlPick],v=V[SH.mlPick],[nm,sub]=mlShName(c),dT=m?v.T-m.Tmax:0,busy3=!v.ns&&c.ml<=2&&NS_POOL&&!(NS_LIVE&&NS_LIVE.done);
@@ -36,6 +38,8 @@ function mlShRes(){
   if(DESIGNS.indexOf(AUTOD)>=0)SH.pick=AUTOD;if(!SH.inSel)shSel();
   if(shEl('shMore').open)shMoreFill();
   return true}
+function mlWaitTick(){const t=document.getElementById('mlWaitT'),b=document.getElementById('mlWaitB');if(!t||!b)return;const s=Math.max(0,(Date.now()-(SH.mlT0||Date.now()))/1000);t.textContent=Math.floor(s)+'초';b.style.width=Math.min(95,s/45*100).toFixed(1)+'%'}
+setInterval(mlWaitTick,1000);
 {const r0=shRes;shRes=function(){try{if(mlShRes())return}catch(e){console.error('mlShRes',e)}return r0.apply(this,arguments)};
  const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);
   // 자동 설계가 방금 목록에 들어온 직후에는 결과 배열(res)에 그 자리가 아직 없음(정밀 풀이 뒤에 채워짐) → 그 몇 초 동안 '자세히 보기'가 다른 구조를 그리지 않게 간단 계산 결과를 먼저 넣어 둠
