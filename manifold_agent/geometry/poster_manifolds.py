@@ -14,14 +14,21 @@ items, C_P, C_U, C_CH, C_PORT = g["items"], g["C_P"], g["C_U"], g["C_CH"], g["C_
 matplotlib.rcParams.update({"font.family": ["WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none"})
 PUR, PINK, TXT = "#5b2a6e", "#e0457b", "#2b2b2b"
 BY = {it[0].split(" = ")[0]: it for it in items}
-SHORT = {"M0": "매니폴드 없음", "M1": "중앙 빗살", "M3": "V자 빗살", "M4": "직상부 공급", "D0": "이중 바람개비", "D1": "말굽",
-         "L1": "국소 개방", "E1": "가장자리 급수", "F1": "핫스팟 줄 입구"}
+import re
+SHORT = {"M0": "매니폴드 없음", "M1": "중앙 빗살형", "M3": "V자 빗살형", "M4": "직상부 공급형", "D0": "이중 바람개비형", "D1": "말굽형",
+         "L1": "국소 개방형", "E1": "가장자리 급수형", "F1": "전용 입구형",
+         "S1": "흡입형", "S2": "바람개비형", "S3": "대역 대향류형", "S4": "V자 빗살형", "S5": "V자 빗살형", "S6": "V자 빗살형",
+         "S8": "넓은 V자 빗살", "S9": "넓은 V자 빗살"}
+for _it in items:
+    _k = _it[0].split(" = ")[0]; _n = re.search(r"띠 (\d+)개", _it[1])
+    if _k[0] in "AB": SHORT[_k] = f"빗살 {_n.group(1)}개"
+    if _k[0] == "C": SHORT[_k] = "모은 빗살형"
 BEST = {"S2": "2_2+3_2", "S5": "2_1+2_2", "F1": "1_3+1_4", "A7": "3_3+3_4"}     # 0.912 m/s 핫스팟별 1등
-ROWS = [("팀 설계", "6종", ["M0", "M1", "M3", "M4", "D0", "D1"]),
-        ("규칙 변형 A", "8종", [f"A{i}" for i in range(1, 9)]),
-        ("규칙 변형 B", "8종", [f"B{i}" for i in range(1, 9)]),
-        ("규칙 변형 C · 새 구조", "4종 + 3종", ["C1", "C2", "C3", "C4", None, "L1", "E1", "F1"]),
-        ("머신러닝 설계", "8종 (S1~S9)", ["S1", "S2", "S3", "S4", "S5", "S6", "S8", "S9"])]
+ROWS = [("기본형", "6종", ["M0", "M1", "M3", "M4", "D0", "D1"]),
+        ("빗살형", "8종", [f"A{i}" for i in range(1, 9)]),
+        ("빗살형", "8종", [f"B{i}" for i in range(1, 9)]),
+        ("모은 빗살형\n· 새 구조", "4종 + 3종", ["C1", "C2", "C3", "C4", None, "L1", "E1", "F1"]),
+        ("바람개비 · 흡입\n· V자 빗살형", "8종", ["S1", "S2", "S3", "S4", "S5", "S6", "S8", "S9"])]
 
 
 def tile(ax, it, key):
@@ -43,7 +50,7 @@ def tile(ax, it, key):
         ax.add_patch(Rectangle((-.5, -.5), 13, 13, fill=False, ec=PINK, lw=2.6, zorder=6, clip_on=False))
         ax.text(12.4, 12.4, "★", ha="center", va="center", fontsize=11, color=PINK, zorder=7, clip_on=False)
     lab = name.replace(" = ", "=")
-    ax.text(6, -1.2, lab + (f"\n{SHORT[key]}" if key in SHORT else ""), ha="center", va="top", fontsize=7.4, color=TXT, linespacing=1.15)
+    ax.text(6, -1.2, f"{SHORT.get(key, '')}\n{lab}", ha="center", va="top", fontsize=7.4, color=TXT, linespacing=1.15)
     ax.set_xlim(-.6, 12.6); ax.set_ylim(-.6, 12.6); ax.set_aspect("equal"); ax.axis("off")
 
 
@@ -56,7 +63,7 @@ if __name__ == "__main__":
         yb = top - (r + 1) * rh
         bg = fig.add_axes([.005, yb + .02, lw_ - .015, rh - .03]); bg.axis("off"); bg.set_xlim(0, 1); bg.set_ylim(0, 1)
         bg.add_patch(FancyBboxPatch((0, .06), 1, .88, boxstyle="round,pad=0,rounding_size=0.08", fc="#f3edf6", ec="none"))
-        bg.text(.5, .6, gname.replace(" · ", "\n· ") if len(gname) > 8 else gname, ha="center", va="center", fontsize=8.6, color=PUR, weight="bold", linespacing=1.2)
+        bg.text(.5, .6, gname, ha="center", va="center", fontsize=8.6, color=PUR, weight="bold", linespacing=1.2)
         bg.text(.5, .22, cnt, ha="center", va="center", fontsize=7.6, color=TXT)
         for c, k in enumerate(keys):
             if k is None: continue
