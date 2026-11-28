@@ -1,0 +1,14 @@
+[
+ {
+  "key": "M0",
+  "name": "매니폴드 없음",
+  "height_mm": 0.65,
+  "fluid_solids": 1,
+  "solid_solids": 1,
+  "fluid_mm3": 28.702,
+  "solid_mm3": 64.898,
+  "filled_dead_fluid_mm3": 0,
+  "bottom_faces": 16,
+  "overlap_mm3": 0.0
+ }
+]
