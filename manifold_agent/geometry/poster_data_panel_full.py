@@ -1,0 +1,69 @@
+"""포스터 '② SimScale 해석 데이터와 머신러닝 모델' 칸 전체 (세로 칸 비율) → out/poster_icons/data_panel_full.png/svg
+  그래프 (a)(b) + 숫자 상자 4개 + SimScale 바닥 온도 사진 4장 + 글 5줄
+"""
+from pathlib import Path
+import pandas as pd, matplotlib
+matplotlib.use("Agg"); import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+from PIL import Image
+ROOT = Path(__file__).resolve().parents[1]
+matplotlib.rcParams.update({"font.family": ["WenQuanYi Zen Hei", "DejaVu Sans"], "svg.fonttype": "none", "axes.unicode_minus": False,
+                            "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": "#b3b3b3", "axes.grid": True,
+                            "grid.color": "#ececec", "axes.axisbelow": True, "xtick.color": "#666", "ytick.color": "#666", "font.size": 8})
+TXT, PUR, PINK, LP = "#2b2b2b", "#5b2a6e", "#e0457b", "#f3edf6"
+SER = [("M0", "매니폴드 없음", "#9a9a9a", "s"), ("M1", "중앙 집중 빗살형", "#3f7fd8", "^"), ("M3", "V자 빗살형", "#5b2a6e", "o")]
+HS = "2_1+2_2"
+d = pd.read_csv(ROOT / "data/ml/thermal.csv"); d = d[(d.augmented == "original") & (d.hotspot == HS)]
+s5 = d[d.design == "S5"].iloc[0]
+PH = [(261, (80, 45, 690, 740), "매니폴드 없음", "M0"), (733, (45, 40, 640, 732), "중앙 집중 빗살형", "M1"),
+      (413, (135, 45, 800, 758), "V자 빗살형", "M3"), (1323, (55, 40, 679, 742), "자동 설계", "S5")]
+
+fig = plt.figure(figsize=(7.6, 9.6))
+# ---- (a)(b) 그래프 ----
+a1 = fig.add_axes([.09, .735, .38, .215]); a2 = fig.add_axes([.60, .735, .38, .215])
+for k, nm, c, m in SER:
+    g = d[d.design == k].sort_values("Q_mLmin")
+    a1.plot(g.Q_mLmin, g.Tmax_C, "-", color=c, lw=1.8, marker=m, ms=5, mec="white", mew=1, label=nm)
+    a2.plot(g.Q_mLmin, g.p_max_Pa / 1000, "-", color=c, lw=1.8, marker=m, ms=5, mec="white", mew=1, label=nm)
+for ax, v in [(a1, s5.Tmax_C), (a2, s5.p_max_Pa / 1000)]:
+    ax.plot(55, v, marker="*", ms=13, color=PINK, mec="white", mew=.8, ls="", label="자동 설계 (V자 빗살)", zorder=5)
+a1.annotate(f"{s5.Tmax_C:.1f} °C", (55, s5.Tmax_C), xytext=(7, -9), textcoords="offset points", fontsize=7.5, color=PINK, weight="bold")
+for ax, t, yl in [(a1, "(a) 유량별 칩 최고 온도", "칩 최고 온도 (°C)"), (a2, "(b) 유량별 압력 강하", "압력 강하 (kPa)")]:
+    ax.set_title(t, fontsize=9, loc="left", color=TXT, weight="bold", pad=4); ax.set_xlabel("총 유량 (mL/min)", fontsize=7.5); ax.set_ylabel(yl, fontsize=7.5)
+    ax.set_xticks([30, 55, 75, 100]); ax.tick_params(labelsize=7)
+a1.legend(frameon=False, fontsize=6.6, loc="upper right", handlelength=1.6); a2.legend(frameon=False, fontsize=6.6, loc="upper left", handlelength=1.6)
+fig.text(.09, .975, f"같은 핫스팟 ({HS}) · SimScale 해석값", fontsize=7.5, color="#666")
+
+# ---- 숫자 상자 4개 ----
+bg = fig.add_axes([0, 0, 1, 1]); bg.axis("off"); bg.set_xlim(0, 1); bg.set_ylim(0, 1); bg.set_zorder(-1)
+for i, (big, small) in enumerate([("238건", "SimScale 해석"), ("37종", "매니폴드 형상"), ("20가지", "핫스팟 위치"), ("5단계", "유량 30~100 mL/min")]):
+    x = .035 + i * .2425
+    bg.add_patch(FancyBboxPatch((x, .595), .222, .075, boxstyle="round,pad=0,rounding_size=0.012", fc=LP, ec="none"))
+    bg.text(x + .111, .643, big, ha="center", va="center", fontsize=15, color=PUR, weight="bold")
+    bg.text(x + .111, .607, small, ha="center", va="center", fontsize=7.3, color=TXT)
+
+# ---- SimScale 사진 4장 ----
+bg.text(.035, .578, "SimScale 칩 바닥 온도 (55 mL/min, 사진마다 색 범위 다름)", fontsize=8.5, color=TXT, weight="bold", va="center")
+for i, (n, box, nm, key) in enumerate(PH):
+    im = Image.open(ROOT / f"images/{n}.png").convert("RGB").crop(box)
+    ax = fig.add_axes([.035 + i * .2425, .33, .222, .185]); ax.imshow(im); ax.set_xticks([]); ax.set_yticks([])
+    best = key == "S5"
+    for s in ax.spines.values(): s.set_visible(best); s.set_edgecolor(PINK); s.set_linewidth(2)
+    t = d[(d.design == key) & (d.inlet_v_mps.round(3) == .912)].Tmax_C.iloc[0]
+    ax.set_title(f"{nm}\n{t:.1f} °C", fontsize=7.8, color=PINK if best else TXT, weight="bold", linespacing=1.15, pad=3)
+
+# ---- 글 ----
+LINES = [("해석 조건", "정상상태, 층류. 핫스팟 2칸(각 3 × 3 mm) 300 W/cm²,\n그 외 50 W/cm², 물 20 °C, 알루미늄"),
+         ("해석 검증", "문헌 구조를 같은 조건으로 해석해 채널 유속 분포가\n2% 이내로 일치함"),
+         ("해석 결과", "같은 핫스팟 · 유량에서도 형상에 따라 칩 최고 온도가\n최대 36 °C 달라짐 (125.1 → 88.8 °C)"),
+         ("머신러닝 모델", "형상 특징, 핫스팟 위치, 유량 → 16칸 온도와 압력 강하 예측.\n해석 전에 예측하고 결과와 비교해 다시 학습함"),
+         ("데이터 분석", "가장자리 핫스팟은 채널 끝 유량이 부족해 덜 식음\n→ 핫스팟 줄 전용 입구(F형) 추가")]
+y = .285
+for head, body in LINES:
+    bg.text(.035, y, "▶", fontsize=8, color=PUR, va="top")
+    bg.text(.065, y, head, fontsize=8.6, color=PUR, weight="bold", va="top")
+    bg.text(.205, y, body, fontsize=8.2, color=TXT, va="top", linespacing=1.35)
+    y -= .057
+out = ROOT / "out/poster_icons"
+fig.savefig(out / "data_panel_full.png", dpi=300, facecolor="white"); fig.savefig(out / "data_panel_full.svg", facecolor="white")
+print("저장")
