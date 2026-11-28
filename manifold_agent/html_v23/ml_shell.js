@@ -5,16 +5,26 @@ function mlShKey(){const H=(G&&G.p&&G.p.hs)||S.hs;return JSON.stringify([S.inl,!
 function mlShList(){if(!AUTO||AUTO.key!==mlShKey())return null;const all=AUTO.cands.filter(c=>c.ml&&!c.hide);if(!all.length||all.some(c=>c.r===undefined))return null;
   const L=all.filter(c=>c.r).sort((a,b)=>a.ml-b.ml);return L.length?L:null}
 function mlShView(c){   // 카드에 보일 값: 3D 값이 있으면 3D, 없으면 간단 계산
-  const i=DESIGNS.indexOf(AUTOD),ra=(c===AUTO.best&&i>=0&&res.length===DESIGNS.length&&res[i]&&res[i].d===AUTOD)?res[i]:null,r=ra||c.r,nx=(AUTO.nsList||[]).find(x=>x.c===c),ns=r.ns||(nx&&nx.ns)||null;
+  const ra=c===AUTO.best?mlAutoRes():null,r=ra||c.r,nx=(AUTO.nsList||[]).find(x=>x.c===c),ns=r.ns||(nx&&nx.ns)||null;
   return {r,ns,T:r.ns?r.Tmax:(nx?nx.ns.Tmax:r.Tmax),dp:r.ns?r.dp:(nx?nx.ns.dp:r.dp)}}
-function mlShName(c){const n=c.name.replace(/^\d위 /,'');let m=n.match(/^(머신러닝 새 설계(?: N\d+)?) ?\(?(.*?)\)?$/);if(m)return [m[1],m[2]];m=n.match(/^(실측 모양 \S+) · (.*)$/);if(m)return [m[1],m[2]];m=n.match(/^(머신러닝 최적) · (.*)$/);return m?[m[1],m[2]]:[n,'']}
+function mlShName(c){return c.nice||mlNiceOf(c)}   // [모양 이름, 설명] — 새 설계 = '자동 최적화 모양', 나머지 = 형상 이름
+function mlBusyText(st){st=st||'';   // 떠 있는 알림 문구: 설계가 끝나기 전에는 '최적화 매니폴드 형성 중', 그 뒤에는 단계 이름
+  let done=false;try{done=!S.hs.length||!!mlShList()}catch(e){}if(!done)return '최적화 매니폴드 형성 중';
+  if(/선택 설계/.test(st))return '고른 모양 정밀 계산 중';if(/구조별 유량장/.test(st))return '기존 구조 비교 계산 중';if(/유량 스윕/.test(st))return '유량별 비교 계산 중';return '마무리 계산 중'}
+// 2~5위도 '온도·흐름·3D 자세히 보기'에서 볼 수 있게: 고른 후보의 간단 계산 결과를 '자동 설계' 자리에 끼워 넣어 그림·흐름·3D 가 그 모양을 그림 (다시 계산하지 않음)
+var ML_VIEW=null,ML_VIEW_SAVE=null;
+function mlAutoRes(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIGNS.length||!res[i])return null;return res[i].d===AUTOD?res[i]:(ML_VIEW_SAVE&&ML_VIEW_SAVE.d===AUTOD?ML_VIEW_SAVE:null)}
+function mlViewApply(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIGNS.length||!res[i])return;
+  const c=(ML_VIEW&&AUTO.cands.includes(ML_VIEW)&&ML_VIEW.r&&ML_VIEW!==AUTO.best)?ML_VIEW:null;
+  if(c){if(res[i].d===AUTOD)ML_VIEW_SAVE=res[i];if(!c._vr||c._vr.src!==c.r){const t=mlShName(c);c._vr={...c.r,src:c.r,d:{...c.d,name:t[0],note:`${c.ml}위 · ${t[1]}`}}}res[i]=c._vr}
+  else if(res[i].d!==AUTOD&&ML_VIEW_SAVE&&ML_VIEW_SAVE.d===AUTOD)res[i]=ML_VIEW_SAVE}
 function mlShRes(){
   const top=shEl('shTop'),rail=shEl('shRail');if(!top||!rail||!S.hs.length||!hasHeat()||!res.length)return false;
   const L=mlShList();
   shEl('shResSub').textContent=`머신러닝 순위 · 유량 ${S.Q} ml/min · 핫스팟 ${S.hs.length}개`;
   if(!L){shEl('shResBusy').hidden=true;rail.innerHTML='';
-    top.innerHTML=`<div class="sh-tb"><b class="sh-tn">머신러닝이 매니폴드를 설계하는 중입니다</b><small>핫스팟 위치·크기·열유속에 맞춰 새 모양(1위)을 만들고, 지금까지 SimScale 로 돌려 본 모양 중 2~5위를 고른 뒤 간단 계산으로 온도를 냅니다. 보통 20초 안팎입니다.</small></div>`;return true}
-  if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key}
+    top.innerHTML=`<div class="sh-tb"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>약 20초 걸립니다.</small></div>`;return true}
+  if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key;ML_VIEW=null}
   const V=L.map(mlShView),m=res.find(r=>r.d.ref),lo=Math.min(...V.map(v=>v.r.Tmin),m?m.Tmin:1e9),hi=Math.max(...V.map(v=>v.r.Tmax),m?m.Tmax:-1e9);
   const c=L[SH.mlPick],v=V[SH.mlPick],[nm,sub]=mlShName(c),dT=m?v.T-m.Tmax:0,busy3=!v.ns&&c.ml<=2&&NS_POOL&&!(NS_LIVE&&NS_LIVE.done);
   {const bz=shEl('shResBusy');bz.hidden=!SH.busy;if(SH.busy&&/조건이 바뀌어/.test(bz.textContent))bz.textContent='1~5위는 간단 계산값입니다. 이어서 1·2위를 3D로 다시 풀고 있습니다…'}   // 순위가 이미 나온 뒤의 '계산 중' 문구
@@ -27,6 +37,10 @@ function mlShRes(){
   if(shEl('shMore').open)shMoreFill();
   return true}
 {const r0=shRes;shRes=function(){try{if(mlShRes())return}catch(e){console.error('mlShRes',e)}return r0.apply(this,arguments)};
- const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);try{if(SH.page==='res'||!shEl('sh-res').hidden)shRes();shCrit()}catch(e){}return x};
+ const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);
+  // 자동 설계가 방금 목록에 들어온 직후에는 결과 배열(res)에 그 자리가 아직 없음(정밀 풀이 뒤에 채워짐) → 그 몇 초 동안 '자세히 보기'가 다른 구조를 그리지 않게 간단 계산 결과를 먼저 넣어 둠
+  try{const i=DESIGNS.indexOf(AUTOD);if(i>=0&&res.length===DESIGNS.length-1&&AUTO.best&&AUTO.best.r){res.splice(i,0,{...AUTO.best.r,d:AUTOD});render()}}catch(e){}
+  try{if(SH.page==='res'||!shEl('sh-res').hidden)shRes();shCrit()}catch(e){}return x};
  const c0=shCrit;shCrit=function(){const x=c0.apply(this,arguments);try{if(S.hs.length&&hasHeat()){const L=mlShList(),t=L?(()=>{const v=mlShView(L[0]);return `머신러닝 1위 · ${mlShName(L[0])[0]} ${v.T.toFixed(1)} °C · ${(v.dp/1e3).toFixed(1)} kPa`})():'머신러닝이 설계하는 중…';document.querySelectorAll('[data-top]').forEach(e=>{e.textContent=t})}}catch(e){}return x};
- shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-mlpick]');if(!b)return;SH.mlPick=+b.dataset.mlpick;shRes()})}
+ shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-mlpick]');if(!b)return;SH.mlPick=+b.dataset.mlpick;const L=mlShList();ML_VIEW=L&&L[SH.mlPick]!==AUTO.best?L[SH.mlPick]:null;if(res.length)render();shRes()});
+ const h0=shDetHead;shDetHead=function(){h0.apply(this,arguments);try{const r=res[sel];if(r&&r.d===AUTOD&&AUTO.best&&AUTO.best.nice)shEl('shDetT').textContent=`${AUTO.best.nice[0]} · ${r.Tmax.toFixed(1)} °C`}catch(e){}}}

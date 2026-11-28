@@ -276,6 +276,24 @@ function mlEvoOK(list,mo){return !!(mo&&mo.evo&&(mo.evo.head||list.some(c=>c.d&&
 // 실측 S 모양 → 계산 엔진 형상(g)
 function mlLibSpec(s,name){return {fam:s.fam,name,make:()=>{const g=aGeo();g.cav.set(mlRLE(s.cav,AG*AG));g.gro.set(mlRLE(s.gro,AG*AG));g.pin=s.pin.map(p=>p.slice());g.pout=s.pout.map(p=>p.slice());return g}}}
 function mlLibName(x){if(x.kind==='P')return `실측 모양 ${x.name} · ${x.pname} (프리셋)`;const fam=(x.kind==='S'||x.kind==='H')?x.s.base:x.kind==='F'?`F형 (핫스팟 줄 전용 입구${x.side==='top'?' · 위':' · 아래'}) · 띠 ${x.p.n}개`:`띠형 · 띠 ${x.p.n}개 · 폭 ${x.p.wf.toFixed(2)}`;return `실측 모양 ${x.name} · ${fam}`}
+// 화면용 이름 (2026-11-28, 사용자: "머신러닝 새 설계·실측 모양 말고 매니폴드 형상에 맞는 이름, 새 설계는 '자동 최적화 모양'"). ML_NICE 가 켜진 판(v23)만 c.name 을 바꿈. c.base(안쪽 이름)는 그대로.
+var ML_NICE=false;
+function mlNiceOf(c){const b=c.base||c.name||'';let m;
+  if((m=b.match(/^머신러닝 새 설계(?: (N\d+))? ?\((.*)\)$/)))return ['자동 최적화 모양',m[2]+(m[1]?` · 설계 번호 ${m[1]}`:'')];
+  if((m=b.match(/^머신러닝 설계 · (.*)$/)))return ['자동 최적화 모양',m[1].replace(/^실측 \S+ · /,'')];
+  if((m=b.match(/^실측 모양 (\S+) · (.*)$/))){const id=m[1],all=m[2],fam=all.split(' · ')[0].split(' (')[0],g=re=>{const x=all.match(re);return x?x[1]:null};let t=fam,det=[];
+    if(/머신러닝 새 설계/.test(all)){t=({D1:'말굽형'}[fam]||fam)+' 진화형'}
+    else if(/\(프리셋\)/.test(all)){t=fam+(id==='M1'||id==='M3'?' (헤더형)':'')}
+    else if(fam==='띠형'){const n=g(/띠 (\d+)개/),w=g(/폭 ([\d.]+)/);t=`가로 띠형 ${n}줄`;if(w)det.push(`띠 폭 비율 ${w}`)}
+    else if(fam==='V자 빗살형'){const w=g(/빗살 폭 ([\d.]+)/),q=g(/간격 ([\d.]+)/);if(w){t=`V자 빗살형 (폭 ${w} · 간격 ${q})`;det.push(`빗살 폭 ${w} mm`,`간격 ${q} mm`)}}
+    else if(fam==='바람개비형'){const w=g(/슬롯 ([\d.]+) mm/);if(w){t=`바람개비형 (슬롯 ${w})`}det.push(...all.split(' · ').slice(1))}
+    else if(fam==='흡입형'){t='흡입형 (핫스팟 위 배출)';det.push(...all.split(' · ').slice(1))}
+    else if(fam==='F형'){const n=g(/띠 (\d+)개/);t='F형 (핫스팟 줄 전용 입구)';if(n)det.push(`띠 ${n}개`)}
+    else det.push(...all.split(' · ').slice(1));
+    det=det.map(x=>x.replace(/ ?\(이 핫스팟 실측 [^)]*\)/,'')).filter(Boolean);det.push(`SimScale 실행 ${id}`);return [t,det.join(' · ')]}
+  return [b,'']}
+function mlNiceApply(order){if(!ML_NICE)return;const N=order.map(mlNiceOf),cnt={};N.forEach(x=>cnt[x[0]]=(cnt[x[0]]||0)+1);const k={};
+  order.forEach((c,i)=>{let [t,sub]=N[i];if(cnt[t]>1){k[t]=(k[t]||0)+1;t+=' '+'①②③④⑤'[k[t]-1]}if(c.sameAs&&i===0)sub+=` · SimScale 실행 ${c.sameAs}와 같은 모양`;if(c.meas!=null)sub+=` · 이 핫스팟 실측 ${c.meas.toFixed(1)} °C`;c.nice=[t,sub];c.name=`${i+1}위 ${t}${sub?' · '+sub:''}`})}
 // 순위: 1위 = 머신러닝 설계(계산된 것 중 점수 최고), 2~5위 = 실측 모양. 나머지는 숨김
 function mlRank(ok,hs,Q){const cells=mlCells(hs);
   for(const c of ok){if(!c.base)c.base=c.name;c.hide=false;c.ml=undefined;
@@ -289,7 +307,7 @@ function mlRank(ok,hs,Q){const cells=mlCells(hs);
   let lib2=lib;if(first){const key=c=>c.d.P.join(''),fk=key(first),same=lib.find(c=>key(c)===fk);if(same){first.sameAs=(same.base.match(/실측 모양 (\S+)/)||[])[1];if(first.meas==null)first.meas=same.meas;same.hide=true;lib2=lib.filter(c=>c!==same)}}
   const order=[...(first?[first]:[]),...lib2.slice(0,first?4:5)];lib2.slice(first?4:5).forEach(c=>c.hide=true);
   ok.filter(c=>!/^(머신러닝 설계|머신러닝 새 설계|실측 모양)/.test(c.base)).forEach(c=>c.hide=true);
-  order.forEach((c,i)=>{c.ml=i+1;c.name=c===first?`1위 ${/^머신러닝 새 설계/.test(c.base)?c.base:'머신러닝 최적 · '+c.base.replace(/^머신러닝 설계 · /,'')}${c.sameAs&&!/실측 /.test(c.base)?` (= 실측 ${c.sameAs}와 같은 모양)`:''}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`:`${i+1}위 ${c.base}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`})}
+  order.forEach((c,i)=>{c.ml=i+1;c.name=c===first?`1위 ${/^머신러닝 새 설계/.test(c.base)?c.base:'머신러닝 최적 · '+c.base.replace(/^머신러닝 설계 · /,'')}${c.sameAs&&!/실측 /.test(c.base)?` (= 실측 ${c.sameAs}와 같은 모양)`:''}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`:`${i+1}위 ${c.base}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`});mlNiceApply(order)}
 </script>
 '''
 
@@ -355,7 +373,7 @@ src = rep(src, "for(let i=0;i<made.length;i+=2){const grp=made.slice(i,i+2);",
 #   그동안 기존 구조는 d.flow 를 떼어 저장 유량장(원본의 대체값)으로 임시 계산하고, 재풀이 뒤 원래 값으로 바꿈. 떼고 붙이는 것은 지금 계산(token) 것만.
 if VER != "v17":
     src = rep(src, "async function compute(){",
-              "let ML_TMP=false;const ML_TMP_NOTE='기존 구조 10개는 유량장을 다시 푸는 중이라 값을 잠시 가렸습니다. 머신러닝 설계(1~5위)를 먼저 보여 드리고, 다 풀리면 표시합니다.';\n"
+              "ML_NICE=true;let ML_TMP=false;const ML_TMP_NOTE='기존 구조 10개는 유량장을 다시 푸는 중이라 값을 잠시 가렸습니다. 머신러닝 설계(1~5위)를 먼저 보여 드리고, 다 풀리면 표시합니다.';\n"
               "function mlDetach(){for(const d of DESIGNS)if(d.k!=='A'){if(typeof d.flow==='function')d._mlFlow=d.flow;if(d._mlFlow)d.flow=null}}   // ← ML: 기존 구조 유량장 재풀이를 뒤로 미룸\n"
               "function mlAttach(){for(const d of DESIGNS)if(d.k!=='A'&&d._mlFlow)d.flow=d._mlFlow}\n"
               "// 재풀이 전의 기존 구조 값(저장 유량장으로 낸 임시 값)은 화면에서 가림: 그림은 흐리게, 숫자는 '다시 푸는 중…'\n"
@@ -364,7 +382,7 @@ if VER != "v17":
               "  const v=document.querySelector('.verdict');if(v)v.classList.toggle('mltmp',tmp(sel));\n"
               "  if(ML_TMP)document.querySelectorAll('#warns li').forEach(li=>{if(li.textContent!==ML_TMP_NOTE)li.style.display='none'})}catch(e){}}   // 임시 값으로 만든 경고 문장도 그동안 가림\n"
               "{const st=document.createElement('style');st.textContent='.tile.mltmp svg{opacity:.22}.tile.mltmp small{font-size:0}.tile.mltmp small::after{content:\"다시 푸는 중…\";font:500 12px var(--mono);color:var(--muted)}tr.mltmp td:not(:first-child){color:transparent}tr.mltmp td:nth-child(2)::after{content:\"푸는 중\";color:var(--muted);font:400 12px var(--sans)}.verdict.mltmp .kv b{color:transparent}.verdict.mltmp .kv:first-of-type b::after{content:\"다시 푸는 중…\";color:var(--muted);font:500 14px var(--sans);margin-left:-6em}';document.head.appendChild(st);\n"
-              "  const r0=render,d0=drawMaps;render=function(){const x=r0.apply(this,arguments);mlMarkTmp();return x};drawMaps=function(){const x=d0.apply(this,arguments);mlMarkTmp();return x}}\n"
+              "  const r0=render,d0=drawMaps;render=function(){try{if(typeof mlViewApply==='function')mlViewApply()}catch(e){}const x=r0.apply(this,arguments);mlMarkTmp();return x};drawMaps=function(){const x=d0.apply(this,arguments);mlMarkTmp();return x}}\n"
               "async function compute(){")
     src = rep(src, "let out;try{G=setup(p);await prefetchFlows(DESIGNS,S.Q,'구조별 유량장');if(my!==token)return;out=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){",
               "let out;try{G=setup(p);mlDetach();ML_TMP=true;out=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){mlAttach();ML_TMP=false;   /* ← ML: 재풀이는 자동 설계 뒤로 */")
@@ -376,6 +394,13 @@ if VER != "v17":
               "  ML_TMP=false;try{res=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){FAILS.push('재계산 오류: '+(e.message||e))}render();\n"
               "  if(!(await nsStage(my)))return;   // ← 16차: 3D NS + 열전달\n")
     src = rep(src, "  if(FAILS.length)w.push(`계산 중 오류가 난 조건(건너뜀): ", "  if(ML_TMP)w.push(ML_TMP_NOTE);   // ← ML\n  if(FAILS.length)w.push(`계산 중 오류가 난 조건(건너뜀): ")
+    # 5e) 떠 있는 알림(계산 중 상자): 긴 문장 대신 짧은 알림, 검은 배경 대신 눈에 띄는 색 (사용자 요청)
+    src = rep(src, "h=`<button type=\"button\" aria-label=\"닫기\" data-x>✕</button><b>계산 중</b> · 경과 <b>${mmss(now-Math.max(tBusy,window.__busyT0||0))}</b><br>${esc((st||'구조별 유량 계산').slice(0,110))}`}",
+              "h=`<button type=\"button\" aria-label=\"닫기\" data-x>✕</button><b>${esc(mlBusyText(st))}</b> · 경과 <b>${mmss(now-Math.max(tBusy,window.__busyT0||0))}</b>`}   // ← ML")
+    src = rep(src, "background:#0B1A2Cee;color:#fff;border-radius:12px;padding:9px 12px;", "background:#FFC53D;color:#0A1F5C;border-radius:12px;padding:10px 14px;")
+    src = rep(src, "#liveBox .bar{height:5px;background:#ffffff30;", "#liveBox .bar{height:5px;background:#0A1F5C26;")
+    src = rep(src, "#liveBox .bar i{display:block;height:100%;background:#5DD39E;width:0}#liveBox .warn{color:#FFC857}#liveBox button{float:right;background:none;border:0;color:#fff9;",
+              "#liveBox .bar i{display:block;height:100%;background:#0B4BD6;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#0A1F5C99;")
     # 5d) 결과 화면(모바일 흐름)을 머신러닝 순위로 — html_v23/ml_shell.js (1위 새 설계 · 2~5위 실측 모양 · 간단 계산 값 · 1·2위는 3D 값으로)
     _a = "shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(!b)return;SH.pick=DESIGNS.find(d=>d.k===b.dataset.pick);shRes()});"
     src = rep(src, _a, _a + "\n" + (VDIR / "ml_shell.js").read_text(encoding="utf-8"))

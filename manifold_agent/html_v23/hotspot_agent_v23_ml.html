@@ -1943,6 +1943,24 @@ function mlEvoOK(list,mo){return !!(mo&&mo.evo&&(mo.evo.head||list.some(c=>c.d&&
 // 실측 S 모양 → 계산 엔진 형상(g)
 function mlLibSpec(s,name){return {fam:s.fam,name,make:()=>{const g=aGeo();g.cav.set(mlRLE(s.cav,AG*AG));g.gro.set(mlRLE(s.gro,AG*AG));g.pin=s.pin.map(p=>p.slice());g.pout=s.pout.map(p=>p.slice());return g}}}
 function mlLibName(x){if(x.kind==='P')return `실측 모양 ${x.name} · ${x.pname} (프리셋)`;const fam=(x.kind==='S'||x.kind==='H')?x.s.base:x.kind==='F'?`F형 (핫스팟 줄 전용 입구${x.side==='top'?' · 위':' · 아래'}) · 띠 ${x.p.n}개`:`띠형 · 띠 ${x.p.n}개 · 폭 ${x.p.wf.toFixed(2)}`;return `실측 모양 ${x.name} · ${fam}`}
+// 화면용 이름 (2026-11-28, 사용자: "머신러닝 새 설계·실측 모양 말고 매니폴드 형상에 맞는 이름, 새 설계는 '자동 최적화 모양'"). ML_NICE 가 켜진 판(v23)만 c.name 을 바꿈. c.base(안쪽 이름)는 그대로.
+var ML_NICE=false;
+function mlNiceOf(c){const b=c.base||c.name||'';let m;
+  if((m=b.match(/^머신러닝 새 설계(?: (N\d+))? ?\((.*)\)$/)))return ['자동 최적화 모양',m[2]+(m[1]?` · 설계 번호 ${m[1]}`:'')];
+  if((m=b.match(/^머신러닝 설계 · (.*)$/)))return ['자동 최적화 모양',m[1].replace(/^실측 \S+ · /,'')];
+  if((m=b.match(/^실측 모양 (\S+) · (.*)$/))){const id=m[1],all=m[2],fam=all.split(' · ')[0].split(' (')[0],g=re=>{const x=all.match(re);return x?x[1]:null};let t=fam,det=[];
+    if(/머신러닝 새 설계/.test(all)){t=({D1:'말굽형'}[fam]||fam)+' 진화형'}
+    else if(/\(프리셋\)/.test(all)){t=fam+(id==='M1'||id==='M3'?' (헤더형)':'')}
+    else if(fam==='띠형'){const n=g(/띠 (\d+)개/),w=g(/폭 ([\d.]+)/);t=`가로 띠형 ${n}줄`;if(w)det.push(`띠 폭 비율 ${w}`)}
+    else if(fam==='V자 빗살형'){const w=g(/빗살 폭 ([\d.]+)/),q=g(/간격 ([\d.]+)/);if(w){t=`V자 빗살형 (폭 ${w} · 간격 ${q})`;det.push(`빗살 폭 ${w} mm`,`간격 ${q} mm`)}}
+    else if(fam==='바람개비형'){const w=g(/슬롯 ([\d.]+) mm/);if(w){t=`바람개비형 (슬롯 ${w})`}det.push(...all.split(' · ').slice(1))}
+    else if(fam==='흡입형'){t='흡입형 (핫스팟 위 배출)';det.push(...all.split(' · ').slice(1))}
+    else if(fam==='F형'){const n=g(/띠 (\d+)개/);t='F형 (핫스팟 줄 전용 입구)';if(n)det.push(`띠 ${n}개`)}
+    else det.push(...all.split(' · ').slice(1));
+    det=det.map(x=>x.replace(/ ?\(이 핫스팟 실측 [^)]*\)/,'')).filter(Boolean);det.push(`SimScale 실행 ${id}`);return [t,det.join(' · ')]}
+  return [b,'']}
+function mlNiceApply(order){if(!ML_NICE)return;const N=order.map(mlNiceOf),cnt={};N.forEach(x=>cnt[x[0]]=(cnt[x[0]]||0)+1);const k={};
+  order.forEach((c,i)=>{let [t,sub]=N[i];if(cnt[t]>1){k[t]=(k[t]||0)+1;t+=' '+'①②③④⑤'[k[t]-1]}if(c.sameAs&&i===0)sub+=` · SimScale 실행 ${c.sameAs}와 같은 모양`;if(c.meas!=null)sub+=` · 이 핫스팟 실측 ${c.meas.toFixed(1)} °C`;c.nice=[t,sub];c.name=`${i+1}위 ${t}${sub?' · '+sub:''}`})}
 // 순위: 1위 = 머신러닝 설계(계산된 것 중 점수 최고), 2~5위 = 실측 모양. 나머지는 숨김
 function mlRank(ok,hs,Q){const cells=mlCells(hs);
   for(const c of ok){if(!c.base)c.base=c.name;c.hide=false;c.ml=undefined;
@@ -1956,7 +1974,7 @@ function mlRank(ok,hs,Q){const cells=mlCells(hs);
   let lib2=lib;if(first){const key=c=>c.d.P.join(''),fk=key(first),same=lib.find(c=>key(c)===fk);if(same){first.sameAs=(same.base.match(/실측 모양 (\S+)/)||[])[1];if(first.meas==null)first.meas=same.meas;same.hide=true;lib2=lib.filter(c=>c!==same)}}
   const order=[...(first?[first]:[]),...lib2.slice(0,first?4:5)];lib2.slice(first?4:5).forEach(c=>c.hide=true);
   ok.filter(c=>!/^(머신러닝 설계|머신러닝 새 설계|실측 모양)/.test(c.base)).forEach(c=>c.hide=true);
-  order.forEach((c,i)=>{c.ml=i+1;c.name=c===first?`1위 ${/^머신러닝 새 설계/.test(c.base)?c.base:'머신러닝 최적 · '+c.base.replace(/^머신러닝 설계 · /,'')}${c.sameAs&&!/실측 /.test(c.base)?` (= 실측 ${c.sameAs}와 같은 모양)`:''}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`:`${i+1}위 ${c.base}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`})}
+  order.forEach((c,i)=>{c.ml=i+1;c.name=c===first?`1위 ${/^머신러닝 새 설계/.test(c.base)?c.base:'머신러닝 최적 · '+c.base.replace(/^머신러닝 설계 · /,'')}${c.sameAs&&!/실측 /.test(c.base)?` (= 실측 ${c.sameAs}와 같은 모양)`:''}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`:`${i+1}위 ${c.base}${c.meas!=null?` (이 핫스팟 실측 ${c.meas.toFixed(1)} °C)`:''}`});mlNiceApply(order)}
 </script>
 <script type="text/plain" id="nsSrc">
 /* =====================================================================================
@@ -2425,7 +2443,7 @@ async function nsStage(my){
 
 // ── 실시간 진행 표시 (모든 화면 위에 떠 있음). 숫자가 1초마다 바뀌면 계산 중, 멈춰 있으면 화면이 멈춘 것 ──
 var NS_LIVE=null;
-(function(){const css=document.createElement('style');css.textContent=`#liveBox{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:84px;width:min(440px,94vw);background:#0B1A2Cee;color:#fff;border-radius:12px;padding:9px 12px;font:12.5px/1.45 'IBM Plex Sans KR','Noto Sans KR',sans-serif;box-shadow:0 6px 20px #0004}#liveBox b{font-weight:700}#liveBox .bar{height:5px;background:#ffffff30;border-radius:3px;margin-top:6px;overflow:hidden}#liveBox .bar i{display:block;height:100%;background:#5DD39E;width:0}#liveBox .warn{color:#FFC857}#liveBox button{float:right;background:none;border:0;color:#fff9;font-size:14px;cursor:pointer}`;document.head.appendChild(css);
+(function(){const css=document.createElement('style');css.textContent=`#liveBox{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:84px;width:min(440px,94vw);background:#FFC53D;color:#0A1F5C;border-radius:12px;padding:10px 14px;font:12.5px/1.45 'IBM Plex Sans KR','Noto Sans KR',sans-serif;box-shadow:0 6px 20px #0004}#liveBox b{font-weight:700}#liveBox .bar{height:5px;background:#0A1F5C26;border-radius:3px;margin-top:6px;overflow:hidden}#liveBox .bar i{display:block;height:100%;background:#0B4BD6;width:0}#liveBox .warn{color:#B3192E}#liveBox button{float:right;background:none;border:0;color:#0A1F5C99;font-size:14px;cursor:pointer}`;document.head.appendChild(css);
  const box=document.createElement('div');box.id='liveBox';box.hidden=true;box.setAttribute('role','status');box.setAttribute('aria-live','polite');
  let tBusy=null,hideAt=0,closed=false;const mmss=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
  const EXP=1150;   // 후보 하나의 유동 반복 횟수 대략값(실측 약 1,100~1,600)
@@ -2436,7 +2454,7 @@ var NS_LIVE=null;
     h=`<button type="button" aria-label="닫기" data-x>✕</button><b>3D 나비에–스토크스 + 열전달 계산 중</b> · 경과 <b>${mmss(now-L.t0)}</b><br>`+
       L.stage.map((st,i)=>`후보 ${i+1}: ${st==='완료'?'완료 ✓':st==='heat'?'열전달 계산':st==='flow'?`유동 반복 ${L.it[i]}`:'대기(앞 후보 끝나면 시작)'}`).join(' · ')+
       `<br>${quiet>60?`<span class="warn">⚠ ${Math.round(quiet)}초째 계산 신호가 없습니다. 오래 이어지면 새로고침해 주세요.</span>`:`마지막 계산 신호 ${Math.round(quiet)}초 전 · 전체 약 ${pct}%`}<div class="bar"><i style="width:${pct}%"></i></div>`}
-  else if(busy){let st='';try{st=$('autoStatus').textContent}catch(e){}h=`<button type="button" aria-label="닫기" data-x>✕</button><b>계산 중</b> · 경과 <b>${mmss(now-Math.max(tBusy,window.__busyT0||0))}</b><br>${esc((st||'구조별 유량 계산').slice(0,110))}`}
+  else if(busy){let st='';try{st=$('autoStatus').textContent}catch(e){}h=`<button type="button" aria-label="닫기" data-x>✕</button><b>${esc(mlBusyText(st))}</b> · 경과 <b>${mmss(now-Math.max(tBusy,window.__busyT0||0))}</b>`}   // ← ML
   else if(now<hideAt||(L&&L.done&&now-L.tDone<8000)){h=L&&L.done?`<b>계산 완료 ✓</b> · 3D 나비에–스토크스 + 열전달 값이 화면에 표시되었습니다 (${mmss(L.tDone-L.t0)} 걸림)`:`<b>계산 완료 ✓</b>`}
   if(!h||closed){box.hidden=true;return}box.hidden=false;box.innerHTML=h},1000);
  box.addEventListener('click',e=>{if(e.target.closest('[data-x]')){closed=true;box.hidden=true}});
@@ -2610,7 +2628,7 @@ function syncDirect(){const cur=DESIGNS[sel],i=DESIGNS.indexOf(M4D);
   else if(S.direct&&i<0){const o=DORD.indexOf(M4D);let at=DESIGNS.length;for(let k=o+1;k<DORD.length;k++){const j=DESIGNS.indexOf(DORD[k]);if(j>=0){at=j;break}}DESIGNS.splice(at,0,M4D)}
   if(!S.direct&&typeof SH!=='undefined'&&SH.pick===M4D)SH.pick=null;
   const n=DESIGNS.indexOf(cur);sel=n>=0?n:Math.min(3,DESIGNS.length-1)}
-let ML_TMP=false;const ML_TMP_NOTE='기존 구조 10개는 유량장을 다시 푸는 중이라 값을 잠시 가렸습니다. 머신러닝 설계(1~5위)를 먼저 보여 드리고, 다 풀리면 표시합니다.';
+ML_NICE=true;let ML_TMP=false;const ML_TMP_NOTE='기존 구조 10개는 유량장을 다시 푸는 중이라 값을 잠시 가렸습니다. 머신러닝 설계(1~5위)를 먼저 보여 드리고, 다 풀리면 표시합니다.';
 function mlDetach(){for(const d of DESIGNS)if(d.k!=='A'){if(typeof d.flow==='function')d._mlFlow=d.flow;if(d._mlFlow)d.flow=null}}   // ← ML: 기존 구조 유량장 재풀이를 뒤로 미룸
 function mlAttach(){for(const d of DESIGNS)if(d.k!=='A'&&d._mlFlow)d.flow=d._mlFlow}
 // 재풀이 전의 기존 구조 값(저장 유량장으로 낸 임시 값)은 화면에서 가림: 그림은 흐리게, 숫자는 '다시 푸는 중…'
@@ -2619,7 +2637,7 @@ function mlMarkTmp(){try{const tmp=i=>ML_TMP&&res[i]&&res[i].d&&res[i].d.k!=='A'
   const v=document.querySelector('.verdict');if(v)v.classList.toggle('mltmp',tmp(sel));
   if(ML_TMP)document.querySelectorAll('#warns li').forEach(li=>{if(li.textContent!==ML_TMP_NOTE)li.style.display='none'})}catch(e){}}   // 임시 값으로 만든 경고 문장도 그동안 가림
 {const st=document.createElement('style');st.textContent='.tile.mltmp svg{opacity:.22}.tile.mltmp small{font-size:0}.tile.mltmp small::after{content:"다시 푸는 중…";font:500 12px var(--mono);color:var(--muted)}tr.mltmp td:not(:first-child){color:transparent}tr.mltmp td:nth-child(2)::after{content:"푸는 중";color:var(--muted);font:400 12px var(--sans)}.verdict.mltmp .kv b{color:transparent}.verdict.mltmp .kv:first-of-type b::after{content:"다시 푸는 중…";color:var(--muted);font:500 14px var(--sans);margin-left:-6em}';document.head.appendChild(st);
-  const r0=render,d0=drawMaps;render=function(){const x=r0.apply(this,arguments);mlMarkTmp();return x};drawMaps=function(){const x=d0.apply(this,arguments);mlMarkTmp();return x}}
+  const r0=render,d0=drawMaps;render=function(){try{if(typeof mlViewApply==='function')mlViewApply()}catch(e){}const x=r0.apply(this,arguments);mlMarkTmp();return x};drawMaps=function(){const x=d0.apply(this,arguments);mlMarkTmp();return x}}
 async function compute(){
   syncDirect();save();const my=++token;const p={...S,hs:S.hs.map(h=>({...h}))};
   let out;try{G=setup(p);mlDetach();ML_TMP=true;out=DESIGNS.map(d=>evaluate(G,d,S.Q,S.t))}catch(e){mlAttach();ML_TMP=false;   /* ← ML: 재풀이는 자동 설계 뒤로 */$('vEyebrow').textContent='입력 오류 — 계산하지 않았습니다';$('vName').textContent=e&&e.message?e.message:String(e);$('warns').innerHTML=`<li>${esc(e&&e.message?e.message:e)}</li>`;return}
@@ -3830,16 +3848,26 @@ function mlShKey(){const H=(G&&G.p&&G.p.hs)||S.hs;return JSON.stringify([S.inl,!
 function mlShList(){if(!AUTO||AUTO.key!==mlShKey())return null;const all=AUTO.cands.filter(c=>c.ml&&!c.hide);if(!all.length||all.some(c=>c.r===undefined))return null;
   const L=all.filter(c=>c.r).sort((a,b)=>a.ml-b.ml);return L.length?L:null}
 function mlShView(c){   // 카드에 보일 값: 3D 값이 있으면 3D, 없으면 간단 계산
-  const i=DESIGNS.indexOf(AUTOD),ra=(c===AUTO.best&&i>=0&&res.length===DESIGNS.length&&res[i]&&res[i].d===AUTOD)?res[i]:null,r=ra||c.r,nx=(AUTO.nsList||[]).find(x=>x.c===c),ns=r.ns||(nx&&nx.ns)||null;
+  const ra=c===AUTO.best?mlAutoRes():null,r=ra||c.r,nx=(AUTO.nsList||[]).find(x=>x.c===c),ns=r.ns||(nx&&nx.ns)||null;
   return {r,ns,T:r.ns?r.Tmax:(nx?nx.ns.Tmax:r.Tmax),dp:r.ns?r.dp:(nx?nx.ns.dp:r.dp)}}
-function mlShName(c){const n=c.name.replace(/^\d위 /,'');let m=n.match(/^(머신러닝 새 설계(?: N\d+)?) ?\(?(.*?)\)?$/);if(m)return [m[1],m[2]];m=n.match(/^(실측 모양 \S+) · (.*)$/);if(m)return [m[1],m[2]];m=n.match(/^(머신러닝 최적) · (.*)$/);return m?[m[1],m[2]]:[n,'']}
+function mlShName(c){return c.nice||mlNiceOf(c)}   // [모양 이름, 설명] — 새 설계 = '자동 최적화 모양', 나머지 = 형상 이름
+function mlBusyText(st){st=st||'';   // 떠 있는 알림 문구: 설계가 끝나기 전에는 '최적화 매니폴드 형성 중', 그 뒤에는 단계 이름
+  let done=false;try{done=!S.hs.length||!!mlShList()}catch(e){}if(!done)return '최적화 매니폴드 형성 중';
+  if(/선택 설계/.test(st))return '고른 모양 정밀 계산 중';if(/구조별 유량장/.test(st))return '기존 구조 비교 계산 중';if(/유량 스윕/.test(st))return '유량별 비교 계산 중';return '마무리 계산 중'}
+// 2~5위도 '온도·흐름·3D 자세히 보기'에서 볼 수 있게: 고른 후보의 간단 계산 결과를 '자동 설계' 자리에 끼워 넣어 그림·흐름·3D 가 그 모양을 그림 (다시 계산하지 않음)
+var ML_VIEW=null,ML_VIEW_SAVE=null;
+function mlAutoRes(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIGNS.length||!res[i])return null;return res[i].d===AUTOD?res[i]:(ML_VIEW_SAVE&&ML_VIEW_SAVE.d===AUTOD?ML_VIEW_SAVE:null)}
+function mlViewApply(){const i=DESIGNS.indexOf(AUTOD);if(i<0||res.length!==DESIGNS.length||!res[i])return;
+  const c=(ML_VIEW&&AUTO.cands.includes(ML_VIEW)&&ML_VIEW.r&&ML_VIEW!==AUTO.best)?ML_VIEW:null;
+  if(c){if(res[i].d===AUTOD)ML_VIEW_SAVE=res[i];if(!c._vr||c._vr.src!==c.r){const t=mlShName(c);c._vr={...c.r,src:c.r,d:{...c.d,name:t[0],note:`${c.ml}위 · ${t[1]}`}}}res[i]=c._vr}
+  else if(res[i].d!==AUTOD&&ML_VIEW_SAVE&&ML_VIEW_SAVE.d===AUTOD)res[i]=ML_VIEW_SAVE}
 function mlShRes(){
   const top=shEl('shTop'),rail=shEl('shRail');if(!top||!rail||!S.hs.length||!hasHeat()||!res.length)return false;
   const L=mlShList();
   shEl('shResSub').textContent=`머신러닝 순위 · 유량 ${S.Q} ml/min · 핫스팟 ${S.hs.length}개`;
   if(!L){shEl('shResBusy').hidden=true;rail.innerHTML='';
-    top.innerHTML=`<div class="sh-tb"><b class="sh-tn">머신러닝이 매니폴드를 설계하는 중입니다</b><small>핫스팟 위치·크기·열유속에 맞춰 새 모양(1위)을 만들고, 지금까지 SimScale 로 돌려 본 모양 중 2~5위를 고른 뒤 간단 계산으로 온도를 냅니다. 보통 20초 안팎입니다.</small></div>`;return true}
-  if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key}
+    top.innerHTML=`<div class="sh-tb"><b class="sh-tn">핫스팟 에이전트가 매니폴드를 설계하는 중입니다</b><small>약 20초 걸립니다.</small></div>`;return true}
+  if(SH.mlKey!==AUTO.key||SH.mlPick==null||SH.mlPick>=L.length){SH.mlPick=0;SH.mlKey=AUTO.key;ML_VIEW=null}
   const V=L.map(mlShView),m=res.find(r=>r.d.ref),lo=Math.min(...V.map(v=>v.r.Tmin),m?m.Tmin:1e9),hi=Math.max(...V.map(v=>v.r.Tmax),m?m.Tmax:-1e9);
   const c=L[SH.mlPick],v=V[SH.mlPick],[nm,sub]=mlShName(c),dT=m?v.T-m.Tmax:0,busy3=!v.ns&&c.ml<=2&&NS_POOL&&!(NS_LIVE&&NS_LIVE.done);
   {const bz=shEl('shResBusy');bz.hidden=!SH.busy;if(SH.busy&&/조건이 바뀌어/.test(bz.textContent))bz.textContent='1~5위는 간단 계산값입니다. 이어서 1·2위를 3D로 다시 풀고 있습니다…'}   // 순위가 이미 나온 뒤의 '계산 중' 문구
@@ -3852,9 +3880,13 @@ function mlShRes(){
   if(shEl('shMore').open)shMoreFill();
   return true}
 {const r0=shRes;shRes=function(){try{if(mlShRes())return}catch(e){console.error('mlShRes',e)}return r0.apply(this,arguments)};
- const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);try{if(SH.page==='res'||!shEl('sh-res').hidden)shRes();shCrit()}catch(e){}return x};
+ const d0=drawAuto;drawAuto=function(){const x=d0.apply(this,arguments);
+  // 자동 설계가 방금 목록에 들어온 직후에는 결과 배열(res)에 그 자리가 아직 없음(정밀 풀이 뒤에 채워짐) → 그 몇 초 동안 '자세히 보기'가 다른 구조를 그리지 않게 간단 계산 결과를 먼저 넣어 둠
+  try{const i=DESIGNS.indexOf(AUTOD);if(i>=0&&res.length===DESIGNS.length-1&&AUTO.best&&AUTO.best.r){res.splice(i,0,{...AUTO.best.r,d:AUTOD});render()}}catch(e){}
+  try{if(SH.page==='res'||!shEl('sh-res').hidden)shRes();shCrit()}catch(e){}return x};
  const c0=shCrit;shCrit=function(){const x=c0.apply(this,arguments);try{if(S.hs.length&&hasHeat()){const L=mlShList(),t=L?(()=>{const v=mlShView(L[0]);return `머신러닝 1위 · ${mlShName(L[0])[0]} ${v.T.toFixed(1)} °C · ${(v.dp/1e3).toFixed(1)} kPa`})():'머신러닝이 설계하는 중…';document.querySelectorAll('[data-top]').forEach(e=>{e.textContent=t})}}catch(e){}return x};
- shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-mlpick]');if(!b)return;SH.mlPick=+b.dataset.mlpick;shRes()})}
+ shEl('shRail').addEventListener('click',e=>{const b=e.target.closest('[data-mlpick]');if(!b)return;SH.mlPick=+b.dataset.mlpick;const L=mlShList();ML_VIEW=L&&L[SH.mlPick]!==AUTO.best?L[SH.mlPick]:null;if(res.length)render();shRes()});
+ const h0=shDetHead;shDetHead=function(){h0.apply(this,arguments);try{const r=res[sel];if(r&&r.d===AUTOD&&AUTO.best&&AUTO.best.nice)shEl('shDetT').textContent=`${AUTO.best.nice[0]} · ${r.Tmax.toFixed(1)} °C`}catch(e){}}}
 
 function shSel(){const i=DESIGNS.indexOf(SH.pick);if(i>=0&&i!==sel){sel=i;SH.inSel=true;render();SH.inSel=false}}
 
